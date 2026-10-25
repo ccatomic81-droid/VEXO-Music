@@ -1,0 +1,23 @@
+{
+  "channel": "testing",
+  "version": "0.13.0-dev",
+  "versionCode": 15,
+  "packageName": "space.vexo.music.radio",
+  "downloadUrl": "https://vexo-music-testing.kavindukavishka785.workers.dev/releases/VEXO-Music-0.13.0-dev.apk",
+  "sha256": "e344868e0131257e3746edcdb040e45111b9284056fbfdd27954f4e64ad9c7b0",
+  "sizeBytes": 6523592,
+  "sourceCommit": "795bd900d1e22d798f59438bfe1346a10012624c",
+  "sourceUrl": "https://github.com/ccatomic81-droid/VEXO-Music/archive/795bd900d1e22d798f59438bfe1346a10012624c.zip",
+  "signingCertificateSha256": "0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3",
+  "releaseNotes": "Private next-song learning, category/language search, Home Skip intros controls for confirmed imported audio, encrypted data migration and verified future updates. Original-key signed test candidate; existing VEXO design retained.",
+  "minimumAndroidApi": 26,
+  "debugDevelopmentBuild": false,
+  "automaticTestUpdates": false,
+  "limitations": [
+    "Physical-device upgrade, background playback and two-phone room acceptance required",
+    "Intro markers apply only to confirmed imported audio; no online sponsor/ad removal",
+    "Accounts, push notifications and authorized YouTube library sync need project setup",
+    "Licensed lyric search, complete transliteration, popularity/audio metadata and authorized online downloads remain dependencies"
+  ],
+  "nextPublicMinimumVersionCode": 16
+}
