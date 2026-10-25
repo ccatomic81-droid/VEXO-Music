@@ -64,3 +64,23 @@ dependencies {
     androidTestImplementation 'androidx.test:runner:1.6.2'
     androidTestImplementation 'androidx.test.ext:junit:1.2.1'
 }
+
+// Inventory the versions Gradle actually resolved, including transitive Android dependencies.
+tasks.register('writeSecurityInventory') {
+    doLast {
+        def resolved = new TreeMap<String, Map>()
+        ['debugRuntimeClasspath', 'releaseRuntimeClasspath'].each { name ->
+            configurations.getByName(name).incoming.resolutionResult.allComponents.each { component ->
+                def module = component.moduleVersion
+                if (module != null && module.group && module.group != 'VEXO-Music') {
+                    def coordinate = module.group + ':' + module.name
+                    resolved[coordinate + ':' + module.version] = [package: [name: coordinate, ecosystem: 'Maven'], version: module.version]
+                }
+            }
+        }
+        def output = layout.buildDirectory.file('security/dependencies.json').get().asFile
+        output.parentFile.mkdirs()
+        output.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson([queries: resolved.values().toList()]))
+        println('Resolved dependency inventory: ' + resolved.size())
+    }
+}

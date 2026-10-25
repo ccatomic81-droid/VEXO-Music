@@ -20,6 +20,16 @@ public final class OfflineLibrary {
   private static OfflineLibrary instance;
 
   public static synchronized OfflineLibrary get(Context c) {
+    Context app = c.getApplicationContext();
+    if (instance != null && instance.context != app) {
+      try {
+        instance.close();
+      } catch (InterruptedException interrupted) {
+        Thread.currentThread().interrupt();
+        throw new IllegalStateException("Previous audio cache is still closing", interrupted);
+      }
+      instance = null;
+    }
     if (instance == null)
       instance =
           new OfflineLibrary(

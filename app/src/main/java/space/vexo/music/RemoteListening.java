@@ -83,88 +83,94 @@ final class RemoteListening implements AutoCloseable {
             .header("Authorization", "Bearer " + session.optString("token"))
             .build();
     socket =
-        OnlineMusic.HTTP.newWebSocket(
-            request,
-            new WebSocketListener() {
-              @Override
-              public void onOpen(WebSocket ws, Response r) {
-                main.post(
-                    () -> {
-                      if (token != generation) return;
-                      retries = 0;
-                      status(host() ? "Hosting · live room" : "Connected · following host");
-                      main.removeCallbacks(heartbeat);
-                      main.postDelayed(heartbeat, 1000);
-                    });
-              }
+        OnlineMusic.HTTP
+            .newBuilder()
+            .followRedirects(false)
+            .followSslRedirects(false)
+            .build()
+            .newWebSocket(
+                request,
+                new WebSocketListener() {
+                  @Override
+                  public void onOpen(WebSocket ws, Response r) {
+                    main.post(
+                        () -> {
+                          if (token != generation) return;
+                          retries = 0;
+                          status(host() ? "Hosting · live room" : "Connected · following host");
+                          main.removeCallbacks(heartbeat);
+                          main.postDelayed(heartbeat, 1000);
+                        });
+                  }
 
-              @Override
-              public void onMessage(WebSocket ws, String text) {
-                if (text.length() > 32768) return;
-                main.post(
-                    () -> {
-                      if (token != generation || !active()) return;
-                      try {
-                        JSONObject value = new JSONObject(text);
-                        if (value.optString("type").equals("error")) {
-                          status(value.optString("error"));
-                          advancing = false;
-                          return;
-                        }
-                        if (!value.optString("type").equals("state")) return;
-                        String advance = value.optString("advance");
-                        boolean moved = !advance.equals(lastAdvance);
-                        if (moved) {
-                          lastAdvance = advance;
-                          advancing = false;
-                        }
-                        offset = value.optLong("serverTime") - System.currentTimeMillis();
-                        store.preference("room_public", value);
-                        if (value.optBoolean("closed")) {
-                          leave(false);
-                          status("Room ended");
-                          return;
-                        }
-                        if (!host() && following && !value.optBoolean("hostOnline", true)) {
-                          applying = true;
-                          player.pause();
-                          applying = false;
-                          status("Host disconnected · waiting for reconnection");
-                          return;
-                        }
-                        apply(value.optJSONObject("playback"), moved);
-                        status(
-                            host()
-                                ? "Hosting · "
-                                    + value.optJSONArray("members").length()
-                                    + " listeners"
-                                : following
-                                    ? "Live · following the host"
-                                    : "Connected · personal playback");
-                      } catch (Exception e) {
-                        status("Couldn’t read room update");
-                      }
-                    });
-              }
+                  @Override
+                  public void onMessage(WebSocket ws, String text) {
+                    if (text.length() > 32768) return;
+                    main.post(
+                        () -> {
+                          if (token != generation || !active()) return;
+                          try {
+                            JSONObject value = new JSONObject(text);
+                            if (value.optString("type").equals("error")) {
+                              status(value.optString("error"));
+                              advancing = false;
+                              return;
+                            }
+                            if (!value.optString("type").equals("state")) return;
+                            String advance = value.optString("advance");
+                            boolean moved = !advance.equals(lastAdvance);
+                            if (moved) {
+                              lastAdvance = advance;
+                              advancing = false;
+                            }
+                            offset = value.optLong("serverTime") - System.currentTimeMillis();
+                            store.preference("room_public", value);
+                            if (value.optBoolean("closed")) {
+                              leave(false);
+                              status("Room ended");
+                              return;
+                            }
+                            if (!host() && following && !value.optBoolean("hostOnline", true)) {
+                              applying = true;
+                              player.pause();
+                              applying = false;
+                              status("Host disconnected · waiting for reconnection");
+                              return;
+                            }
+                            apply(value.optJSONObject("playback"), moved);
+                            status(
+                                host()
+                                    ? "Hosting · "
+                                        + value.optJSONArray("members").length()
+                                        + " listeners"
+                                    : following
+                                        ? "Live · following the host"
+                                        : "Connected · personal playback");
+                          } catch (Exception e) {
+                            status("Couldn’t read room update");
+                          }
+                        });
+                  }
 
-              @Override
-              public void onClosed(WebSocket ws, int code, String reason) {
-                main.post(() -> lost(token));
-              }
+                  @Override
+                  public void onClosed(WebSocket ws, int code, String reason) {
+                    main.post(() -> lost(token));
+                  }
 
-              @Override
-              public void onFailure(WebSocket ws, Throwable error, Response r) {
-                main.post(
-                    () -> {
-                      if (r != null && (r.code() == 401 || r.code() == 403 || r.code() == 410)) {
-                        if (token == generation) {
-                          leave(false);
-                          status("Room expired. Ask the host for a new invite.");
-                        }
-                      } else lost(token);
-                    });
-              }
-            });
+                  @Override
+                  public void onFailure(WebSocket ws, Throwable error, Response r) {
+                    main.post(
+                        () -> {
+                          if (r != null
+                              && (r.code() == 401 || r.code() == 403 || r.code() == 410)) {
+                            if (token == generation) {
+                              leave(false);
+                              status("Room expired. Ask the host for a new invite.");
+                            }
+                          } else lost(token);
+                        });
+                  }
+                });
   }
 
   private void lost(int token) {

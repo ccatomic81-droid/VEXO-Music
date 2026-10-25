@@ -27,6 +27,10 @@ jobs:
         run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
       - name: Check and build
         run: bash gradlew --no-daemon testDebugUnitTest lintDebug lintRelease assembleDebug assembleRelease
+      - name: Audit resolved dependencies
+        run: |
+          bash gradlew --no-daemon :app:writeSecurityInventory
+          python3 tools/audit-dependencies.py app/build/security/dependencies.json
       - name: Check security and services
         run: |
           python3 tools/security-check.py
@@ -65,6 +69,7 @@ jobs:
             app/build/reports/
             app/build/test-results/
             app/build/ui-checks/
+            app/build/security/
           if-no-files-found: ignore
       - name: Probe live music discovery
         id: discovery_probe
