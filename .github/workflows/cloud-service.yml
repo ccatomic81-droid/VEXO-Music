@@ -1,0 +1,22 @@
+name: Check cloud radio service
+on:
+  pull_request:
+    paths: ['cloud-service/**', '.github/workflows/cloud-service.yml']
+  push:
+    branches: ['feature/cloud-radio-glass']
+    paths: ['cloud-service/**', '.github/workflows/cloud-service.yml']
+permissions:
+  contents: read
+jobs:
+  policy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check cloud-service/worker.mjs
+      - run: node --test cloud-service/policy.test.mjs

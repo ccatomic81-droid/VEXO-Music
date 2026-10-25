@@ -23,19 +23,32 @@ final class SmartExperiencePanel extends MusicSurface {
       play(tracks, 0, 0);
     }
 
+    default void remote() {}
+
+    default void radioPlan(JSONObject plan) {
+      JSONArray q = plan.optJSONArray("queries");
+      if (q != null && q.length() > 0) discover(q.optString(0), false);
+    }
+
     void changed();
   }
 
   private final SmartStore smart;
   private final LibraryStore library;
   private final Listener listener;
+  private final java.util.concurrent.ExecutorService aiWorker =
+      java.util.concurrent.Executors.newSingleThreadExecutor();
+  private final android.os.Handler aiMain =
+      new android.os.Handler(android.os.Looper.getMainLooper());
+  private int screenGeneration;
+  private boolean disposed;
 
   SmartExperiencePanel(Context c, SmartStore smart, LibraryStore library, Listener listener) {
     super(c);
     this.smart = smart;
     this.library = library;
     this.listener = listener;
-    setBackgroundColor(BG);
+    setBackground(Glass.backdrop());
     menu();
   }
 
@@ -51,6 +64,7 @@ final class SmartExperiencePanel extends MusicSurface {
   }
 
   private void screen(String title) {
+    screenGeneration++;
     body.removeAllViews();
     scrollTo(0, 0);
     if (!title.equals("Your music. Your way."))
@@ -73,7 +87,7 @@ final class SmartExperiencePanel extends MusicSurface {
   private void button(String label, Runnable action) {
     TextView control = action(label, false, () -> safe(action));
     control.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
-    control.setBackground(round(PANEL, dp(16)));
+    Glass.apply(control, 18, false);
     body.addView(control);
     gap(body, 8);
   }
@@ -89,7 +103,11 @@ final class SmartExperiencePanel extends MusicSurface {
     tool("Find a forgotten song", "Follow a clue back to a past listen.", this::find);
     tool("Song memories", "Keep a note. Return to a favourite moment.", this::memories);
     tool("Playlist Time Machine", "Recover songs and revisit earlier versions.", this::revisions);
-    tool("FairPlay · on this phone", "Everyone gets a turn in the queue.", this::group);
+    tool(
+        "FairPlay · listen together",
+        "Live rooms, shared requests and fair turns.",
+        listener::remote);
+    tool("FairPlay on one phone", "Pass this phone around for local requests.", this::group);
     tool("Discovery adventure", "Take a new artist or regional trail.", this::adventure);
     tool("Customize Home", "Keep the sections that matter to you.", this::home);
     tool("Privacy & listening history", "Pause recording or clear your history.", this::privacy);
@@ -98,7 +116,7 @@ final class SmartExperiencePanel extends MusicSurface {
   private void tool(String title, String detail, Runnable open) {
     LinearLayout card = column();
     card.setPadding(dp(16), dp(16), dp(16), dp(16));
-    card.setBackground(round(PANEL, dp(18)));
+    Glass.apply(card, 22, title.equals("VEXO MindRadio"));
     card.setMinimumHeight(dp(80));
     LinearLayout heading = row();
     TextView label = text(title, 16, TEXT, true);
@@ -159,17 +177,99 @@ final class SmartExperiencePanel extends MusicSurface {
   private void mind() {
     screen("VEXO MindRadio");
     note(
-        "Describe what you want: calm Sinhala music, Tamil dance, or an artist. Uses search clues"
-            + " and your controls on this device. Cloud AI conversation is not connected yet.");
-    EditText command = input("What would you like to hear?", "");
+        "Tell VEXO what to play, change the mood, or exclude an artist. Cloud AI turns your request"
+            + " into a music search plan; your private notes and listening history stay on this"
+            + " phone.");
+    EditText command = input("e.g. Calm Sinhala music, fewer popular artists", "");
+    TextView reply =
+        text(
+            "Free cloud AI · 5 requests per device each day. Local radio remains available.",
+            13,
+            MUTED,
+            false);
+    body.addView(reply);
+    gap(body, 14);
+    TextView build = action("Ask MindRadio", true, () -> {});
+    body.addView(build);
+    gap(body, 10);
+    build.setOnClickListener(
+        v -> {
+          if (command.getText().toString().trim().isEmpty()) {
+            command.setError("Describe the music you want");
+            return;
+          }
+          Runnable run =
+              () -> {
+                int token = screenGeneration;
+                build.setEnabled(false);
+                reply.setText("Thinking about your next soundtrack…");
+                aiWorker.execute(
+                    () -> {
+                      try {
+                        JSONObject plan =
+                            new CloudApi(getContext()).plan(command.getText().toString());
+                        aiMain.post(
+                            () -> {
+                              if (disposed || token != screenGeneration) return;
+                              build.setEnabled(true);
+                              reply.setText(plan.optString("reply", "Your radio is ready."));
+                              try {
+                                smart.preference(
+                                    "cloud_context",
+                                    command.getText().toString() + ". " + plan.optString("reply"));
+                              } catch (Exception ignored) {
+                              }
+                              button("Play this AI radio", () -> listener.radioPlan(plan));
+                            });
+                      } catch (Exception error) {
+                        aiMain.post(
+                            () -> {
+                              if (disposed || token != screenGeneration) return;
+                              build.setEnabled(true);
+                              reply.setText(
+                                  error.getMessage() == null
+                                      ? "Cloud AI unavailable. You can use local radio below."
+                                      : error.getMessage());
+                            });
+                      }
+                    });
+              };
+          if (!smart.preferences().optBoolean("cloud_consent"))
+            new AlertDialog.Builder(getContext())
+                .setTitle("Use cloud MindRadio?")
+                .setMessage(
+                    "Your typed request and selected genre, language, mood, energy and artist"
+                        + " preferences will be sent to Cloudflare Workers AI. Memories and"
+                        + " listening history are not sent. Free usage limits apply.")
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton(
+                    "Use cloud AI",
+                    (d, w) ->
+                        safe(
+                            () -> {
+                              smart.preference("cloud_consent", true);
+                              run.run();
+                            }))
+                .show();
+          else run.run();
+        });
     button(
-        "Build my radio",
+        "Build local radio",
         () -> {
           smart.preference("radio_command", command.getText().toString().trim());
           listener.discover(
               SmartPolicy.query(smart.preferences(), command.getText().toString()), false);
         });
     button("Adjust mood, energy & artists", this::preferences);
+  }
+
+  @Override
+  protected void onDetachedFromWindow() {
+    disposed = true;
+    screenGeneration++;
+    aiMain.removeCallbacksAndMessages(null);
+    aiWorker.shutdownNow();
+    super.onDetachedFromWindow();
   }
 
   private void preferences() {
@@ -631,6 +731,13 @@ final class SmartExperiencePanel extends MusicSurface {
             + " this device with an Android Keystore key. No cloud account or sync. New history"
             + " keeps up to 1,000 plays, memories 200. Clearing app data or uninstalling removes"
             + " these records. Existing saved music is retained.");
+    button(
+        "Reset cloud AI consent",
+        () -> {
+          smart.preference("cloud_consent", false);
+          smart.preference("cloud_context", "");
+          note("Cloud AI will ask before sending another request.");
+        });
     button(
         p.optBoolean("pause_history") ? "Resume listening history" : "Pause listening history",
         () -> {

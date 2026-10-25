@@ -7,14 +7,12 @@ import org.json.*;
 /** A release feed contains metadata only. Downloads always need a user tap. */
 final class AppRelease {
   static final String NOTES =
-      "• Smart experience: private song memories and dated listening-history search.\n"
-          + "• Playlist Time Machine with deleted-track recovery and undo snapshots.\n"
-          + "• Anti-repeat controls, detailed feedback and discovery trails.\n"
-          + "• Reorder Home, pin playlists, hide modules and focus on music.\n"
-          + "• MindRadio uses local search clues; cloud AI is not connected.\n"
-          + "• FairPlay rotation works on this phone; multi-device sessions are pending.\n"
-          + "• Connection recovery and provider-authorization gate for new offline saves.\n"
-          + "• Development candidate: external services and device verification remain.";
+      "• Cloud MindRadio understands music requests with a free daily allowance.\n"
+          + "• Create live listening rooms, share invites and request songs from multiple phones.\n"
+          + "• Host playback sync, fair request rotation and reconnect support.\n"
+          + "• New glass surfaces, refined navigation and a Smart tab after Settings.\n"
+          + "• Private history and memories remain on your device.\n"
+          + "• Development test build: playback timing depends on each device and connection.";
   final int code;
   final String version, summary, url;
 

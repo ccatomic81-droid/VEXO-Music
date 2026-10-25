@@ -31,6 +31,11 @@ public final class PlaybackService extends MediaSessionService {
   public static final String HIDE_RADIO = "space.vexo.music.HIDE_RADIO";
   private AutoplayManager autoplay;
   private RadioStore radioStore;
+  public static final String ROOM_JOIN = "space.vexo.music.ROOM_JOIN",
+      ROOM_ACTION = "space.vexo.music.ROOM_ACTION",
+      ROOM_FOLLOW = "space.vexo.music.ROOM_FOLLOW",
+      ROOM_LEAVE = "space.vexo.music.ROOM_LEAVE";
+  private RemoteListening remote;
 
   private void startRadio(Track seed) {
     if (!RadioPolicy.music(seed)) return;
@@ -54,7 +59,8 @@ public final class PlaybackService extends MediaSessionService {
   }
 
   private void retuneAutoplay() {
-    if (getSharedPreferences("playback_state", 0).getBoolean("fair_queue", false))
+    if ((remote != null && remote.active())
+        || getSharedPreferences("playback_state", 0).getBoolean("fair_queue", false))
       autoplay.suspend();
     else autoplay.settingsChanged();
   }
@@ -283,6 +289,17 @@ public final class PlaybackService extends MediaSessionService {
     if (getSharedPreferences("playback_state", 0).getBoolean("fair_queue", false))
       autoplay.suspend();
     handler.postDelayed(positionCheckpoint, 5000);
+    remote =
+        new RemoteListening(
+            this,
+            player,
+            () -> {
+              clearUpcoming();
+              autoplay.suspend();
+              player.setShuffleModeEnabled(false);
+              player.setRepeatMode(Player.REPEAT_MODE_OFF);
+            });
+    remote.connect();
     player.addListener(
         new Player.Listener() {
           private String recorded = "";
@@ -296,6 +313,11 @@ public final class PlaybackService extends MediaSessionService {
           @Override
           public void onPlayWhenReadyChanged(boolean ready, int reason) {
             if (!ready) recovery.cancel();
+            if (!ready
+                && reason == Player.PLAY_WHEN_READY_CHANGE_REASON_USER_REQUEST
+                && remote.active()
+                && !remote.host()
+                && !remote.applying()) remote.follow(false);
           }
 
           @Override
@@ -322,7 +344,10 @@ public final class PlaybackService extends MediaSessionService {
               Track seed = Track.from(player.getCurrentMediaItem());
               if (seed.online()) radioStore.anchor(seed);
             }
-            autoplay.check();
+            if (remote.active()) {
+              autoplay.suspend();
+              if (p.getPlaybackState() == Player.STATE_ENDED) remote.ended();
+            } else autoplay.check();
             handler.removeCallbacks(saveQueueTask);
             handler.postDelayed(saveQueueTask, 500);
             MediaItem item = p.getCurrentMediaItem();
@@ -399,6 +424,10 @@ public final class PlaybackService extends MediaSessionService {
                                 .add(new SessionCommand(AUTOPLAY_CHANGED, Bundle.EMPTY))
                                 .add(new SessionCommand(CLEAR_UPCOMING, Bundle.EMPTY))
                                 .add(new SessionCommand(CLEAR_QUEUE, Bundle.EMPTY))
+                                .add(new SessionCommand(ROOM_JOIN, Bundle.EMPTY))
+                                .add(new SessionCommand(ROOM_ACTION, Bundle.EMPTY))
+                                .add(new SessionCommand(ROOM_FOLLOW, Bundle.EMPTY))
+                                .add(new SessionCommand(ROOM_LEAVE, Bundle.EMPTY))
                                 .add(new SessionCommand(FAIR_QUEUE, Bundle.EMPTY))
                                 .add(new SessionCommand(START_RADIO, Bundle.EMPTY))
                                 .add(new SessionCommand(HIDE_RADIO, Bundle.EMPTY))
@@ -423,6 +452,32 @@ public final class PlaybackService extends MediaSessionService {
                                   androidx.media3.session.SessionError.ERROR_BAD_VALUE));
                         if (command.customAction.equals(START_RADIO)) startRadio(seed);
                         else hideFromRadio(seed);
+                        return Futures.immediateFuture(
+                            new SessionResult(SessionResult.RESULT_SUCCESS));
+                      } catch (Exception e) {
+                        return Futures.immediateFuture(
+                            new SessionResult(
+                                androidx.media3.session.SessionError.ERROR_BAD_VALUE));
+                      }
+                    }
+                    if (command.customAction.equals(ROOM_JOIN)) {
+                      remote.connect();
+                      return Futures.immediateFuture(
+                          new SessionResult(SessionResult.RESULT_SUCCESS));
+                    }
+                    if (command.customAction.equals(ROOM_LEAVE)) {
+                      remote.leave(true);
+                      return Futures.immediateFuture(
+                          new SessionResult(SessionResult.RESULT_SUCCESS));
+                    }
+                    if (command.customAction.equals(ROOM_FOLLOW)) {
+                      remote.follow(args.getBoolean("follow", true));
+                      return Futures.immediateFuture(
+                          new SessionResult(SessionResult.RESULT_SUCCESS));
+                    }
+                    if (command.customAction.equals(ROOM_ACTION)) {
+                      try {
+                        remote.send(new org.json.JSONObject(args.getString("action", "{}")));
                         return Futures.immediateFuture(
                             new SessionResult(SessionResult.RESULT_SUCCESS));
                       } catch (Exception e) {
@@ -512,6 +567,7 @@ public final class PlaybackService extends MediaSessionService {
 
   @Override
   public void onDestroy() {
+    if (remote != null) remote.close();
     if (recovery != null) recovery.close();
     if (autoplay != null) autoplay.close();
     radioWorker.shutdownNow();

@@ -151,8 +151,7 @@ final class MusicHomePanel extends MusicSurface {
     filters.addView(chips);
     body.addView(filters);
     gap(body, 16);
-    body.addView(action("Your smart experience", true, listener::smart));
-    gap(body, 16);
+
     Map<String, List<View>> modules = new LinkedHashMap<>();
     int moduleStart = body.getChildCount();
     List<Track> likes = store.tracks("favourites"), history = store.tracks("history");

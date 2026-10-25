@@ -20,7 +20,11 @@ public final class Visuals {
 
   public static GradientDrawable round(int color, float radius) {
     GradientDrawable d = new GradientDrawable();
-    d.setColor(color);
+    if (color == PANEL) {
+      d.setColors(new int[] {0xd53b4757, 0xc91c2432});
+      d.setOrientation(GradientDrawable.Orientation.TL_BR);
+      d.setStroke(1, 0x467c96aa);
+    } else d.setColor(color);
     d.setCornerRadius(radius);
     return d;
   }
@@ -208,6 +212,8 @@ public final class Visuals {
 
     private static String description(String name) {
       switch (name) {
+        case "smart":
+          return "Smart Experience";
         case "play":
           return "Play";
         case "pause":
@@ -257,6 +263,19 @@ public final class Visuals {
       p.setStrokeJoin(Paint.Join.ROUND);
       Path a = new Path();
       switch (name) {
+        case "smart":
+          a.moveTo(12, 2);
+          a.lineTo(15, 9);
+          a.lineTo(22, 12);
+          a.lineTo(15, 15);
+          a.lineTo(12, 22);
+          a.lineTo(9, 15);
+          a.lineTo(2, 12);
+          a.lineTo(9, 9);
+          a.close();
+          c.drawPath(a, p);
+          break;
+
         case "download":
           c.drawLine(12, 4, 12, 16, p);
           a.moveTo(7, 11);

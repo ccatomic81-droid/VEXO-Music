@@ -229,7 +229,7 @@ public final class MainActivity extends ComponentActivity {
       profileDraft = state.getString("profile_draft", profile.name());
     }
     root = column();
-    root.setBackgroundColor(BG);
+    root.setBackground(Glass.backdrop());
     setContentView(root);
     androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(
         root,
@@ -462,14 +462,15 @@ public final class MainActivity extends ComponentActivity {
   private void buildNav() {
     nav = row();
     nav.setPadding(dp(10), dp(2), dp(10), dp(4));
-    nav.setMinimumHeight(dp(64));
+    nav.setMinimumHeight(dp(72));
+    Glass.apply(nav, 26, false);
     root.addView(nav, new LinearLayout.LayoutParams(-1, -2));
   }
 
   private void refreshNav() {
     nav.removeAllViews();
-    String[] labels = {"Home", "Search", "Library", "Settings"};
-    String[] names = {"home", "search", "library", "settings"};
+    String[] labels = {"Home", "Search", "Library", "Settings", "Smart"};
+    String[] names = {"home", "search", "library", "settings", "smart"};
     for (int j = 0; j < labels.length; j++) {
       String label = labels[j];
       boolean selected = label.equals(tab);
@@ -480,11 +481,16 @@ public final class MainActivity extends ComponentActivity {
       if (selected) i.setBackground(round(PANEL, dp(16)));
       i.setContentDescription(label);
       i.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-      item.setMinimumHeight(dp(56));
+      TextView caption = text(label, 10, selected ? LIME : MUTED, selected);
+      caption.setGravity(Gravity.CENTER);
+      caption.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+      item.addView(caption);
+      caption.setOnClickListener(v -> item.performClick());
+      item.setMinimumHeight(dp(64));
       item.setSelected(selected);
       item.setFocusable(true);
       item.setTooltipText(label);
-      item.setContentDescription(label + " tab");
+      item.setContentDescription(label.equals("Smart") ? "Smart Experience tab" : label + " tab");
       item.setOnClickListener(
           v -> {
             if (searchField != null) query = searchField.getText().toString();
@@ -592,6 +598,9 @@ public final class MainActivity extends ComponentActivity {
         break;
       case "Library":
         renderLibrary();
+        break;
+      case "Smart":
+        showSmart(null, true);
         break;
       case "Settings":
         renderSettings();
@@ -1691,6 +1700,11 @@ public final class MainActivity extends ComponentActivity {
         .hideSoftInputFromWindow(root.getWindowToken(), 0);
     if (tab.equals("Search") && searchField != null)
       searchHistory.add(searchField.getText().toString());
+    if (getSharedPreferences("playback_state", 0).getBoolean("room_active", false)) {
+      controller.sendCustomCommand(
+          new SessionCommand(PlaybackService.ROOM_LEAVE, Bundle.EMPTY), Bundle.EMPTY);
+      message("Leaving the listening room for your personal queue");
+    }
     List<MediaItem> queue = new ArrayList<>();
     int first = Math.max(0, index - 10),
         end = Math.min(tracks.size(), first + QueuePolicy.MAX_ITEMS);
@@ -2217,6 +2231,10 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private void showSmart(Track track) {
+    showSmart(track, false);
+  }
+
+  private void showSmart(Track track, boolean embedded) {
     Dialog dialog = new Dialog(this);
     SmartStore smart = new SmartStore(this);
     final boolean[] closed = {false};
@@ -2248,24 +2266,53 @@ public final class MainActivity extends ComponentActivity {
                     new SessionCommand(PlaybackService.FAIR_QUEUE, Bundle.EMPTY), Bundle.EMPTY);
               }
 
+              public void remote() {
+                showRemoteRoom();
+              }
+
               public void discover(String query, boolean newArtists) {
+                discoverPlan(Collections.singletonList(query), Collections.emptySet(), newArtists);
+              }
+
+              public void radioPlan(org.json.JSONObject plan) {
+                List<String> queries = new ArrayList<>();
+                org.json.JSONArray a = plan.optJSONArray("queries");
+                if (a != null) for (int i = 0; i < a.length(); i++) queries.add(a.optString(i));
+                Set<String> excluded = new HashSet<>();
+                org.json.JSONArray x = plan.optJSONArray("excludeArtists");
+                if (x != null)
+                  for (int i = 0; i < x.length(); i++)
+                    excluded.add(RadioPolicy.normalize(x.optString(i)));
+                discoverPlan(queries, excluded, false);
+              }
+
+              private void discoverPlan(
+                  List<String> queries, Set<String> excluded, boolean newArtists) {
                 int token = ++generation[0];
                 message("Finding your music…");
                 io.execute(
                     () -> {
                       try {
                         LinkedHashMap<String, Track> pool = new LinkedHashMap<>();
-                        for (String variant : SmartPolicy.variants(query)) {
-                          if (closed[0] || destroyed || token != generation[0]) return;
-                          for (Track t : OnlineMusic.search(variant).tracks)
-                            pool.putIfAbsent(t.url, t);
-                        }
+                        for (String query : queries)
+                          for (String variant : SmartPolicy.variants(query)) {
+                            if (closed[0] || destroyed || token != generation[0]) return;
+                            for (Track t : OnlineMusic.search(variant).tracks)
+                              pool.putIfAbsent(t.url, t);
+                          }
                         List<Track> picks =
                             SmartPolicy.rank(
                                 new ArrayList<>(pool.values()),
                                 smart,
                                 store.tracks("history"),
                                 newArtists);
+                        picks.removeIf(
+                            t ->
+                                excluded.stream()
+                                    .anyMatch(
+                                        artist ->
+                                            !artist.isEmpty()
+                                                && RadioPolicy.artist(t).contains(artist)));
                         if (newArtists) {
                           Set<String> known = new HashSet<>();
                           for (Track t : store.tracks("history")) known.add(RadioPolicy.artist(t));
@@ -2313,7 +2360,22 @@ public final class MainActivity extends ComponentActivity {
                   && controller.getCurrentMediaItem().mediaId.equals(track.url)
               ? controller.getCurrentPosition()
               : 0);
-    panel.setBackgroundColor(BG);
+    panel.setBackground(Glass.backdrop());
+    panel.addOnAttachStateChangeListener(
+        new View.OnAttachStateChangeListener() {
+          public void onViewAttachedToWindow(View v) {}
+
+          public void onViewDetachedFromWindow(View v) {
+            closed[0] = true;
+            generation[0]++;
+          }
+        });
+    if (embedded) {
+      content.addView(panel, new LinearLayout.LayoutParams(-1, 0, 1));
+      return;
+    }
+    panel.setBackground(Glass.dialogBackdrop(this));
+    panel.setClipToOutline(true);
     dialog.setContentView(panel);
     dialog.setOnDismissListener(
         d -> {
@@ -2321,6 +2383,69 @@ public final class MainActivity extends ComponentActivity {
           generation[0]++;
         });
     dialog.show();
+    blurDialog(dialog);
+    if (dialog.getWindow() != null)
+      dialog
+          .getWindow()
+          .setLayout(-1, (int) (getResources().getDisplayMetrics().heightPixels * .88f));
+  }
+
+  private void blurDialog(Dialog dialog) {
+    Window window = dialog.getWindow();
+    if (window == null) return;
+    window.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
+    window.setDimAmount(.35f);
+    if (Build.VERSION.SDK_INT >= 31)
+      try {
+        if (getWindowManager().isCrossWindowBlurEnabled()) window.setBackgroundBlurRadius(dp(24));
+      } catch (RuntimeException unavailable) {
+      }
+  }
+
+  private Bundle roomArgs(String action) {
+    Bundle b = new Bundle();
+    b.putString("action", action);
+    return b;
+  }
+
+  private void showRemoteRoom() {
+    Dialog dialog = new Dialog(this);
+    RemoteRoomPanel panel =
+        new RemoteRoomPanel(
+            this,
+            store,
+            new RemoteRoomPanel.Actions() {
+              private void command(String name, Bundle args) {
+                if (controller == null) {
+                  message("Player is connecting. Try again.");
+                  return;
+                }
+                controller.sendCustomCommand(new SessionCommand(name, Bundle.EMPTY), args);
+              }
+
+              public void connect() {
+                command(PlaybackService.ROOM_JOIN, Bundle.EMPTY);
+              }
+
+              public void action(org.json.JSONObject value) {
+                command(PlaybackService.ROOM_ACTION, roomArgs(value.toString()));
+              }
+
+              public void follow(boolean value) {
+                Bundle b = new Bundle();
+                b.putBoolean("follow", value);
+                command(PlaybackService.ROOM_FOLLOW, b);
+              }
+
+              public void leave() {
+                command(PlaybackService.ROOM_LEAVE, Bundle.EMPTY);
+              }
+            });
+    panel.setBackground(Glass.dialogBackdrop(this));
+    panel.setClipToOutline(true);
+    dialog.setContentView(panel);
+    dialog.show();
+    blurDialog(dialog);
     if (dialog.getWindow() != null)
       dialog
           .getWindow()
@@ -2334,12 +2459,6 @@ public final class MainActivity extends ComponentActivity {
     body.setPadding(dp(22), dp(8), dp(22), dp(24));
     scroll.addView(body);
     content.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
-    setting(
-        body,
-        "Smart experience",
-        "MindRadio, memories, discovery, Time Machine & Home",
-        false,
-        () -> showSmart(null));
     setting(body, "Your profile", profile.name() + " · name and photo", false, this::openProfile);
     setting(
         body,
@@ -2811,7 +2930,12 @@ public final class MainActivity extends ComponentActivity {
                     togglePlay();
                     break;
                   case "next":
-                    controller.seekToNextMediaItem();
+                    if (getSharedPreferences("playback_state", 0).getBoolean("room_active", false)
+                        && getSharedPreferences("playback_state", 0).getBoolean("room_host", false))
+                      controller.sendCustomCommand(
+                          new SessionCommand(PlaybackService.ROOM_ACTION, Bundle.EMPTY),
+                          roomArgs("{\"type\":\"next\"}"));
+                    else controller.seekToNextMediaItem();
                     break;
                   case "repeat":
                     int mode = controller.getRepeatMode();
