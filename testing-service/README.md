@@ -2,22 +2,28 @@
 
 Public tester page: https://vexo-music-testing.kavindukavishka785.workers.dev/
 
-This separate Worker serves the original-key-signed 0.11.0-dev APK (code 13), checksum file and `testing.json`. It links to the corresponding source already publicly available on GitHub at `b095c291da27f150b65657bec69c78d3da76b6c1`. No existing application users are automatically enrolled. The app currently reads only its existing stable feed. Testers download the APK directly and install it as an update while keeping the old app installed. This is a public opt-in test link, not an authenticated closed testing group.
+Current candidate: **0.13.0-dev, version code 15**, signed with VEXO's original certificate and built with debug mode disabled. Its non-signature APK contents exactly match the tested CI release candidate from `795bd900d1e22d798f59438bfe1346a10012624c` (Android Actions 40190374785). The public stable release stays at 0.12.0/code 14. No stable branch merge or automatic enrolment is part of this test publication.
 
-The app's private data is not uploaded here. The APK is a debuggable development build, not a production release. Cloud MindRadio and live rooms are connected. Licensed lyric search, comprehensive transliteration and full catalogue metadata remain pending. Existing saved content remains, and new online offline saves are disabled without authorization. Device checks are still needed.
+## Test installation
 
-## Isolation
+1. Open the tester page on an Android 8+ phone and download the APK.
+2. Keep the existing VEXO app installed; choose **Update** when Android opens the APK. Android may ask to allow installation from the browser.
+3. Check existing playlists, favourites, profile, memories and queue. Do not uninstall or clear app data.
+4. Test automatic next songs, category/language search, local intro markers with crossfade and full-version override, network interruption recovery, Bluetooth controls and background playback. Test rooms on two phones.
+5. Report problems through **Settings → Report a problem**. Test installations wait for a newer test/public build; an in-place downgrade to 0.12 is not provided. The next public update must use code 16 or higher.
 
-Only the exact public artifact names/checksums in `artifacts.mjs` can be read. No source archive is uploaded to this host. All objects use `testing/0.11.0-dev/` in the existing release bucket. The stable Worker, stable objects and `stable.json` are not modified. Read-only `service.mjs` is the deployed final entrypoint. Files are streamed with correct content types, resumable ranges, ETags and content lengths. The test page is noindex and shows development limitations.
+This is a public opt-in link, not an authenticated closed-testing group. The installed app still reads the stable feed; testers must use this link to install this candidate. No new update push notification or sign-in system is claimed.
 
-`publisher.mjs` is a temporary deployment entrypoint. It requires a short-lived capability, verifies hashes and sizes against the reviewed artifacts, refuses overwrite with differing bytes and requires all downloads before publishing the manifest. It cannot address any stable object. After publication, redeploy `service.mjs` with only the R2 binding and remove all publishing bindings/token material. Never commit a token, key or signing password.
+## Scope and limits
 
-`node --test testing-service/service.test.mjs update-service/service.test.mjs` covers public download/range behavior, manifest routing, closed write routes, authentication/expiry, checksum rejection, publish ordering and stable isolation. Cloud verification checks exact served bytes/certificate and confirms the stable manifest is unchanged.
+The candidate adds private audible-time listening learning, category/language search, Home Skip intros controls, shared PureSong settings, encrypted legacy library/profile migration, authenticated future updates and safer media controls. Existing VEXO solid colors and music features remain. Intro markers apply only to confirmed imported audio; online songs remain uncut. Accounts, push notifications and authorized YouTube library sync need project configuration. Licensed lyrics, complete transliteration, popularity/audio features and newly authorized online offline playback remain external dependencies. Physical Android acceptance testing is still required.
 
-No paid plan or subscription is enabled by this configuration. It reuses the existing release bucket; existing account quotas still apply.
+## Hosting and isolation
 
-Future releases offered to devices that install this candidate must use version code 14 or higher; the current test candidate uses code 13.
+Only exact checksum-pinned APK/manifest/checksum names in `artifacts.mjs` can be read. New objects are immutable under `testing/0.13.0-dev/` in the existing release bucket. Both 0.10 and 0.11 test APK addresses remain supported at their original immutable prefixes. No source ZIP is uploaded here; corresponding source links the already-public GitHub commit.
 
-The original 0.10.0-dev APK URL remains available at its original immutable object. Android verification: 117 tests, zero failures/errors, five optional skips; lint and APK build passed in run 40170936665. See `release/verification-0.11.0-dev.json` and `cloud-service/live-verification.json`.
+`service.mjs` is the final read-only entrypoint with the R2 binding alone. It streams downloads, supports ranges/HEAD/ETags and noindexes the test page. The temporary publisher uses a short-lived capability, checks hashes/sizes, rejects differing overwrites, and publishes the manifest only after all artifacts exist. It cannot address stable objects. After publication, remove the publisher entrypoint and publishing bindings. Never commit tokens, signing keys or passwords.
 
-After 0.12.0 public publication, the landing page now links the stable production APK, its public source and GitHub checksums. The archived testing manifest and both old test APK addresses remain unchanged. The regular in-app Update button now offers the public release.
+Tests cover ranges/cache, closed writes, authentication/expiry, checksum validation, publication ordering, stable isolation and archived APK routing. Live verification independently downloads and checks the served APK and original certificate, compares the stable manifest before/after, checks HEAD/ranges, and confirms write routes are closed. See `verification-0.13.0-dev.json`, `../release/verification-0.13.0-dev.json` and `../release/update-0.13.0-dev.json`.
+
+No paid plan or new paid resource is enabled. This reuses the existing release bucket and test Worker, subject to existing account quotas.
