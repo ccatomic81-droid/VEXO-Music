@@ -158,6 +158,41 @@ public class ListeningExperienceTest {
     assertTrue(failed.get(1));
   }
 
+  private Player.PositionInfo position(MediaItem item, int index, long ms) {
+    return new Player.PositionInfo(
+        null, index, item, null, 0, ms, ms, C.INDEX_UNSET, C.INDEX_UNSET);
+  }
+
+  @Test
+  public void onlyManualCrossTrackSeeksAreEarlySkipSignals() {
+    Fake f = new Fake();
+    MediaItem a = song("one", "A").mediaItem(),
+        b = song("two", "B").mediaItem(),
+        c = song("three", "C").mediaItem();
+    f.item = a;
+    List<Boolean> skips = new ArrayList<>();
+    ListeningTracker tracker =
+        new ListeningTracker(f.player, (t, ms, skip, error) -> skips.add(skip));
+    ShadowSystemClock.advanceBy(Duration.ofSeconds(4));
+    tracker.onEvents(f.player, null);
+    tracker.onPositionDiscontinuity(
+        position(a, 0, 4000), position(a, 0, 18000), Player.DISCONTINUITY_REASON_SEEK);
+    tracker.onEvents(f.player, null);
+    f.item = b;
+    tracker.onMediaItemTransition(b, Player.MEDIA_ITEM_TRANSITION_REASON_AUTO);
+    tracker.onEvents(f.player, null);
+    assertEquals(Collections.singletonList(false), skips);
+    ShadowSystemClock.advanceBy(Duration.ofSeconds(4));
+    tracker.onEvents(f.player, null);
+    tracker.onPositionDiscontinuity(
+        position(b, 1, 4000), position(c, 2, 0), Player.DISCONTINUITY_REASON_SEEK);
+    f.item = c;
+    tracker.onMediaItemTransition(c, Player.MEDIA_ITEM_TRANSITION_REASON_SEEK);
+    tracker.onEvents(f.player, null);
+    assertEquals(Arrays.asList(false, true), skips);
+    tracker.close();
+  }
+
   @Test
   public void privacyChangeDropsTheInFlightSampleUntilTheNextTrack() {
     Fake f = new Fake();

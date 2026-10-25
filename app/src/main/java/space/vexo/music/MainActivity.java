@@ -2855,7 +2855,6 @@ public final class MainActivity extends ComponentActivity {
                     "Clear",
                     (d, w) -> {
                       new SmartStore(this).clearHistory();
-                      new SmartStore(this).resetTaste();
                       store.save("history", Collections.emptyList());
                       radioChanged();
                       message("History cleared");

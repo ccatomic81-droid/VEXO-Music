@@ -792,7 +792,6 @@ final class SmartExperiencePanel extends MusicSurface {
                         safe(
                             () -> {
                               smart.clearHistory();
-                              smart.resetTaste();
                               library.save("history", Collections.emptyList());
                               listener.changed();
                               privacy();

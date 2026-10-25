@@ -1,5 +1,7 @@
 # VEXO Music smart experience upgrade
 
+Current 0.13 development status, security migration, listening/category/PureSong implementation, verification and remaining service gates are recorded in [EXPERIENCE-UPGRADE.md](EXPERIENCE-UPGRADE.md). The chronology below documents earlier delivered phases.
+
 Developer: Kavindu Kavishka. Inspected baseline: `c23abe77f3c94b1f0875cd7717682f6a2cef181f` (0.9.0, code 11), 25 October 2026. Initial development branch: `feature/smart-experience`; cloud/UI follow-up: `feature/cloud-radio-glass` (PR #2, based on PR #1).
 
 ## Architecture and preservation

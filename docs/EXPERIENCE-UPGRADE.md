@@ -18,9 +18,9 @@ The live backend and stable feed are not changed by these source edits. 0.12 cli
 
 ## Status and next phases
 
-Security tests and Android Actions validation must pass before considering this foundation ready. On-device encryption/upgrade/installer and external-controller behavior still require physical-device checks. User account creation, Firebase/Google configuration, notifications, read-only YouTube authorization and cloud sync are not provisioned by this phase.
+The security foundation at `d55c011` passed Android Actions [40183211061](https://github.com/ccatomic81-droid/VEXO-Music/actions/runs/40183211061): unit tests, debug/release lint and builds, OSV review of 60 resolved packages with no known findings, service checks and the optional live discovery probe. On-device encryption/upgrade/installer and external-controller behavior still require physical-device checks. User account creation, Firebase/Google configuration, notifications, read-only YouTube authorization and cloud sync are not provisioned by this phase.
 
-Next: actual listening signals and improved next-song ranking; real category search/results; then permitted PureSong markers and the top Home Skip intros ON/OFF control. Preserve FairPlay fairness, manual queues and crossfade; automatic intro jumps must not count as dislikes. Complete future integration phases against the master plan's source permissions and privacy gates.
+The next implementation branch adds actual listening signals, improved next-song ranking, real category search/results, permitted PureSong markers and the top Home Skip intros ON/OFF control, as detailed below. Preserve FairPlay fairness, manual queues and crossfade; automatic intro jumps must not count as dislikes. Complete future integration phases against the master plan's source permissions and privacy gates.
 
 Credential custody, repository account multifactor status, full dependency vulnerability coverage, hardware-backed Keystore behavior, signing-key rotation compatibility and paid/free account billing status have not been independently audited here. No claim of full penetration testing or complete security certification is made.
 
@@ -47,3 +47,30 @@ Tests cover outcome weights/cooldown/decay, error/pause/seek handling, privacy/r
 ## External setup remains separate
 
 Update push notifications, optional Google/email sign-in, an authorized YouTube library subset and cross-device account sync need an owner-selected/configured project, app registration and appropriate OAuth/notification configuration. No working account or push setup is fabricated. YouTube account sign-in alone does not authorize private library access or grant streaming/offline rights. Cloud quota and service availability remain relevant even with free tiers; no paid resources are provisioned. Existing cloud-radio and room features keep their current explicit consent and configured backend.
+
+
+## Consolidated feature status for this development candidate
+
+The twelve original features already have working integrations in the existing app; the status below distinguishes their implemented scope from capabilities needing other data/services. “Implemented” refers to code and automated validation, not completed physical-phone acceptance testing.
+
+| Feature | Current working scope | Status / remaining work |
+|---|---|---|
+| MindRadio | Consented cloud command interpretation, local fallback, preference hints, real candidate lookup and playback | Implemented within configured quotas; mood/energy are search hints, not measured audio. Cloud security source changes still need a separate deployment. |
+| Anti-repeat | Time window, alternate-upload/song identity, artist variety, forgotten favourites, discovery and new audible-time learning | Implemented locally. Manual selections/repeat and FairPlay remain user overrides; sparse pools may exhaust. |
+| Forgotten search | Timestamp/date ranges, metadata clues, limited spelling/alias matching, old history retained | Partial: no licensed lyric index or semantic recollection of context never recorded. |
+| Recommendation controls | Genre, language, mood, energy, artist, discovery, repeat and listening-learning controls | Partial: popularity and real audio-feature filtering require an authorized catalogue supplying them. |
+| Song memories | Encrypted private notes, favourite positions, dated timeline, play/seek and deletion | Implemented on-device; account sync remains separate. |
+| Playlist Time Machine | Before-edit/delete/rename versions, recovery of tracks, restore copy/replace and undo snapshots | Implemented from the time snapshots started; older deleted data cannot be invented. |
+| FairPlay | Local round robin plus existing hosted live rooms, shared requests and host transport | Implemented with best-effort synchronization. Physical multi-device timing, reconnect and background tests remain. Personal intro markers never change room playback. |
+| Smart feedback | More/less, seven-day break, never, reset; future ranking/filtering consumes these | Implemented; explicit feedback outweighs weak inferred listening signals. |
+| Multilingual search | Original Unicode, Sinhala/Tamil/English language hints, limited Romanized aliases, spelling tolerance, remote autocomplete and category search | Partial: comprehensive transliteration needs a maintained dataset/service. |
+| Connection recovery | Bounded retry, same-track/position resume, pause/item-change cancellation, low-data mode and imported/previously saved files | Partial: new online offline saves remain disabled without provider authorization. Physical interruption/background acceptance tests remain. |
+| Discovery adventure | New-artist, regional and hidden-gem search trails with actual playable results | Implemented using transparent metadata/search ranking; hidden gems are not verified popularity labels. |
+| Customizable Home | Section order, pin playlists, hide/show modules, distraction-free mode; new intro toggle | Implemented; VEXO solid-color identity retained. |
+| PureSong addition | Confirmed imported-audio markers, shared saved controls, crossfade preparation, full-version override | Implemented for local audio. Online speech/sponsor timing and licensed alternate versions remain external dependencies; no platform-ad bypass. |
+
+## Release gate
+
+Review PR #5 (security) before stacked PR #6 (listening/categories/PureSong). Keep `main`, the public 0.12 release, live stable feed and original key unchanged until review and device acceptance. CI test APKs use the runner debug key and cannot update an installed original-key VEXO app; do not uninstall the app to use them. CI also produces a non-debuggable **unsigned** release candidate, which must be signed with the existing identity and verified before distribution.
+
+Before public promotion, test an original-key upgrade over 0.12 with real playlists/profile/history, notification and Bluetooth controls, crossfade with local markers, toggling OFF and full-version playback, airplane-mode recovery, background playback, and two physical phones in a room. Then prepare signed release metadata using the existing offline signer, review the final release notes and deploy compatible update verification/backend source. Owner project/OAuth/push setup remains the next integration dependency; there is no fabricated sign-in, notification delivery or automatic YouTube library access.
