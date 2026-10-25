@@ -34,3 +34,9 @@ Certificate SHA-256: `0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9
 APK SHA-256: `4b8a86d6b3dd68a1ea8294ebdef988c69e6a583e71d939248802a7b412eea026`
 
 Install over the existing app to retain data. Private signing/publishing keys, SDK files, Gradle caches and build outputs are excluded from the source archive.
+
+## Published release
+
+The public stable feed returned the correct application ID, version 0.9.0/code 11, APK/source URLs, byte count, APK SHA-256 and certificate field. Full public downloads matched the local APK/source hashes. HEAD, byte-range resume (206), ETag revalidation (304), and rejected public publishing writes (405) passed. The production Worker retains only its R2 binding; the temporary publishing token and hash were removed.
+
+GitHub Actions run 40144401512 passed the Android test/lint/build, update-service contracts, APK package verification, and optional live music-metadata probe. Metadata checks do not establish audible playback or physical-device reliability.

@@ -1,0 +1,26 @@
+{
+  "version": "0.9.0",
+  "manifest": true,
+  "artifacts": [
+    {
+      "file": "VEXO-Music-0.9.0.apk",
+      "bytes": 8488040,
+      "sha256": "4b8a86d6b3dd68a1ea8294ebdef988c69e6a583e71d939248802a7b412eea026",
+      "download": true,
+      "head": true,
+      "range": true,
+      "etag": true
+    },
+    {
+      "file": "VEXO-Music-0.9.0-Source.zip",
+      "bytes": 1595835,
+      "sha256": "1bad2b94f3c7d1b1738936e85c7e63054a32472d6a689ff9f046679802427b7b",
+      "download": true,
+      "head": true,
+      "range": true,
+      "etag": true
+    }
+  ],
+  "publicWrites": 405,
+  "temporaryTokenDeleted": true
+}
