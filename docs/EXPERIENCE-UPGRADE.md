@@ -27,3 +27,21 @@ Credential custody, repository account multifactor status, full dependency vulne
 Initial CI exposed a process-static offline cache retaining the previous application context during encrypted-storage UI tests. The cache now closes/rebinds when the application context changes, avoiding stale storage handles. Cloud API and room connection clients also disable redirects so credentials and music commands stay on the configured service.
 
 The initial OSV inventory found two known advisories for transitive `org.jsoup:jsoup:1.22.2`: GHSA-65r4-943x-97jj and GHSA-pmhh-3w7g-xqp8. A dependency constraint now selects the maintainer's patched 1.23.2 release. The audit remains fail-closed for known findings, unavailable responses or pagination it cannot completely examine. This is not a claim that VEXO's particular parser use was exploitable. Maintainer source: https://jsoup.org/news/ and https://github.com/jhy/jsoup/security/advisories/GHSA-pmhh-3w7g-xqp8 .
+
+
+## Listening, categories and PureSong phase
+
+Implemented on `feature/listening-categories-puresong`, stacked on the security foundation:
+
+- Next-song ranking reads a bounded encrypted local taste model. Monotonic audible time adds modest song/artist preference; manual early skips add a weak negative, playback failures and pause/seek distance add none. One signal per song per 30 minutes, 30-day decay and a 300-song cap limit feedback loops. Explicit feedback, anti-repeat, favourites and artist variety still apply. This only ranks future automatic candidates; it never reorders manual queues or FairPlay requests.
+- Listening learning can be disabled or reset from Smart recommendation controls. Pausing listening history suppresses learning. Clearing history clears learned taste; a play already underway cannot repopulate a just-cleared model. Memories, favourites, intro markers and playlists remain separate.
+- Search has 14 native category cards, scoped Sinhala/Tamil/English/Any search, category results, pagination using the existing provider result cursor and a Play category mix action. Typed title/artist clues remain in the query. These are search collections and language hints, not measured audio genre/energy/popularity labels. Autoplay from category results keeps the chosen category query; explicitly starting song radio clears it. No provider or new subscription is introduced.
+- Home has a distinct, accessible Skip intros ON/OFF control with a 48dp touch target. Hold it for PureSong controls. Smart, Settings and song menus open the same saved controls. Solid charcoal/forest surfaces and lime accents preserve VEXO branding; navigation remains Home, Search, Library, Settings, Smart.
+- PureSong stores only user-confirmed start markers for imported content URIs, bound to URI and matching duration. At a fresh playing track start it can make one permitted seek. OFF, unknown/mismatched markers, restored non-start positions and shared rooms do not auto-seek. Full version cancels the armed seek and starts at zero. Same-track intro seeks are never skip dislikes. No online cuts, audio speech detection or platform-ad blocking are claimed.
+- Optional Prefer official audio adds a small title-based preference to future ranked candidates. It does not certify a source, replace a manual choice, or strip sponsors from online content.
+
+Tests cover outcome weights/cooldown/decay, error/pause/seek handling, privacy/reset, explicit-feedback priority, local marker eligibility/mismatches, off/full-version/shared-room protections, category queries, saved Home state and 320dp native layouts. CI must pass before this phase is ready; physical-device playback, large libraries, installation and room compatibility still need device testing.
+
+## External setup remains separate
+
+Update push notifications, optional Google/email sign-in, an authorized YouTube library subset and cross-device account sync need an owner-selected/configured project, app registration and appropriate OAuth/notification configuration. No working account or push setup is fabricated. YouTube account sign-in alone does not authorize private library access or grant streaming/offline rights. Cloud quota and service availability remain relevant even with free tiers; no paid resources are provisioned. Existing cloud-radio and room features keep their current explicit consent and configured backend.

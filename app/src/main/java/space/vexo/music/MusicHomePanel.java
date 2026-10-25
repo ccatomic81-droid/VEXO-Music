@@ -54,6 +54,10 @@ final class MusicHomePanel extends MusicSurface {
   interface Listener {
     default void smart() {}
 
+    default void pure() {}
+
+    default void pureSettings() {}
+
     void region();
 
     void profile();
@@ -115,7 +119,36 @@ final class MusicHomePanel extends MusicSurface {
     refresh.setOnClickListener(v -> listener.refresh());
     brand.addView(refresh, new LinearLayout.LayoutParams(dp(48), dp(48)));
     body.addView(brand);
-    gap(body, 22);
+    gap(body, 8);
+    boolean skip = false;
+    try {
+      skip = new PureSong(new SmartStore(c)).enabled();
+    } catch (IllegalStateException unavailable) {
+    }
+    LinearLayout utility = row();
+    utility.setGravity(Gravity.END);
+    LinearLayout intro = row();
+    intro.setGravity(Gravity.CENTER);
+    intro.setMinimumHeight(dp(48));
+    intro.setPadding(dp(12), 0, dp(14), 0);
+    intro.setBackground(round(skip ? 0xff253526 : PANEL, dp(24)));
+    intro.setSelected(skip);
+    Icon mark = new Icon(c, "intro", skip ? LIME : MUTED);
+    intro.addView(mark, new LinearLayout.LayoutParams(dp(28), dp(28)));
+    TextView state = text(skip ? "Intros ON" : "Intros OFF", 12, skip ? LIME : MUTED, true);
+    state.setPadding(dp(8), 0, 0, 0);
+    intro.addView(state);
+    intro.setContentDescription(skip ? "Skip intros, on" : "Skip intros, off");
+    intro.setTooltipText("Skip confirmed intros · hold for PureSong settings");
+    intro.setOnClickListener(v -> listener.pure());
+    intro.setOnLongClickListener(
+        v -> {
+          listener.pureSettings();
+          return true;
+        });
+    utility.addView(intro);
+    body.addView(utility);
+    gap(body, 12);
     LinearLayout welcome = column();
     android.graphics.drawable.GradientDrawable glow =
         new android.graphics.drawable.GradientDrawable();

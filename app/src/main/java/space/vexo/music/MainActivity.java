@@ -128,7 +128,7 @@ public final class MainActivity extends ComponentActivity {
   private List<Track> previewSongs = new ArrayList<>();
   private List<String> previewTerms = new ArrayList<>();
   private boolean previewLoading, previewFailed, phraseFailed, keyboardOpen;
-  private View searchTitleView, searchSources;
+  private View searchTitleView, searchSources, searchLanguages, searchCategoryBack;
 
   private ScrollView suggestionScroll;
   private LinearLayout suggestionBody;
@@ -209,7 +209,11 @@ public final class MainActivity extends ComponentActivity {
     searchHistory = new SearchHistory(this);
     suggestions =
         new SearchSuggestions(main, Executors.newSingleThreadExecutor(), SearchSuggestions.ONLINE);
-    musicPreview = new MusicPreview(main, Executors.newFixedThreadPool(2), OnlineMusic::preview);
+    musicPreview =
+        new MusicPreview(
+            main,
+            Executors.newFixedThreadPool(2),
+            (term, country) -> OnlineMusic.preview(categoryQuery(term), country));
     mixCatalogue = new MixCatalogue(this);
     updates = new UpdateChecker(this);
     getSharedPreferences("playback_state", 0)
@@ -220,6 +224,8 @@ public final class MainActivity extends ComponentActivity {
       tab = state.getString("tab", "Home");
       shelf = state.getString("shelf", "Phone");
       query = state.getString("query", "");
+      searchCategory = MusicCategory.find(state.getString("category", ""));
+      searchLanguage = state.getString("search_language", "Any");
       online = state.getBoolean("online", true);
       activeCollection = state.getString("collection", "");
       collectionTitle = state.getString("collection_title", "");
@@ -372,6 +378,8 @@ public final class MainActivity extends ComponentActivity {
     b.putString("tab", tab);
     b.putString("shelf", shelf);
     b.putString("query", query);
+    b.putString("category", searchCategory == null ? "" : searchCategory.id);
+    b.putString("search_language", searchLanguage);
     b.putBoolean("online", online);
     b.putString("collection", activeCollection);
     b.putString("collection_title", collectionTitle);
@@ -569,6 +577,8 @@ public final class MainActivity extends ComponentActivity {
     musicPreview.cancel();
     searchTitleView = null;
     searchSources = null;
+    searchLanguages = null;
+    searchCategoryBack = null;
     homePanel = null;
     suggestionsVisible = false;
     suggestionScroll = null;
@@ -727,6 +737,14 @@ public final class MainActivity extends ComponentActivity {
             homeError,
             homeFilter,
             new MusicHomePanel.Listener() {
+              public void pure() {
+                togglePureSong();
+              }
+
+              public void pureSettings() {
+                showPureSong(null);
+              }
+
               public void smart() {
                 showSmart(null);
               }
@@ -883,10 +901,65 @@ public final class MainActivity extends ComponentActivity {
     return t;
   }
 
+  private MusicCategory searchCategory;
+  private String searchLanguage = "Any";
+
+  private String categoryQuery(String term) {
+    if (isYouTubeLink(term)) return term;
+    if (searchCategory != null) return searchCategory.query(term, searchLanguage);
+    return searchLanguage.equals("Any") || isYouTubeLink(term)
+        ? term
+        : term + " " + searchLanguage + " music";
+  }
+
+  private void browseCategories(LinearLayout parent) {
+    TextView label = text("Browse categories", 20, TEXT, true);
+    label.setPadding(0, dp(14), 0, dp(12));
+    parent.addView(label);
+    TextView detail =
+        text("Search collections · choose a language, mood or genre", 12, MUTED, false);
+    parent.addView(detail);
+    gap(parent, 12);
+    for (String group : new String[] {"Genres", "Moods & activities", "Regional"}) {
+      parent.addView(text(group, 14, LIME, true));
+      gap(parent, 8);
+      LinearLayout line = null;
+      int count = 0;
+      for (MusicCategory category : MusicCategory.ALL)
+        if (category.group.equals(group)) {
+          if (count++ % 2 == 0) {
+            line = row();
+            parent.addView(line);
+          }
+          TextView card = text(category.name, 16, TEXT, true);
+          card.setGravity(Gravity.CENTER_VERTICAL);
+          card.setMinHeight(dp(68));
+          card.setPadding(dp(14), dp(12), dp(12), dp(12));
+          card.setBackground(round(category.color, dp(16)));
+          card.setContentDescription("Browse " + category.name + " music");
+          card.setOnClickListener(
+              v -> {
+                searchCategory = category;
+                query = "";
+                online = true;
+                searchGeneration++;
+                suggestions.cancel();
+                musicPreview.cancel();
+                search();
+              });
+          LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, -2, 1);
+          params.setMargins(0, 0, dp(8), dp(8));
+          line.addView(card, params);
+        }
+      gap(parent, 8);
+    }
+  }
+
   private void renderSearch() {
     LinearLayout h = column();
     h.setPadding(dp(20), dp(12), dp(20), dp(8));
-    searchTitleView = text("Search music", 23, TEXT, true);
+    searchTitleView =
+        text(searchCategory == null ? "Search music" : searchCategory.name, 23, TEXT, true);
     h.addView(searchTitleView);
     gap(h, 10);
     content.addView(h);
@@ -914,13 +987,17 @@ public final class MainActivity extends ComponentActivity {
     searchField.setHintTextColor(MUTED);
     searchField.setTextSize(15);
     searchField.setSingleLine();
-    searchField.setHint("Songs, artists, or YouTube link");
+    searchField.setHint(
+        searchCategory == null
+            ? "Songs, artists, or YouTube link"
+            : "Search in " + searchCategory.name);
     searchField.setBackgroundColor(Color.TRANSPARENT);
     searchField.setImeOptions(EditorInfo.IME_ACTION_SEARCH);
     searchField.setInputType(android.text.InputType.TYPE_CLASS_TEXT);
     searchField.setText(query);
     searchField.setSelectAllOnFocus(false);
-    searchField.setContentDescription("Search songs or artists");
+    searchField.setContentDescription(
+        searchCategory == null ? "Search songs or artists" : "Search in " + searchCategory.name);
     searchField.addTextChangedListener(
         new TextWatcher() {
           public void beforeTextChanged(CharSequence value, int start, int count, int after) {}
@@ -979,18 +1056,55 @@ public final class MainActivity extends ComponentActivity {
             !online,
             () -> {
               online = false;
+              searchCategory = null;
               searchGeneration++;
               searching = false;
               render();
             }));
     h.addView(source);
     searchSources = source;
+    if (online) {
+      HorizontalScrollView languages = new HorizontalScrollView(this);
+      languages.setHorizontalScrollBarEnabled(false);
+      LinearLayout options = row();
+      for (String language : new String[] {"Any", "Sinhala", "Tamil", "English"})
+        options.addView(
+            chip(
+                language,
+                language.equals(searchLanguage),
+                () -> {
+                  searchLanguage = language;
+                  searchGeneration++;
+                  suggestions.cancel();
+                  musicPreview.cancel();
+                  if (searchCategory != null || !query.trim().isEmpty()) search();
+                  else render();
+                }));
+      languages.addView(options);
+      h.addView(languages);
+      searchLanguages = languages;
+      if (searchCategory != null) {
+        searchCategoryBack =
+            button(
+                "‹ All categories",
+                () -> {
+                  searchCategory = null;
+                  query = "";
+                  results = new ArrayList<>();
+                  onlinePage = null;
+                  searching = false;
+                  searchGeneration++;
+                  render();
+                });
+        h.addView(searchCategoryBack);
+      }
+    }
     gap(h, 6);
     status =
         text(
             searching
                 ? "Searching YouTube…"
-                : query.isEmpty()
+                : query.isEmpty() && searchCategory == null
                     ? "Find a song to get started."
                     : online ? results.size() + " results" : "Your phone’s music",
             13,
@@ -1004,6 +1118,13 @@ public final class MainActivity extends ComponentActivity {
     suggestionScroll.setVisibility(View.GONE);
     content.addView(suggestionScroll, new LinearLayout.LayoutParams(-1, 0, 1));
     if (online) {
+      if (searchCategory != null && !results.isEmpty()) {
+        TextView playCategory =
+            button("Play " + searchCategory.name + " mix", () -> play(new ArrayList<>(results), 0));
+        LinearLayout.LayoutParams categoryParams = new LinearLayout.LayoutParams(-1, -2);
+        categoryParams.setMargins(dp(22), 0, dp(22), dp(8));
+        content.addView(playCategory, categoryParams);
+      }
       addList(results, null);
       if (!searching
           && onlinePage != null
@@ -1024,13 +1145,17 @@ public final class MainActivity extends ComponentActivity {
       else addList(filtered, null);
     }
     updateSearchChrome();
-    if (online && query.isEmpty()) requestSuggestions();
+    if (online && query.isEmpty() && searchCategory == null) requestSuggestions();
   }
 
   private void updateSearchChrome() {
     if (searchTitleView != null)
       searchTitleView.setVisibility(keyboardOpen ? View.GONE : View.VISIBLE);
     if (searchSources != null) searchSources.setVisibility(keyboardOpen ? View.GONE : View.VISIBLE);
+    if (searchLanguages != null)
+      searchLanguages.setVisibility(keyboardOpen ? View.GONE : View.VISIBLE);
+    if (searchCategoryBack != null)
+      searchCategoryBack.setVisibility(keyboardOpen ? View.GONE : View.VISIBLE);
     if (tab.equals("Search") && status != null)
       status.setVisibility(keyboardOpen ? View.GONE : View.VISIBLE);
   }
@@ -1077,6 +1202,8 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private List<Track> cachedSearchSongs(String term) {
+    if (searchCategory != null)
+      return MusicPreview.combine(term, Collections.emptyList(), previewSongs, 6);
     List<Track> cached = new ArrayList<>(store.tracks("history"));
     cached.addAll(store.tracks("favourites"));
     cached.addAll(OfflineLibrary.get(this).saved());
@@ -1093,6 +1220,7 @@ public final class MainActivity extends ComponentActivity {
     for (int i = 2; i < content.getChildCount(); i++)
       content.getChildAt(i).setVisibility(View.GONE);
     suggestionBody.removeAllViews();
+    if (term.trim().isEmpty() && searchCategory == null) browseCategories(suggestionBody);
     List<String> recent = searchHistory.entries();
     List<String> choices = SearchHistory.merge(term, recent, remote);
     TextView title =
@@ -1252,7 +1380,7 @@ public final class MainActivity extends ComponentActivity {
 
   private void search() {
     if (searchField != null) query = searchField.getText().toString().trim();
-    if (query.isEmpty()) {
+    if (query.isEmpty() && searchCategory == null) {
       message("Enter a song or artist first");
       return;
     }
@@ -1265,7 +1393,7 @@ public final class MainActivity extends ComponentActivity {
       return;
     }
     int generation = ++searchGeneration;
-    String request = query;
+    String request = categoryQuery(query);
     searching = true;
     results = new ArrayList<>();
     onlinePage = null;
@@ -1711,6 +1839,11 @@ public final class MainActivity extends ComponentActivity {
     for (Track t : tracks.subList(first, end)) queue.add(t.mediaItem());
     Bundle queueArgs = new Bundle();
     queueArgs.putString("track", tracks.get(index).json().toString());
+    queueArgs.putString(
+        "session_query",
+        tab.equals("Search") && searchCategory != null
+            ? searchCategory.query("", searchLanguage)
+            : "");
     queueArgs.putString("ai_plan", pendingAiPlan == null ? "" : pendingAiPlan.toString());
     pendingAiPlan = null;
     controller.sendCustomCommand(
@@ -1731,6 +1864,7 @@ public final class MainActivity extends ComponentActivity {
                 "Play next",
                 "Add to queue"));
     options.add("Smart feedback & song memory");
+    options.add("PureSong & intro markers");
     if (getSharedPreferences("playback_state", 0).getBoolean("room_active", false))
       options.add("Request in listening room");
     if (track.online()) {
@@ -1762,6 +1896,10 @@ public final class MainActivity extends ComponentActivity {
                 } catch (Exception error) {
                   message("Couldn’t add the room request");
                 }
+                return;
+              }
+              if (action.equals("PureSong & intro markers")) {
+                showPureSong(track);
                 return;
               }
               if (action.equals("Smart feedback & song memory")) {
@@ -2252,6 +2390,77 @@ public final class MainActivity extends ComponentActivity {
     message("Report copied");
   }
 
+  private void pureCommand(String action) {
+    if (controller == null) return;
+    Bundle args = new Bundle();
+    args.putString("action", action);
+    controller.sendCustomCommand(
+        new SessionCommand(PlaybackService.PURE_ACTION, Bundle.EMPTY), args);
+  }
+
+  private void togglePureSong() {
+    try {
+      PureSong pure = new PureSong(new SmartStore(this));
+      pure.enabled(!pure.enabled());
+      pureCommand("changed");
+      render();
+      message(
+          pure.enabled()
+              ? "Intro skipping on · confirmed imported-audio markers only"
+              : "Intro skipping off · full songs");
+    } catch (IllegalStateException unavailable) {
+      message(unavailable.getMessage());
+    }
+  }
+
+  private void showPureSong(Track selected) {
+    Track track =
+        selected != null
+            ? selected
+            : controller == null || controller.getCurrentMediaItem() == null
+                ? null
+                : Track.from(controller.getCurrentMediaItem());
+    PureSongPanel panel =
+        new PureSongPanel(
+            this,
+            new SmartStore(this),
+            track,
+            new PureSongPanel.Listener() {
+              public Track current() {
+                return controller == null || controller.getCurrentMediaItem() == null
+                    ? null
+                    : Track.from(controller.getCurrentMediaItem());
+              }
+
+              public long position() {
+                return controller == null ? 0 : controller.getCurrentPosition();
+              }
+
+              public long duration() {
+                return controller == null ? 0 : controller.getDuration();
+              }
+
+              public boolean inRoom() {
+                return getSharedPreferences("playback_state", 0).getBoolean("room_active", false);
+              }
+
+              public void changed() {
+                pureCommand("changed");
+                radioChanged();
+                if (tab.equals("Home") || tab.equals("Settings")) render();
+              }
+
+              public void transport(String action) {
+                pureCommand(action);
+              }
+            });
+    new AlertDialog.Builder(this)
+        .setTitle("PureSong")
+        .setView(panel)
+        .setPositiveButton("Done", null)
+        .show();
+  }
+
   private void showSmart(Track track) {
     showSmart(track, false);
   }
@@ -2267,6 +2476,10 @@ public final class MainActivity extends ComponentActivity {
             smart,
             store,
             new SmartExperiencePanel.Listener() {
+              public void pure() {
+                showPureSong(null);
+              }
+
               private org.json.JSONObject selectedAiPlan;
 
               public void changed() {
@@ -2603,6 +2816,14 @@ public final class MainActivity extends ComponentActivity {
             : crossfade + (crossfade == 1 ? " second" : " seconds") + " · smoothly overlap songs",
         false,
         this::crossfadeSettings);
+    setting(
+        body,
+        "PureSong & skip intros",
+        new PureSong(new SmartStore(this)).enabled()
+            ? "On · confirmed local intro markers"
+            : "Off · play full songs",
+        false,
+        () -> showPureSong(null));
     setting(body, "Playback speed", "Choose 0.75× to 2×", false, this::playbackSpeed);
     setting(body, "Sleep timer", "Pause playback after a time you choose", false, this::sleepTimer);
     setting(
@@ -2623,7 +2844,10 @@ public final class MainActivity extends ComponentActivity {
                 .setPositiveButton(
                     "Clear",
                     (d, w) -> {
+                      new SmartStore(this).clearHistory();
+                      new SmartStore(this).resetTaste();
                       store.save("history", Collections.emptyList());
+                      radioChanged();
                       message("History cleared");
                     })
                 .show());
