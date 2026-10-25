@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.0 — Discovery and playlists (24 October 2026)
+
+- Real playable song matches while typing, with artwork, artists/channels, direct play and cached matches.
+- Compact search layout that leaves room for results above the keyboard.
+- New Home with collection shortcuts, music shelves, personal playlists, regional picks and six mood mixes.
+- Background metadata loading for the first three mixes; other mixes load on demand.
+- Full playlist pages with Play all, randomized queue, save mix, add songs, rename, remove and delete.
+- Persisted playlist navigation across activity recreation; existing library and signer retained.
+
 ## 0.6.0 — 24 October 2026
 
 - Search suggestions while typing, localized by the selected music region, with a 300 ms debounce and stale-response protection.

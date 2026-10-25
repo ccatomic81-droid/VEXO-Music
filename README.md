@@ -1,12 +1,22 @@
-# VEXO Music 0.6.0
+# VEXO Music 0.7.0
 
 Developer: **Kavindu Kavishka**.
 
-This update adds debounced YouTube search suggestions, device-only recent searches, once-per-version release summaries, and manual/automatic update checks. Crossfade, song radio, offline saves and the existing package/signing identity are retained.
+Search now shows real song names, artwork and artists while typing, with direct play controls. Home has quick collection tiles, horizontally scrolling music cards, regional picks and VEXO mood mixes. Full playlist pages support Play all, a one-shot shuffled queue, adding songs, renaming and deleting a playlist, and removing individual tracks.
 
-The source is on `ccatomic81-droid/dayspace-android`, branch `vexo-music-build`, directory `vexo/`. A root-level VEXO workflow builds only this project. The repository is private: public app-update delivery requires a separate public HTTPS feed and download URL. The APK's feed starts disconnected; Settings → Update source connects it. See [UPDATES.md](UPDATES.md).
+The source is on `ccatomic81-droid/dayspace-android`, branch `vexo-music-build`, directory `vexo/`. Build instructions and the existing package/signing identity are unchanged. Install over the previous version to keep favourites, downloads and playlists.
 
-An original native Android music app with YouTube music discovery, background playback and a private offline library. Android 8.0 or later. This is a development APK.
+## Discovery and playlists (0.7.0)
+
+Type two or more characters in Search for debounced online song matches; cached matching songs appear immediately. Results show title, artist/channel, cover art, and a Play button without submitting the whole search. Artist/channel matches and search phrases remain available. Old asynchronous requests cannot replace a newer query. Search contracts its header when the keyboard opens.
+
+Home mixes are original VEXO collections of live YouTube music-search results. The first three mixes warm in the background, and other mixes load when opened. Cached mixes are scoped by country and refreshed after six hours. They are not Spotify-owned playlists or ranked charts. No fake songs are bundled. If no cached songs exist and a provider request fails, the mix shows Retry and disables playback until songs are available. Cover art comes from real source metadata, with a gradient fallback when artwork is absent.
+
+Open a mix, then choose **Save to your playlists** to retain its current songs on this device. A saved copy does not change when the discovery mix refreshes. Open a personal playlist → **Add songs** to search and use each song’s + button; choose **Done** to return. Song menus also support adding songs to any playlist. **Edit playlist** handles rename, individual removal and deletion. Song URLs are deduplicated. Existing personal collections are never overwritten by saving a mix.
+
+Play all starts the displayed collection in its stored order. Shuffle starts a randomized copy, leaving saved order unchanged. Both use the existing player, radio, crossfade and queue limits. Saving playlist metadata does not automatically download audio; existing auto-save rules still apply when listening.
+
+Crossfade, song radio, offline saves, per-install What's new, recent-search controls, and update settings remain. A public update delivery feed is still not connected. See [UPDATES.md](UPDATES.md). GitHub Actions produces a clean-install test APK unless the existing signing key is configured securely; use the delivered signed APK to upgrade an installed version.
 
 ## Crossfade (0.5.0)
 
@@ -56,7 +66,7 @@ Auto-save is enabled by default and attempts to save the full audio of a played 
 
 ## Install or update VEXO Music
 
-Install `VEXO-Music-0.6.0.apk`. It appears as **VEXO Music**, package `space.vexo.music.radio`, version code 8.
+Install `VEXO-Music-0.7.0.apk`. It appears as **VEXO Music**, package `space.vexo.music.radio`, version code 9.
 
 The earlier delivery workspace and its signing key were reset. The v0.4.x line uses its backed-up development signing certificate and a separate app ID so it can coexist with v0.3.0. **Keep the old app installed to preserve its favourites, playlists and offline audio. That private app data does not automatically transfer to this build.** This APK is not an in-place update to v0.3.0.
 

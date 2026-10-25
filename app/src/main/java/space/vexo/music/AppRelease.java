@@ -7,11 +7,12 @@ import org.json.*;
 /** A release feed contains metadata only. Downloads always need a user tap. */
 final class AppRelease {
   static final String NOTES =
-      "• Find songs and artists with suggestions as you type.\n"
-          + "• Revisit recent searches, remove one, or clear them all.\n"
-          + "• See what changed after each app update.\n"
-          + "• Check for new versions in Settings.\n"
-          + "• Keeps song radio, offline saves and smooth crossfade.";
+      "• See real song matches with artwork and artists while you type.\n"
+          + "• Play a matching song directly from search.\n"
+          + "• Explore a new Home with quick picks and mood mixes.\n"
+          + "• Open full playlists, play all or shuffle, and add more songs.\n"
+          + "• Save VEXO mixes to your own playlists; rename or edit them.\n"
+          + "• Keeps your library, offline saves, song radio and crossfade.";
   final int code;
   final String version, summary, url;
 

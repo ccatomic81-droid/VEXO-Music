@@ -80,4 +80,49 @@ public final class LibraryStore {
     if (a.stream().noneMatch(x -> x.url.equals(t.url))) a.add(t);
     save("playlist:" + name, a);
   }
+
+  public synchronized boolean renamePlaylist(String oldName, String newName) {
+    String name = newName == null ? "" : newName.trim();
+    List<String> names = playlists();
+    if (!names.contains(oldName) || name.isEmpty() || name.length() > 60) return false;
+    for (String existing : names)
+      if (!existing.equals(oldName) && existing.equalsIgnoreCase(name)) return false;
+    if (oldName.equals(name)) return true;
+    JSONArray songs = new JSONArray();
+    for (Track t : tracks("playlist:" + oldName)) songs.put(t.json());
+    names.set(names.indexOf(oldName), name);
+    prefs
+        .edit()
+        .putString("playlists", new JSONArray(names).toString())
+        .remove("playlist:" + oldName)
+        .putString("playlist:" + name, songs.toString())
+        .apply();
+    return true;
+  }
+
+  /** Saving the same mix twice reuses its copy; never overwrite a user's edited playlist. */
+  public synchronized String savePlaylistCopy(String base, List<Track> songs) {
+    String name = base.trim();
+    if (name.length() > 50) name = name.substring(0, 50);
+    if (name.isEmpty()) name = "My mix";
+    String candidate = name;
+    for (int count = 2; playlists().contains(candidate); count++) {
+      List<Track> existing = tracks("playlist:" + candidate);
+      if (existing.size() == songs.size()) {
+        boolean same = true;
+        for (int i = 0; i < songs.size(); i++)
+          if (!existing.get(i).url.equals(songs.get(i).url)) {
+            same = false;
+            break;
+          }
+        if (same) return candidate;
+      }
+      candidate = name + " (" + count + ")";
+    }
+    createPlaylist(candidate);
+    java.util.LinkedHashMap<String, Track> unique = new java.util.LinkedHashMap<>();
+    for (Track t : songs) unique.putIfAbsent(t.url, t);
+    save("playlist:" + candidate, new ArrayList<>(unique.values()));
+    return candidate;
+  }
 }

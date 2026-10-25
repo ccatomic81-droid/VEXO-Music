@@ -205,6 +205,10 @@ public final class Visuals {
       p.setStrokeJoin(Paint.Join.ROUND);
       Path a = new Path();
       switch (name) {
+        case "add":
+          c.drawLine(5, 12, 19, 12, p);
+          c.drawLine(12, 5, 12, 19, p);
+          break;
         case "play":
           p.setStyle(Paint.Style.FILL);
           a.moveTo(8, 5);

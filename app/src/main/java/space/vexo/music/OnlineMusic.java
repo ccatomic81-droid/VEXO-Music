@@ -35,6 +35,13 @@ public final class OnlineMusic {
           .callTimeout(6, TimeUnit.SECONDS)
           .build();
   private static boolean initialized;
+  private static final ThreadLocal<Boolean> PREVIEW = new ThreadLocal<>();
+  private static final OkHttpClient PREVIEW_HTTP =
+      HTTP.newBuilder()
+          .connectTimeout(5, TimeUnit.SECONDS)
+          .readTimeout(7, TimeUnit.SECONDS)
+          .callTimeout(10, TimeUnit.SECONDS)
+          .build();
   private static final Map<String, Cached> cache = new LinkedHashMap<>();
   private static final Map<String, List<Track>> relatedCache = new LinkedHashMap<>();
 
@@ -81,7 +88,9 @@ public final class OnlineMusic {
             b.method(request.httpMethod(), body);
             okhttp3.Request call = b.build();
             OkHttpClient client =
-                call.url().host().contains("suggestqueries") ? SUGGESTIONS_HTTP : HTTP;
+                call.url().host().contains("suggestqueries")
+                    ? SUGGESTIONS_HTTP
+                    : Boolean.TRUE.equals(PREVIEW.get()) ? PREVIEW_HTTP : HTTP;
             try (okhttp3.Response r = client.newCall(call).execute()) {
               if (r.code() == 429)
                 throw new ReCaptchaException(
@@ -132,6 +141,27 @@ public final class OnlineMusic {
             .fromQuery(text, Collections.singletonList("music_songs"), "");
     SearchInfo info = SearchInfo.getInfo(ServiceList.YouTube, q);
     return new Results(convert(info.getRelatedItems()), info.getNextPage(), q);
+  }
+
+  public static List<Track> preview(String text, String country) throws Exception {
+    PREVIEW.set(true);
+    try {
+      return regionalSearch(text, country);
+    } finally {
+      PREVIEW.remove();
+    }
+  }
+
+  public static List<Track> regionalSearch(String text, String country) throws Exception {
+    initialize();
+    org.schabi.newpipe.extractor.search.SearchExtractor extractor =
+        ServiceList.YouTube.getSearchExtractor(
+            ServiceList.YouTube.getSearchQHFactory()
+                .fromQuery(text, Collections.singletonList("music_songs"), ""));
+    extractor.forceContentCountry(
+        new org.schabi.newpipe.extractor.localization.ContentCountry(country));
+    extractor.fetchPage();
+    return convert(extractor.getInitialPage().getItems());
   }
 
   public static Results more(Results previous) throws Exception {

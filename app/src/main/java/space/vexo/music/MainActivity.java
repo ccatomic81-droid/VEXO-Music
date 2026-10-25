@@ -64,6 +64,26 @@ public final class MainActivity extends ComponentActivity {
   private EditText searchField;
   private SearchHistory searchHistory;
   private SearchSuggestions suggestions;
+  private MusicPreview musicPreview;
+  private MixCatalogue mixCatalogue;
+  private MusicHomePanel homePanel;
+  private final ExecutorService mixIo = Executors.newFixedThreadPool(2);
+  private final Set<String> prefetchingMixes = new HashSet<>();
+  private final Set<String> attemptedMixes = new HashSet<>();
+  private String homeFilter = "All",
+      activeCollection = "",
+      collectionTitle = "",
+      activeMix = "",
+      addingToPlaylist = "";
+  private String mixError = "";
+  private boolean mixLoading;
+  private int mixGeneration;
+  private String previewTerm = "";
+  private List<Track> previewSongs = new ArrayList<>();
+  private List<String> previewTerms = new ArrayList<>();
+  private boolean previewLoading, previewFailed, phraseFailed, keyboardOpen;
+  private View searchTitleView, searchSources;
+
   private ScrollView suggestionScroll;
   private LinearLayout suggestionBody;
   private boolean suggestionsVisible;
@@ -141,6 +161,8 @@ public final class MainActivity extends ComponentActivity {
     searchHistory = new SearchHistory(this);
     suggestions =
         new SearchSuggestions(main, Executors.newSingleThreadExecutor(), SearchSuggestions.ONLINE);
+    musicPreview = new MusicPreview(main, Executors.newFixedThreadPool(2), OnlineMusic::preview);
+    mixCatalogue = new MixCatalogue(this);
     updates = new UpdateChecker(this);
     getSharedPreferences("playback_state", 0)
         .registerOnSharedPreferenceChangeListener(playbackStateChanged);
@@ -151,6 +173,11 @@ public final class MainActivity extends ComponentActivity {
       shelf = state.getString("shelf", "Phone");
       query = state.getString("query", "");
       online = state.getBoolean("online", true);
+      activeCollection = state.getString("collection", "");
+      collectionTitle = state.getString("collection_title", "");
+      activeMix = state.getString("mix", "");
+      homeFilter = state.getString("home_filter", "All");
+      addingToPlaylist = state.getString("adding_playlist", "");
     }
     root = column();
     root.setBackgroundColor(BG);
@@ -165,6 +192,8 @@ public final class MainActivity extends ComponentActivity {
           androidx.core.graphics.Insets keyboard =
               insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.ime());
           v.setPadding(bars.left, bars.top, bars.right, Math.max(bars.bottom, keyboard.bottom));
+          keyboardOpen = keyboard.bottom > bars.bottom;
+          updateSearchChrome();
           return insets;
         });
     androidx.core.view.ViewCompat.requestApplyInsets(root);
@@ -206,6 +235,10 @@ public final class MainActivity extends ComponentActivity {
             new OnBackPressedCallback(true) {
               @Override
               public void handleOnBackPressed() {
+                if (!activeCollection.isEmpty() || !activeMix.isEmpty()) {
+                  closeCollection();
+                  return;
+                }
                 if (tab.equals("Search") && suggestionsVisible) {
                   hideSuggestions();
                   if (searchField != null) searchField.clearFocus();
@@ -222,6 +255,7 @@ public final class MainActivity extends ComponentActivity {
             });
     scanPhone();
     loadHome(false);
+    if (!activeMix.isEmpty()) loadMix(false);
     main.post(tick);
     main.postDelayed(
         () -> {
@@ -240,6 +274,11 @@ public final class MainActivity extends ComponentActivity {
     b.putString("shelf", shelf);
     b.putString("query", query);
     b.putBoolean("online", online);
+    b.putString("collection", activeCollection);
+    b.putString("collection_title", collectionTitle);
+    b.putString("mix", activeMix);
+    b.putString("home_filter", homeFilter);
+    b.putString("adding_playlist", addingToPlaylist);
     super.onSaveInstanceState(b);
   }
 
@@ -248,6 +287,9 @@ public final class MainActivity extends ComponentActivity {
     destroyed = true;
     homeGeneration++;
     suggestions.close();
+    musicPreview.close();
+    mixIo.shutdownNow();
+    mixGeneration++;
     if (updateDialog != null) updateDialog.dismiss();
     OfflineLibrary.get(this).removeListener(offlineChanged);
     searchGeneration++;
@@ -345,6 +387,13 @@ public final class MainActivity extends ComponentActivity {
           v -> {
             if (searchField != null) query = searchField.getText().toString();
             tab = label;
+            activeCollection = "";
+            activeMix = "";
+            mixGeneration++;
+            mixLoading = false;
+            if (!label.equals("Search")) addingToPlaylist = "";
+            ((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE))
+                .hideSoftInputFromWindow(root.getWindowToken(), 0);
             render();
           });
       nav.addView(item, new LinearLayout.LayoutParams(0, -2, 1));
@@ -395,6 +444,10 @@ public final class MainActivity extends ComponentActivity {
   private void render() {
     if (destroyed) return;
     suggestions.cancel();
+    musicPreview.cancel();
+    searchTitleView = null;
+    searchSources = null;
+    homePanel = null;
     suggestionsVisible = false;
     suggestionScroll = null;
     suggestionBody = null;
@@ -404,6 +457,10 @@ public final class MainActivity extends ComponentActivity {
     status = null;
     offlineSummary = null;
     refreshNav();
+    if (!activeCollection.isEmpty() || !activeMix.isEmpty()) {
+      renderCollection();
+      return;
+    }
     switch (tab) {
       case "Search":
         renderSearch();
@@ -471,137 +528,101 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private void renderHome() {
-    String country = RegionPolicy.current(this);
-    LinearLayout h = header("VEXO MUSIC", "Made for your day.");
-    content.removeView(h);
-    ScrollView scroll = new ScrollView(this);
-    scroll.setFillViewport(true);
-    scroll.setClipToPadding(false);
-    scroll.addView(h);
-    content.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
-    LinearLayout region = row();
-    TextView regionLabel = text("Your music region", 13, MUTED, false);
-    regionLabel.setSingleLine();
-    regionLabel.setEllipsize(TextUtils.TruncateAt.END);
-    region.addView(regionLabel, new LinearLayout.LayoutParams(0, -2, 1));
-    TextView choose = chip(RegionPolicy.name(country) + "  ▾", false, this::chooseRegion);
-    choose.setMaxWidth(dp(190));
-    choose.setSingleLine();
-    choose.setEllipsize(TextUtils.TruncateAt.END);
-    choose.setContentDescription("Change music region. Current: " + RegionPolicy.name(country));
-    region.addView(choose);
-    h.addView(region);
-    gap(h, 22);
-    boolean available =
-        homeFeed != null && homeFeed.country.equals(country) && !homeFeed.tracks.isEmpty();
-    LinearLayout title = row();
-    TextView heading =
-        text(
-            available && homeFeed.ranked ? "Trending near you" : "Regional viral picks",
-            21,
-            TEXT,
-            true);
-    heading.setMaxLines(2);
-    title.addView(heading, new LinearLayout.LayoutParams(0, -2, 1));
-    TextView refresh = text(homeLoading ? "Updating…" : "Refresh", 12, LIME, true);
-    refresh.setGravity(Gravity.CENTER);
-    refresh.setPadding(dp(10), dp(14), 0, dp(14));
-    refresh.setMinHeight(dp(48));
-    refresh.setOnClickListener(v -> loadHome(true));
-    title.addView(refresh);
-    h.addView(title);
-    if (available) {
-      TextView source =
-          text(homeFeed.source + " · " + RegionPolicy.name(country), 12, MUTED, false);
-      source.setLineSpacing(dp(3), 1);
-      h.addView(source);
-      String time =
-          android.text.format.DateUtils.getRelativeTimeSpanString(
-                  homeFeed.fetchedAt, System.currentTimeMillis(), 60_000)
-              .toString();
-      gap(h, 6);
-      h.addView(
-          text((homeError.isEmpty() ? "Updated " : "Saved list · ") + time, 11, MUTED, false));
-      gap(h, 12);
-      appendHomeSongs(h, homeFeed.tracks, Math.min(12, homeFeed.tracks.size()), homeFeed.ranked);
-    } else {
-      LinearLayout loading = column();
-      loading.setPadding(dp(18), dp(20), dp(18), dp(20));
-      loading.setBackground(round(PANEL, dp(18)));
-      loading.addView(
-          text(
-              homeLoading ? "Finding your region’s music…" : "Your regional feed is ready to load",
-              16,
-              TEXT,
-              true));
-      gap(loading, 10);
-      loading.addView(
-          text(
-              homeLoading
-                  ? "Fresh music picks will appear here."
-                  : "Tap Refresh to load songs from YouTube.",
-              13,
-              MUTED,
-              false));
-      h.addView(loading);
-    }
-    if (!homeError.isEmpty()) {
-      gap(h, 12);
-      h.addView(text(homeError, 12, MUTED, false));
-    }
-    gap(h, 24);
-    h.addView(text("Jump into a mood", 18, TEXT, true));
-    gap(h, 12);
-    HorizontalScrollView moods = new HorizontalScrollView(this);
-    moods.setHorizontalScrollBarEnabled(false);
-    LinearLayout moodRow = row();
-    for (String mood : new String[] {"Sinhala", "Tamil", "English", "Lo-fi", "Acoustic"})
-      moodRow.addView(
-          chip(
-              mood,
-              false,
-              () -> {
+    MusicHomePanel panel =
+        new MusicHomePanel(
+            this,
+            store,
+            mixCatalogue,
+            homeFeed,
+            RegionPolicy.current(this),
+            homeLoading,
+            homeError,
+            homeFilter,
+            new MusicHomePanel.Listener() {
+              public void region() {
+                chooseRegion();
+              }
+
+              public void refresh() {
+                loadHome(true);
+              }
+
+              public void search() {
                 tab = "Search";
-                query = mood + " music";
-                online = true;
                 render();
-                search();
-              }));
-    moods.addView(moodRow);
-    h.addView(moods);
-    gap(h, 24);
-    LinearLayout recentTitle = row();
-    recentTitle.addView(
-        text("Recently played", 20, TEXT, true), new LinearLayout.LayoutParams(0, -2, 1));
-    TextView library = text("View all", 12, LIME, true);
-    library.setPadding(dp(8), dp(14), 0, dp(14));
-    library.setMinHeight(dp(48));
-    library.setOnClickListener(
-        v -> {
-          tab = "Library";
-          shelf = "History";
-          render();
-        });
-    recentTitle.addView(library);
-    h.addView(recentTitle);
-    List<Track> recent = store.tracks("history");
-    if (recent.isEmpty()) {
-      TextView intro = text("Your listening history will appear here.", 13, MUTED, false);
-      intro.setPadding(0, dp(8), 0, dp(16));
-      h.addView(intro);
-    } else appendHomeSongs(h, recent, Math.min(5, recent.size()), false);
-    gap(h, 24);
+              }
+
+              public void library(String section) {
+                tab = "Library";
+                shelf = section;
+                render();
+              }
+
+              public void collection(String name, String key) {
+                showCollection(name, key);
+              }
+
+              public void mix(MixCatalogue.Mix mix) {
+                openMix(mix);
+              }
+
+              public void create() {
+                createPlaylist(null);
+              }
+
+              public void play(List<Track> songs, int index) {
+                MainActivity.this.play(songs, index);
+              }
+
+              public void filter(String value) {
+                homeFilter = value;
+                render();
+              }
+            });
+    homePanel = panel;
+    content.addView(panel, new LinearLayout.LayoutParams(-1, 0, 1));
+    main.postDelayed(this::prefetchHomeMixes, 600);
   }
 
-  private void appendHomeSongs(LinearLayout parent, List<Track> songs, int count, boolean ranked) {
-    TrackList adapter = new TrackList(songs, null);
-    for (int index = 0; index < count; index++) {
-      int position = index;
-      TrackHolder holder = adapter.onCreateViewHolder(parent, 0);
-      adapter.onBindViewHolder(holder, index);
-      if (ranked) holder.title.setText((index + 1) + ". " + songs.get(index).title);
-      holder.itemView.setOnClickListener(v -> play(songs, position));
-      parent.addView(holder.itemView, new LinearLayout.LayoutParams(-1, -2));
+  private void prefetchHomeMixes() {
+    if (destroyed || !tab.equals("Home") || !activeMix.isEmpty() || !activeCollection.isEmpty())
+      return;
+    String country = RegionPolicy.current(this);
+    List<MixCatalogue.Mix> mixes = MixCatalogue.mixes(country);
+    for (MixCatalogue.Mix mix : mixes.subList(0, Math.min(3, mixes.size()))) {
+      String key = country + ":" + mix.id;
+      if (mixCatalogue.fresh(mix, country, System.currentTimeMillis())
+          || attemptedMixes.contains(key)) continue;
+      attemptedMixes.add(key);
+      prefetchingMixes.add(key);
+      mixIo.execute(
+          () -> {
+            List<Track> songs = Collections.emptyList();
+            boolean failed = false;
+            try {
+              songs = MixCatalogue.songs(OnlineMusic.preview(mix.query, country));
+              if (songs.isEmpty()) failed = true;
+              else mixCatalogue.save(mix, country, songs);
+            } catch (Exception ignored) {
+              failed = true;
+            }
+            List<Track> found = songs;
+            boolean unavailable = failed;
+            main.post(
+                () -> {
+                  prefetchingMixes.remove(key);
+                  if (destroyed || !country.equals(RegionPolicy.current(this))) return;
+                  if (homePanel != null && !unavailable) homePanel.updateMix(mix, found);
+                  if (activeMix.equals(mix.id)) {
+                    mixLoading = false;
+                    mixError =
+                        unavailable
+                            ? "Couldn’t refresh this mix. Check your connection and try again."
+                            : "";
+                    render();
+                  }
+                });
+          });
     }
   }
 
@@ -650,7 +671,26 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private void renderSearch() {
-    LinearLayout h = header("DISCOVER", "Search music");
+    LinearLayout h = column();
+    h.setPadding(dp(20), dp(12), dp(20), dp(8));
+    searchTitleView = text("Search music", 23, TEXT, true);
+    h.addView(searchTitleView);
+    gap(h, 10);
+    content.addView(h);
+    if (!addingToPlaylist.isEmpty()) {
+      TextView done =
+          button(
+              "Done · " + addingToPlaylist,
+              () -> {
+                String name = addingToPlaylist;
+                addingToPlaylist = "";
+                tab = "Library";
+                shelf = "Playlists";
+                showCollection(name, "playlist:" + name);
+              });
+      h.addView(done);
+      gap(h, 8);
+    }
     LinearLayout box = row();
     box.setBackground(round(PANEL, dp(18)));
     box.setPadding(dp(8), 0, dp(4), 0);
@@ -731,7 +771,8 @@ public final class MainActivity extends ComponentActivity {
               render();
             }));
     h.addView(source);
-    gap(h, 14);
+    searchSources = source;
+    gap(h, 6);
     status =
         text(
             searching
@@ -769,24 +810,67 @@ public final class MainActivity extends ComponentActivity {
             this::importAudio);
       else addList(filtered, null);
     }
+    updateSearchChrome();
     if (online && query.isEmpty()) requestSuggestions();
+  }
+
+  private void updateSearchChrome() {
+    if (searchTitleView != null)
+      searchTitleView.setVisibility(keyboardOpen ? View.GONE : View.VISIBLE);
+    if (searchSources != null) searchSources.setVisibility(keyboardOpen ? View.GONE : View.VISIBLE);
+    if (tab.equals("Search") && status != null)
+      status.setVisibility(keyboardOpen ? View.GONE : View.VISIBLE);
   }
 
   private void requestSuggestions() {
     if (searchField == null || suggestionBody == null || !online || !tab.equals("Search")) return;
-    final String value = searchField.getText().toString();
-    showSuggestions(value, Collections.emptyList(), false);
+    final String value = SearchHistory.clean(searchField.getText().toString());
+    previewTerm = value;
+    previewTerms = new ArrayList<>();
+    previewSongs = new ArrayList<>();
+    previewLoading = RadioPolicy.normalize(value).length() >= 2 && !value.contains("://");
+    previewFailed = false;
+    phraseFailed = false;
+    showSuggestions(value, previewTerms, false);
     suggestions.request(
         value,
         RegionPolicy.current(this),
         (term, remote, unavailable) -> {
-          if (destroyed
-              || !tab.equals("Search")
-              || !online
-              || searchField == null
-              || !SearchHistory.clean(searchField.getText().toString()).equals(term)) return;
-          showSuggestions(term, remote, unavailable);
+          if (!previewCurrent(term)) return;
+          previewTerms = remote;
+          phraseFailed = unavailable;
+          showSuggestions(term, previewTerms, phraseFailed);
         });
+    musicPreview.request(
+        value,
+        RegionPolicy.current(this),
+        (term, songs, unavailable) -> {
+          if (!previewCurrent(term)) return;
+          previewSongs = songs;
+          previewLoading = false;
+          previewFailed = unavailable;
+          showSuggestions(term, previewTerms, phraseFailed);
+        });
+  }
+
+  private boolean previewCurrent(String term) {
+    return !destroyed
+        && tab.equals("Search")
+        && online
+        && suggestionsVisible
+        && searchField != null
+        && SearchHistory.clean(searchField.getText().toString()).equals(term)
+        && previewTerm.equals(term);
+  }
+
+  private List<Track> cachedSearchSongs(String term) {
+    List<Track> cached = new ArrayList<>(store.tracks("history"));
+    cached.addAll(store.tracks("favourites"));
+    cached.addAll(OfflineLibrary.get(this).saved());
+    if (homeFeed != null && homeFeed.country.equals(RegionPolicy.current(this)))
+      cached.addAll(homeFeed.tracks);
+    for (String name : store.playlists()) cached.addAll(store.tracks("playlist:" + name));
+    return MusicPreview.combine(term, cached, previewSongs, 6);
   }
 
   private void showSuggestions(String term, List<String> remote, boolean unavailable) {
@@ -802,6 +886,64 @@ public final class MainActivity extends ComponentActivity {
         text(term.trim().isEmpty() ? "Recent searches" : "Suggestions", 14, TEXT, true);
     title.setPadding(0, dp(8), 0, dp(10));
     suggestionBody.addView(title);
+    List<Track> matches = term.trim().isEmpty() ? Collections.emptyList() : cachedSearchSongs(term);
+    if (!matches.isEmpty()) {
+      TextView songsLabel = text("Songs", 13, LIME, true);
+      suggestionBody.addView(songsLabel);
+      TrackList adapter = new TrackList(matches, null);
+      for (int i = 0; i < matches.size(); i++) {
+        final int index = i;
+        TrackHolder holder = adapter.onCreateViewHolder(suggestionBody, 0);
+        adapter.onBindViewHolder(holder, i);
+        holder.itemView.setOnClickListener(
+            v -> {
+              searchHistory.add(term);
+              ((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE))
+                  .hideSoftInputFromWindow(root.getWindowToken(), 0);
+              play(matches, index);
+            });
+        suggestionBody.addView(holder.itemView, new LinearLayout.LayoutParams(-1, -2));
+      }
+      LinkedHashSet<String> artists = new LinkedHashSet<>();
+      for (Track t : matches)
+        if (RadioPolicy.normalize(t.artist).contains(RadioPolicy.normalize(term)))
+          artists.add(t.artist);
+      if (!artists.isEmpty()) {
+        TextView artistLabel = text("Artists & channels", 13, LIME, true);
+        artistLabel.setPadding(0, dp(12), 0, dp(8));
+        suggestionBody.addView(artistLabel);
+        int count = 0;
+        for (String artist : artists) {
+          if (count++ >= 2) break;
+          TextView name = text(artist, 15, TEXT, true);
+          name.setMinHeight(dp(48));
+          name.setGravity(Gravity.CENTER_VERTICAL);
+          name.setContentDescription("Find music by " + artist);
+          name.setOnClickListener(
+              v -> {
+                searchField.setText(artist);
+                search();
+              });
+          suggestionBody.addView(name);
+        }
+      }
+    }
+    if (previewLoading) {
+      TextView loading = text("Finding matching songs…", 12, MUTED, false);
+      loading.setPadding(0, dp(8), 0, dp(12));
+      suggestionBody.addView(loading);
+    } else if (previewFailed && !term.trim().isEmpty()) {
+      TextView failed =
+          text(
+              matches.isEmpty()
+                  ? "Couldn’t load song matches. Tap search to retry."
+                  : "Showing saved matches. Online matches are unavailable.",
+              12,
+              MUTED,
+              false);
+      failed.setPadding(0, dp(8), 0, dp(12));
+      suggestionBody.addView(failed);
+    }
     if (!recent.isEmpty() && term.trim().isEmpty()) {
       TextView clear = text("Clear recent searches", 13, LIME, true);
       clear.setMinHeight(dp(48));
@@ -813,7 +955,7 @@ public final class MainActivity extends ComponentActivity {
           });
       suggestionBody.addView(clear);
     }
-    for (String choice : choices) {
+    for (String choice : choices.subList(0, Math.min(matches.isEmpty() ? 8 : 4, choices.size()))) {
       boolean isRecent = recent.stream().anyMatch(t -> t.equalsIgnoreCase(choice));
       LinearLayout row = row();
       row.setMinimumHeight(dp(52));
@@ -879,6 +1021,7 @@ public final class MainActivity extends ComponentActivity {
 
   private void hideSuggestions() {
     suggestions.cancel();
+    musicPreview.cancel();
     suggestionsVisible = false;
     if (suggestionScroll != null) suggestionScroll.setVisibility(View.GONE);
     for (int i = 2; i < content.getChildCount(); i++)
@@ -1274,8 +1417,23 @@ public final class MainActivity extends ComponentActivity {
             if (index < 0) index = pos;
             play(tracks, index);
           });
+      h.more.set("more", MUTED);
       h.more.setContentDescription("Options for " + t.title);
       h.more.setOnClickListener(v -> songMenu(t, collection));
+      if (tab.equals("Search") && !addingToPlaylist.isEmpty()) {
+        h.more.set("add", LIME);
+        h.more.setContentDescription("Add " + t.title + " to " + addingToPlaylist);
+        h.more.setOnClickListener(
+            v -> {
+              store.addToPlaylist(addingToPlaylist, t);
+              message("Added to " + addingToPlaylist);
+            });
+      }
+      h.itemView.setOnLongClickListener(
+          v -> {
+            songMenu(t, collection);
+            return true;
+          });
     }
 
     @Override
@@ -1305,6 +1463,10 @@ public final class MainActivity extends ComponentActivity {
       return;
     }
     if (index < 0 || index >= tracks.size()) return;
+    ((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE))
+        .hideSoftInputFromWindow(root.getWindowToken(), 0);
+    if (tab.equals("Search") && searchField != null)
+      searchHistory.add(searchField.getText().toString());
     List<MediaItem> queue = new ArrayList<>();
     int first = Math.max(0, index - 10),
         end = Math.min(tracks.size(), first + QueuePolicy.MAX_ITEMS);
@@ -1357,7 +1519,8 @@ public final class MainActivity extends ComponentActivity {
                 case 0:
                   store.toggle("favourites", track);
                   radioChanged();
-                  if (tab.equals("Library")) render();
+                  if (tab.equals("Library") || tab.equals("Home") || !activeCollection.isEmpty())
+                    render();
                   updatePlayback();
                   break;
                 case 1:
@@ -1383,7 +1546,8 @@ public final class MainActivity extends ComponentActivity {
                     List<Track> saved = store.tracks(collection);
                     saved.removeIf(x -> x.url.equals(track.url));
                     store.save(collection, saved);
-                    if (tab.equals("Library")) render();
+                    if (tab.equals("Library") || tab.equals("Home") || !activeCollection.isEmpty())
+                      render();
                   }
               }
             })
@@ -1431,49 +1595,242 @@ public final class MainActivity extends ComponentActivity {
                         input.setError("Use a name between 1 and 60 characters");
                         return;
                       }
-                      if (store.playlists().contains(name)) {
+                      if (store.playlists().stream().anyMatch(n -> n.equalsIgnoreCase(name))) {
                         input.setError("That playlist already exists");
                         return;
                       }
                       store.createPlaylist(name);
                       if (track != null) store.addToPlaylist(name, track);
                       dialog.dismiss();
-                      if (tab.equals("Library")) render();
+                      if (tab.equals("Library")
+                          || tab.equals("Home")
+                          || !activeCollection.isEmpty()) render();
                       message("Playlist created");
                     }));
     dialog.show();
   }
 
   private void showCollection(String title, String key) {
-    List<Track> tracks = store.tracks(key);
-    if (tracks.isEmpty()) {
-      message("This playlist is empty. Add songs from the song menu.");
+    activeCollection = key;
+    collectionTitle = title;
+    activeMix = "";
+    addingToPlaylist = "";
+    mixGeneration++;
+    mixLoading = false;
+    mixError = "";
+    ((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE))
+        .hideSoftInputFromWindow(root.getWindowToken(), 0);
+    render();
+  }
+
+  private void closeCollection() {
+    activeCollection = "";
+    activeMix = "";
+    mixGeneration++;
+    mixLoading = false;
+    mixError = "";
+    render();
+  }
+
+  private void openMix(MixCatalogue.Mix mix) {
+    activeCollection = "";
+    activeMix = mix.id;
+    collectionTitle = mix.name;
+    mixError = "";
+    mixLoading = false;
+    render();
+    loadMix(false);
+  }
+
+  private void loadMix(boolean force) {
+    if (activeMix.isEmpty() || mixLoading) return;
+    String country = RegionPolicy.current(this);
+    MixCatalogue.Mix mix = MixCatalogue.find(activeMix, country);
+    if (mix == null) return;
+    if (!force && mixCatalogue.fresh(mix, country, System.currentTimeMillis())) return;
+    if (prefetchingMixes.contains(country + ":" + mix.id)) {
+      mixLoading = true;
+      render();
       return;
     }
-    String[] labels = new String[tracks.size()];
-    for (int i = 0; i < labels.length; i++) labels[i] = tracks.get(i).title;
+    mixLoading = true;
+    mixError = "";
+    int generation = ++mixGeneration;
+    render();
+    io.execute(
+        () -> {
+          try {
+            List<Track> songs = MixCatalogue.songs(OnlineMusic.regionalSearch(mix.query, country));
+            if (songs.isEmpty()) throw new java.io.IOException("No songs in this mix");
+            mixCatalogue.save(mix, country, songs);
+            main.post(
+                () -> {
+                  if (destroyed
+                      || generation != mixGeneration
+                      || !country.equals(RegionPolicy.current(this))) return;
+                  mixLoading = false;
+                  mixError = "";
+                  if (activeMix.equals(mix.id)) render();
+                });
+          } catch (Exception e) {
+            main.post(
+                () -> {
+                  if (destroyed || generation != mixGeneration) return;
+                  mixLoading = false;
+                  mixError = "Couldn’t refresh this mix. Check your connection and try again.";
+                  if (activeMix.equals(mix.id)) render();
+                });
+          }
+        });
+  }
+
+  private void renderCollection() {
+    String country = RegionPolicy.current(this);
+    boolean isMix = !activeMix.isEmpty();
+    MixCatalogue.Mix mix = isMix ? MixCatalogue.find(activeMix, country) : null;
+    if (isMix && mix == null) {
+      activeMix = "";
+      renderHome();
+      return;
+    }
+    List<Track> songs = isMix ? mixCatalogue.cached(mix, country) : store.tracks(activeCollection);
+    if (isMix
+        && songs.isEmpty()
+        && mix.id.equals("regional")
+        && homeFeed != null
+        && homeFeed.country.equals(country)) songs = MixCatalogue.songs(homeFeed.tracks);
+    List<Track> collection = new ArrayList<>(songs);
+    boolean editable = activeCollection.startsWith("playlist:");
+    PlaylistPanel panel =
+        new PlaylistPanel(
+            this,
+            isMix ? mix.name : collectionTitle,
+            isMix ? mix.detail : "Your music, together.",
+            collection,
+            isMix,
+            editable,
+            isMix && mixLoading,
+            isMix ? mixError : "",
+            isMix ? mix.color : 0xff665a9b,
+            new PlaylistPanel.Listener() {
+              public void back() {
+                closeCollection();
+              }
+
+              public void play(int index) {
+                if (controller != null) controller.setShuffleModeEnabled(false);
+                MainActivity.this.play(collection, index);
+              }
+
+              public void shuffle() {
+                if (collection.isEmpty()) return;
+                List<Track> shuffled = new ArrayList<>(collection);
+                Collections.shuffle(shuffled);
+                if (controller != null) controller.setShuffleModeEnabled(false);
+                MainActivity.this.play(shuffled, 0);
+              }
+
+              public void options(Track track) {
+                songMenu(track, isMix ? null : activeCollection);
+              }
+
+              public void add() {
+                addingToPlaylist = editable ? collectionTitle : "";
+                activeCollection = "";
+                activeMix = "";
+                tab = "Search";
+                online = true;
+                query = "";
+                render();
+                if (searchField != null) searchField.requestFocus();
+              }
+
+              public void edit() {
+                editPlaylist();
+              }
+
+              public void save() {
+                if (collection.isEmpty()) return;
+                String name = store.savePlaylistCopy(mix.name, collection);
+                message("Saved to " + name);
+                showCollection(name, "playlist:" + name);
+              }
+
+              public void retry() {
+                loadMix(true);
+              }
+            });
+    content.addView(panel, new LinearLayout.LayoutParams(-1, 0, 1));
+  }
+
+  private void editPlaylist() {
+    if (!activeCollection.startsWith("playlist:")) return;
+    String name = collectionTitle;
     new AlertDialog.Builder(this)
-        .setTitle(title)
-        .setItems(labels, (d, w) -> play(tracks, w))
-        .setNeutralButton(
-            "Edit songs",
-            (d, w) -> {
-              new AlertDialog.Builder(this)
-                  .setTitle("Remove a song")
-                  .setItems(
-                      labels,
-                      (x, y) -> {
-                        List<Track> current = store.tracks(key);
-                        current.removeIf(t -> t.url.equals(tracks.get(y).url));
-                        store.save(key, current);
-                        message("Song removed from playlist");
-                        if (tab.equals("Library")) render();
-                      })
-                  .setNegativeButton("Cancel", null)
-                  .show();
+        .setTitle(name)
+        .setItems(
+            new String[] {"Rename playlist", "Remove songs", "Delete playlist"},
+            (d, which) -> {
+              if (which == 0) renamePlaylist(name);
+              else if (which == 1) {
+                List<Track> songs = store.tracks("playlist:" + name);
+                String[] labels = songs.stream().map(t -> t.title).toArray(String[]::new);
+                new AlertDialog.Builder(this)
+                    .setTitle("Remove a song")
+                    .setItems(
+                        labels,
+                        (x, index) -> {
+                          List<Track> current = store.tracks("playlist:" + name);
+                          current.removeIf(t -> t.url.equals(songs.get(index).url));
+                          store.save("playlist:" + name, current);
+                          render();
+                        })
+                    .setNegativeButton("Close", null)
+                    .show();
+              } else
+                new AlertDialog.Builder(this)
+                    .setTitle("Delete playlist?")
+                    .setMessage("Your music files stay on this phone.")
+                    .setNegativeButton("Cancel", null)
+                    .setPositiveButton(
+                        "Delete",
+                        (x, y) -> {
+                          store.deletePlaylist(name);
+                          closeCollection();
+                        })
+                    .show();
             })
-        .setNegativeButton("Close", null)
         .show();
+  }
+
+  private void renamePlaylist(String oldName) {
+    EditText input = new EditText(this);
+    input.setText(oldName);
+    input.setSingleLine();
+    AlertDialog dialog =
+        new AlertDialog.Builder(this)
+            .setTitle("Rename playlist")
+            .setView(input)
+            .setNegativeButton("Cancel", null)
+            .setPositiveButton("Save", null)
+            .create();
+    dialog.setOnShowListener(
+        d ->
+            dialog
+                .getButton(AlertDialog.BUTTON_POSITIVE)
+                .setOnClickListener(
+                    v -> {
+                      String name = input.getText().toString().trim();
+                      if (!store.renamePlaylist(oldName, name)) {
+                        input.setError("Use a unique name between 1 and 60 characters");
+                        return;
+                      }
+                      collectionTitle = name;
+                      activeCollection = "playlist:" + name;
+                      dialog.dismiss();
+                      render();
+                    }));
+    dialog.show();
   }
 
   private String offlineDescription() {

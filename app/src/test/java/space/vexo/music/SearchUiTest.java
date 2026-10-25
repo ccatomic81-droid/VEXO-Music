@@ -85,6 +85,15 @@ public class SearchUiTest {
               new Handler(Looper.getMainLooper()),
               work,
               (q, c) -> Arrays.asList("Sinhala new songs", "Sinhala music")));
+      Field previews = MainActivity.class.getDeclaredField("musicPreview");
+      previews.setAccessible(true);
+      ((MusicPreview) previews.get(activity)).close();
+      previews.set(
+          activity,
+          new MusicPreview(
+              new Handler(Looper.getMainLooper()),
+              new SearchSuggestionsTest.Work(),
+              (q, c) -> Collections.emptyList()));
       View root = activity.findViewById(android.R.id.content);
       description(root, "Search tab").performClick();
       assertNotNull(text(root, "Recent searches"));
