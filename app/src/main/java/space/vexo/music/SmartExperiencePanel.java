@@ -260,6 +260,8 @@ final class SmartExperiencePanel extends MusicSurface {
   }
 
   private void find() {
+    from = 0;
+    to = Long.MAX_VALUE;
     screen("Find a forgotten song");
     note(
         "Search titles and artists from recorded plays, with spelling tolerance. Descriptive clues"

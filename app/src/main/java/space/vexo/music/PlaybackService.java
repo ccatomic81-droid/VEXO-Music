@@ -50,7 +50,13 @@ public final class PlaybackService extends MediaSessionService {
     radioStore.hide(track);
     // Existing manually queued songs and the current playback are respected.
     // Future refills re-rank with this feedback immediately.
-    autoplay.settingsChanged();
+    retuneAutoplay();
+  }
+
+  private void retuneAutoplay() {
+    if (getSharedPreferences("playback_state", 0).getBoolean("fair_queue", false))
+      autoplay.suspend();
+    else autoplay.settingsChanged();
   }
 
   private java.util.List<Track> smartSelect(
@@ -454,7 +460,7 @@ public final class PlaybackService extends MediaSessionService {
                           new SessionResult(SessionResult.RESULT_SUCCESS));
                     }
                     if (command.customAction.equals(AUTOPLAY_CHANGED)) {
-                      autoplay.settingsChanged();
+                      retuneAutoplay();
                       return Futures.immediateFuture(
                           new SessionResult(SessionResult.RESULT_SUCCESS));
                     }
