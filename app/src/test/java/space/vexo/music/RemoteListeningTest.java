@@ -49,9 +49,10 @@ public class RemoteListeningTest {
                   return null;
                 default:
                   Class<?> t = m.getReturnType();
-                  return t == boolean.class
-                      ? false
-                      : t == long.class ? 0L : t == int.class ? 0 : null;
+                  if (t == boolean.class) return false;
+                  if (t == long.class) return 0L;
+                  if (t == int.class) return 0;
+                  return null;
               }
             });
   }

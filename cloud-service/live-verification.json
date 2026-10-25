@@ -6,11 +6,13 @@
     "guest playback control rejected",
     "fair next-track control synchronized",
     "host pause and position synchronized",
+    "host disconnect is broadcast to followers",
+    "host reconnect restored the same room",
     "host ended room for both clients",
     "live cloud AI produced validated music search plan"
   ],
   "ai_query_count": 3,
-  "ai_reply": "Relaxing Sinhala music to help you focus on your studies.",
+  "ai_reply": "Here's some calming Sinhala music to help you focus while studying.",
   "device_credentials_printed": false,
   "physical_android_devices_tested": false
 }

@@ -232,7 +232,11 @@ final class RemoteListening implements AutoCloseable {
 
   void follow(boolean value) {
     following = value;
-    store.preference("room_follow", value);
+    try {
+      store.preference("room_follow", value);
+    } catch (IllegalStateException unavailable) {
+      status("Couldn’t save room preferences");
+    }
     if (value)
       try {
         JSONObject s = store.preferences().optJSONObject("room_public");
