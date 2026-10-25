@@ -13,7 +13,7 @@ const get=(path,init)=>new Request('https://testing.test'+path,init);
 
 test('tester page is opt-in, download is streamed and range/HEAD/cache work',async()=>{
  const service=createService(artifacts,prefix), env={RELEASES:seeded()};
- const page=await service.fetch(get('/'),env);assert.equal(page.status,200);assert.match(await page.text(),/regular app’s Update button still uses the stable 0.9.0 feed/);
+ const page=await service.fetch(get('/'),env);assert.equal(page.status,200);assert.match(await page.text(),/app’s Update button checks the latest public release/);
  const file='/releases/VEXO-Music-0.10.0-dev.apk';
  const full=await service.fetch(get(file),env);assert.equal(full.status,200);assert.equal(full.headers.get('Content-Type'),'application/vnd.android.package-archive');assert.deepEqual(new Uint8Array(await full.arrayBuffer()),data['VEXO-Music-0.10.0-dev.apk']);
  const part=await service.fetch(get(file,{headers:{Range:'bytes=2-5'}}),env);assert.equal(part.status,206);assert.equal(part.headers.get('Content-Range'),`bytes 2-5/${artifacts['VEXO-Music-0.10.0-dev.apk'].size}`);assert.deepEqual(new Uint8Array(await part.arrayBuffer()),data['VEXO-Music-0.10.0-dev.apk'].slice(2,6));

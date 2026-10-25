@@ -19,3 +19,5 @@ No paid plan or subscription is enabled by this configuration. It reuses the exi
 Future releases offered to devices that install this candidate must use version code 14 or higher; the current test candidate uses code 13.
 
 The original 0.10.0-dev APK URL remains available at its original immutable object. Android verification: 117 tests, zero failures/errors, five optional skips; lint and APK build passed in run 40170936665. See `release/verification-0.11.0-dev.json` and `cloud-service/live-verification.json`.
+
+After 0.12.0 public publication, the landing page now links the stable production APK, its public source and GitHub checksums. The archived testing manifest and both old test APK addresses remain unchanged. The regular in-app Update button now offers the public release.
