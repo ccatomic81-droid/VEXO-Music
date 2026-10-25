@@ -1,0 +1,21 @@
+{
+  "version": "0.10.0-dev",
+  "versionCode": 12,
+  "channel": "testing",
+  "page": "https://vexo-music-testing.kavindukavishka785.workers.dev/",
+  "apk": "https://vexo-music-testing.kavindukavishka785.workers.dev/releases/VEXO-Music-0.10.0-dev.apk",
+  "sha256": "2944744bae6a12a47e8be530df63cf2078bfeee4f92485d04d6abb270e95ab94",
+  "certificate_sha256": "0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3",
+  "bytes": 8389463,
+  "public_download_verified": true,
+  "signature_verified": true,
+  "head_verified": true,
+  "range_verified": true,
+  "public_write_status": 405,
+  "publisher_bindings_removed": true,
+  "stable_manifest_unchanged": true,
+  "stable_version": "0.9.0",
+  "source_commit": "cf381c0014a3614c4294d8a2359a16335b762acf",
+  "source_archive_uploaded": false,
+  "existing_public_source_url": "https://github.com/ccatomic81-droid/VEXO-Music/archive/cf381c0014a3614c4294d8a2359a16335b762acf.zip"
+}

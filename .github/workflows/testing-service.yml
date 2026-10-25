@@ -1,0 +1,21 @@
+name: Check opt-in testing release host
+on:
+  pull_request:
+    paths: ['testing-service/**', 'update-service/**', '.github/workflows/testing-service.yml']
+  push:
+    branches: [main, 'feature/smart-experience']
+    paths: ['testing-service/**', 'update-service/**', '.github/workflows/testing-service.yml']
+permissions:
+  contents: read
+jobs:
+  release-host:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test testing-service/service.test.mjs update-service/service.test.mjs
