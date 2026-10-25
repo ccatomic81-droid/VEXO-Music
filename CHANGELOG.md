@@ -1,0 +1,45 @@
+# Changelog
+
+## 0.6.0 — 24 October 2026
+
+- Search suggestions while typing, localized by the selected music region, with a 300 ms debounce and stale-response protection.
+- Up to 20 recent searches stored on-device; tap to search, fill the field, remove one, or clear all.
+- Suggestions are capped, cached by query/region and use a short network timeout; normal search still works when suggestions fail.
+- What’s new after an app update and a permanent Settings summary.
+- Optional once-daily foreground update checks, manual checks, version-code comparison, release summaries and user-triggered browser downloads.
+- Public HTTPS feed configuration, bounded responses and HTTPS-only redirects. No embedded GitHub credentials or silent installation.
+- Same Android package and signing certificate for installation over previous versions.
+
+## 0.5.0 — Crossfade (24 October 2026)
+
+Added Settings → Crossfade with Off or 1–12 seconds, default 4 seconds. A second prepared ExoPlayer overlaps song endings using equal-power volume curves while a stable MediaSession-facing player preserves the queue and controls. A single audio-focus owner handles both decks. Pause/seek/stop/noisy/focus loss cancel outgoing audio; unready tracks use normal playback. Short tracks shorten the fade, Shuffle keeps its actual successor and Repeat One bypasses crossfade. Package and signer remain update-compatible.
+
+# 0.4.2 — Settings privacy and branding (24 October 2026)
+
+Hide downloading/saved song titles from the Settings offline summary, including live download-status updates. Keep usage and count, and retain the Offline library. Rename the installed app to VEXO Music and add Developer: Kavindu Kavishka in About and the Settings footer. Keep the package and signer compatible with v0.4.0/v0.4.1 Radio.
+
+# 0.4.1 — Player alignment and icons (24 October 2026)
+
+Rebuilt the actual Now Playing view with a measured square artwork frame, rounded clipping, fixed header, aligned title/favourite area, equal tool slots, clear Autoplay switch and separate radio buttons. Icons now use a stable optical size and cleaner queue/repeat/timer/heart geometry. Added player renders and checks for narrow screens, landscape, enlarged text, control spacing and icon sizing. Package and signing certificate remain compatible with v0.4.0 Radio.
+
+# 0.4.0 — Song Radio (24 October 2026)
+
+Added seed-based Song Radio, Balanced/Familiar/Discover tuning, local artist-affinity ranking, explicit negative feedback/reset, alternate-upload deduplication, artist variety and bounded multi-source candidate gathering. Now Playing and Up Next expose radio controls/status and a manual retry. Queue restoration, pause/repeat/shuffle guards and offline saving remain.
+
+This delivery uses a new signing certificate and package `space.vexo.music.radio` because the previous signing key is unavailable after a workspace reset. It installs alongside the prior app; its private library does not transfer automatically.
+
+# 0.3.0
+
+- Icon-only navigation with accessibility descriptions and tooltips.
+- Song Play buttons open Now Playing; mini-player Play opens the full player.
+- Live Up Next screen with reorder, Play Next, remove, clear-upcoming and clear-queue actions.
+- Related-song Autoplay, duplicate filtering, shuffle-aware order and stale-request protection.
+- Saved queue/position restored paused; restored Play prepares and resumes correctly.
+- Remembered playback speed controls from 0.75× to 2×.
+
+# 0.2.0
+
+- Repair small-screen control overflow and align headings, song rows, action buttons and larger-text layouts.
+- Load region-aware Home music charts with a labelled regional-search fallback, refresh, cached lists and manual region selection.
+- Automatically save complete listened-to audio for offline playback, with a 500 MiB budget, an Offline library and storage controls.
+- Keep the original application ID and signing certificate for an in-place update.

@@ -1,0 +1,114 @@
+# VEXO Music 0.6.0
+
+Developer: **Kavindu Kavishka**.
+
+This update adds debounced YouTube search suggestions, device-only recent searches, once-per-version release summaries, and manual/automatic update checks. Crossfade, song radio, offline saves and the existing package/signing identity are retained.
+
+The source is on `ccatomic81-droid/dayspace-android`, branch `vexo-music-build`, directory `vexo/`. A root-level VEXO workflow builds only this project. The repository is private: public app-update delivery requires a separate public HTTPS feed and download URL. The APK's feed starts disconnected; Settings → Update source connects it. See [UPDATES.md](UPDATES.md).
+
+An original native Android music app with YouTube music discovery, background playback and a private offline library. Android 8.0 or later. This is a development APK.
+
+## Crossfade (0.5.0)
+
+Open **Settings → Crossfade**. Choose **Off** or **1–12 seconds** and tap **Save**. The default is **4 seconds**. Cancel leaves the setting unchanged.
+
+At a natural song ending, a prepared next song fades in while the current song fades out with an equal-power curve. This works with finite, seekable local/offline songs and online audio when the next song has buffered. Queue order and Shuffle are preserved. Very short songs use a shorter fade; Repeat One and an absent/unsupported/unready next track use normal playback. Manual skips and seeking remain immediate. A setting change applies to the next transition, without cutting an overlap already playing.
+
+Crossfade prepares audio early and may use extra mobile data. Turning it off avoids the additional crossfade preload. Pause, clearing the queue, sleep timer, unplugging headphones and audio-focus loss stop any hidden outgoing audio. See [CROSSFADE.md](CROSSFADE.md) for implementation details and verification limits. Host-side checks do not establish physical-phone sound quality.
+
+The app name remains **VEXO Music**, developer **Kavindu Kavishka**. Install over v0.4.x Radio / VEXO Music to keep that app's library; the package and backed-up signer are unchanged.
+
+## Settings privacy and branding (0.4.2)
+
+The installed app is named **VEXO Music**. Settings → About and the Settings footer credit **Developer: Kavindu Kavishka**.
+
+Settings shows offline storage usage and saved-song count without downloading/saved song titles. The songs themselves remain visible in Library → Offline; auto-save and existing downloads are preserved. The summary uses “1 saved song” for a single song.
+
+Install this APK over v0.4.0/v0.4.1 Radio. Its internal package and signing certificate are unchanged, so existing app data is retained.
+
+## Player alignment and icon update (0.4.1)
+
+Now Playing uses a square, rounded artwork frame sized to the available window, a consistent content width and a title/favourite row with separate space. The timer, speed, queue and more controls occupy equal slots. Radio buttons have a visible gap, and Autoplay has a clear switch. On short screens or with large text, the content scrolls while the player header stays fixed.
+
+Icons use a consistent 24 dp glyph size inside their touch targets, with a larger central play/pause glyph. Queue, repeat, timer and favourite shapes have been redrawn, and screen-reader action descriptions are clearer. The playback-speed label shows `1×` instead of `1.0×`.
+
+This APK uses the same app ID and signing certificate as v0.4.0 Radio. Install it over v0.4.0 Radio to retain that app's library. The older v0.3.0 app remains a separate installation.
+
+## This update: Song Radio
+
+- Start song radio from any supported online song's menu or from Now Playing. The original song anchors the station while related songs continue automatically.
+- Tune radio to Balanced, Familiar or Discover from Now Playing, Up Next or Settings.
+- Local favourites and listening history influence ranking. Artist variety prevents same-artist runs when alternatives exist.
+- Duplicate YouTube URLs, alternate lyric/official uploads, recent songs and common non-music/long-compilation results are filtered.
+- “Don't recommend in radio” hides a song and matching title/artist uploads from future radio refills. Reset radio feedback in Settings.
+- Up Next shows station/mode/loading status and offers Tune radio and Retry radio. Tuning and feedback apply to future refills, preserving your current queue.
+- Candidate gathering combines the original station seed, the current song and music-only artist search, with independent request fallbacks and bounded cancellation-safe loading.
+
+See [RADIO-RESEARCH.md](RADIO-RESEARCH.md) for the Spotify/YouTube research, exact ranking rules and limitations. This is an original metadata-based implementation; it does not claim to reproduce those services' private recommendation models.
+
+## Retained features
+
+Regional Home discovery, manual region selection, YouTube search, local phone audio, favourites, playlists, listening history, mini-player, full player, seek, shuffle/repeat, sleep timer and automatic offline saving remain available.
+
+Home detects the music region through network/SIM country or phone locale, with a manual override and no GPS permission. It shows a real regional YouTube chart where available; unsupported regions such as LK use explicitly labelled regional search picks. Lists are cached locally.
+
+Auto-save is enabled by default and attempts to save the full audio of a played online song. Only complete saves appear in Library → Offline. Storage is limited to 500 MiB, with controls to turn auto-save off, remove a song or clear saved audio.
+
+## Install or update VEXO Music
+
+Install `VEXO-Music-0.6.0.apk`. It appears as **VEXO Music**, package `space.vexo.music.radio`, version code 8.
+
+The earlier delivery workspace and its signing key were reset. The v0.4.x line uses its backed-up development signing certificate and a separate app ID so it can coexist with v0.3.0. **Keep the old app installed to preserve its favourites, playlists and offline audio. That private app data does not automatically transfer to this build.** This APK is not an in-place update to v0.3.0.
+
+For production, choose a permanent app ID and a stable private signing key, keep an external backup of that key, and configure it for CI. No private signing key or credentials are included in this source ZIP. The separately delivered `VEXO-Radio-Development-Signing-Backup.zip` backs up this Radio build’s development signer; keep it private and outside the repository.
+
+If Android requests it, allow APK installation for the browser or Files app you use to open the APK. Use **Library → Scan phone** to grant audio access, or **Import audio** to choose individual audio files.
+
+Auto-saved audio is stored privately inside the app, for offline listening in VEXO Music. It is not exported as MP3 files to the public Downloads folder. Auto-save uses the phone’s current internet connection. Uninstalling clears saved audio and app library data, while your original phone audio files stay intact.
+
+Auto-save runs with the playback service. Switching songs cancels an unfinished save and starts the new song; already completed saves remain. Android force-stop or service shutdown ends unfinished work. Retry by playing that song again. When storage fills, existing offline songs remain and new saves stop until space is cleared.
+
+## Other features
+
+YouTube song/artist search, direct YouTube links, phone music, favourites, named playlists, listening history, queue controls, seek, shuffle, repeat, sleep timer, mini-player, audio-focus management and unplug-to-pause. No account, API key, analytics backend or cloud database is required.
+
+## Build with GitHub, without Android Studio
+
+Upload this folder’s contents to a GitHub repository, including `.github`, `gradle`, `gradlew` and `gradlew.bat`. Run **Actions → Build VEXO Music APK → Run workflow**, then download **VEXO-Music-APK** when the run succeeds. The workflow tests, lints, builds and verifies the APK.
+
+The supplied APK uses a new development debug signing key. A new GitHub runner’s default debug key will be different. Configure a stable private release key in Actions secrets before using CI for future updates to an existing install. No keystore or credentials are in this source archive.
+
+## Build locally
+
+Use JDK 17, Android SDK platform 35 and build tools 35.0.0. Set `ANDROID_HOME` to the SDK path. Dependencies come from Google Maven, Maven Central and JitPack.
+
+```sh
+./gradlew testDebugUnitTest lintDebug assembleDebug
+```
+
+On Windows, use `gradlew.bat` instead. Output: `app/build/outputs/apk/debug/app-debug.apk`.
+
+## Source structure
+
+| File | Purpose |
+| --- | --- |
+| `MainActivity.java` | Screens, navigation, local music, regional feed UI and settings |
+| `TransportControls.java` | Measured full-player controls that fit narrow windows |
+| `PlaybackService.java` | Media3 background playback, queue, autoplay, auto-save and sleep timer |
+| `RadioPolicy.java`, `RadioCatalogue.java`, `RadioStore.java`, `RadioTuner.java` | Station candidates, local taste, feedback and radio tuning |
+| `AutoplayManager.java`, `QueuePolicy.java` | Stale-result-safe radio loading, duplicate filtering and shuffle-aware queue rules |
+| `QueueStore.java`, `QueuePanel.java` | Paused queue restoration and Up Next UI |
+| `OfflineLibrary.java` | Persistent complete audio downloads, stable cache keys, offline reads and storage budget |
+| `RegionPolicy.java` | Automatic region selection and country validation |
+| `RegionalFeed.java` | Per-region YouTube chart, labelled search fallback and local feed cache |
+| `OnlineMusic.java` | NewPipe search, pagination and short-lived stream resolution |
+| `LibraryStore.java` | Favourites, playlists, imports and history |
+| `Track.java`, `Visuals.java` | Metadata, original icons and cover placeholders |
+
+## Verification and limits
+
+See [VERIFICATION.md](VERIFICATION.md) and `verification/` for this build's actual results. Host-side tests cover ranking, duplicate filtering, familiarity/discovery choices, station persistence, request fallback/cancellation, queue state/races and narrow/large-text layouts. UI renders use fixture metadata and do not represent a bundled music catalogue. Offline tests verify exact stored bytes persist and replay with network fetching disabled.
+
+This app depends on YouTube/NewPipe availability. Source changes, unavailable/restricted songs or network failures can prevent playback and radio continuation. Related metadata and artist terms are sent to YouTube; the favourites/history dataset itself stays local. There is no cloud recommender, mood/tempo embedding model or guaranteed language matching.
+
+Earlier live audio probing received an HTML “Site Unavailable” response from the audio CDN; HTML/JSON responses are rejected. Audible YouTube playback, physical-device background/lock-screen behavior and saving real online audio still need phone testing. Successful metadata requests do not establish that audio is playable.
