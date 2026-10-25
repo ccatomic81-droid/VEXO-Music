@@ -1,0 +1,12 @@
+{
+  "applicationId": "space.vexo.music.radio",
+  "versionCode": 14,
+  "sourceCommit": "bc92d1a9c1423c5f20fc244978675e0e98dd6460",
+  "sha256": "2c129fe7a0f3d39f64048b89d06f9c61a17b8107a4b9b7df7263931c1d28c034",
+  "size": 6494864,
+  "certificateSha256": "0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3",
+  "versionName": "0.12.0",
+  "downloadUrl": "https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.12.0.apk",
+  "sourceUrl": "https://github.com/ccatomic81-droid/VEXO-Music/archive/bc92d1a9c1423c5f20fc244978675e0e98dd6460.zip",
+  "summary": "\u2022 Solid charcoal and forest-green colors with VEXO lime controls.\n\u2022 Smart Experience is after Settings in the bottom navigation.\n\u2022 Cloud MindRadio music requests and refinements, with consent and local fallback.\n\u2022 Live FairPlay listening rooms, fair requests, host controls and reconnect support.\n\u2022 Private memories, playlist recovery, anti-repeat and discovery tools.\n\u2022 AI: five requests per device/day; shared service quotas apply. Rooms: eight listeners, two hours.\n\u2022 Each phone streams independently; shared playback timing can vary.\n\u2022 Existing app data is preserved. Licensed lyric search, full audio metadata and authorized online downloads remain dependencies."
+}
