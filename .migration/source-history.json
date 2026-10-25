@@ -1,0 +1,74 @@
+{
+  "source_repository": "ccatomic81-droid/dayspace-android",
+  "source_branch": "vexo-music-build",
+  "subdirectory": "vexo",
+  "note": "Only VEXO source snapshots are imported. Original commit identities/dates retained here; new root paths and parents produce new commit IDs.",
+  "snapshots": [
+    {
+      "original": "59317ef3f75a88a0aa621ee7007fe5e3326b272d",
+      "tree": "3b4df3ec9b0ec95166b3a4b51c43ae61c911b0bd",
+      "message": "Start isolated VEXO Music Android project",
+      "date": "2026-10-24T17:21:26Z"
+    },
+    {
+      "original": "ff14235301c610d9adadbdec454309cebc0978e2",
+      "tree": "5dcd99390860b7fabeb299be2ca66b3212d660a7",
+      "message": "Add VEXO Music 0.6.0 search suggestions and app update notices",
+      "date": "2026-10-24T17:26:45Z"
+    },
+    {
+      "original": "fa1912dc669205ed142fa9688a385041233f8880",
+      "tree": "a517b322f27f728f692203c44dcdbf34156eca1d",
+      "message": "Fix Android CI setup by omitting obsolete SDK tools package",
+      "date": "2026-10-24T17:28:20Z"
+    },
+    {
+      "original": "29964147049e2f7612ab0fce7000a6ca576d8072",
+      "tree": "d346d730cc6195a182094e1639c1837115133efd",
+      "message": "Add VEXO Music 0.7.0 playable typeahead, discovery Home and music playlists",
+      "date": "2026-10-24T17:54:19Z"
+    },
+    {
+      "original": "394eb67609c54e27e8ff68b33675339cb6515c39",
+      "tree": "ce862e6ded2361a99276652e168a0479d9922827",
+      "message": "Verify packaged app version and document clean signed VEXO 0.7.0 APK",
+      "date": "2026-10-24T17:56:58Z"
+    },
+    {
+      "original": "a3c0da4c06c1ad2d0dcfae488e696174bb4d52b2",
+      "tree": "e9147eea1b1175a2992a17c20a54d0ecce27e7d8",
+      "message": "Add personalized Home, private profiles, built-in updates and sharper artwork in VEXO 0.8.0",
+      "date": "2026-10-24T23:20:19Z"
+    },
+    {
+      "original": "4a1683d5154e26d4f5e99599494224fe7dec2ee5",
+      "tree": "ace1cae87b562131db71d15ad3e23634d7bdd10f",
+      "message": "Document pending public release approval and verified VEXO 0.8.0 delivery state",
+      "date": "2026-10-24T23:21:30Z"
+    },
+    {
+      "original": "769e7232ca5e6b5cdafb8e2ee67d422aef1a6f54",
+      "tree": "82869c48e47ddd2943f6db79bb88a61d43f1cf8e",
+      "message": "Document verified public VEXO 0.8.0 updates and signed release downloads",
+      "date": "2026-10-24T23:27:26Z"
+    },
+    {
+      "original": "ec1a96f05507b47355a12da21558ab9d29e7013d",
+      "tree": "31d4109f0b78b8ac1a2b3c07d66b6bebcb67afb6",
+      "message": "Fix local greetings, refine Home and add safe recovery and issue reports in VEXO 0.9.0",
+      "date": "2026-10-24T23:51:08Z"
+    },
+    {
+      "original": "33398720a9728b1d65ab9b005d8cb26127ce53b4",
+      "tree": "e7869eb334f7394060c964ccb712c04a6b69927c",
+      "message": "Record verified public VEXO 0.9.0 release and successful GitHub checks",
+      "date": "2026-10-24T23:56:54Z"
+    },
+    {
+      "original": "8d859d7f4b031b9394293e62b6be8eb8433a3f94",
+      "tree": "c88f888786ec498a3d77f9e1c36f81054a450022",
+      "message": "Publish VEXO Music 0.9.0 release with verified original signed APK and source",
+      "date": "2026-10-25T00:12:12Z"
+    }
+  ]
+}
