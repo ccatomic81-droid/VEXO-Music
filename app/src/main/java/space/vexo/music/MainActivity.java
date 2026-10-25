@@ -471,8 +471,8 @@ public final class MainActivity extends ComponentActivity {
   private void buildNav() {
     nav = row();
     nav.setPadding(dp(10), dp(2), dp(10), dp(4));
-    nav.setMinimumHeight(dp(72));
-    Glass.apply(nav, 26, false);
+    nav.setMinimumHeight(dp(64));
+    Glass.apply(nav, 20, false);
     root.addView(nav, new LinearLayout.LayoutParams(-1, -2));
   }
 
@@ -486,8 +486,9 @@ public final class MainActivity extends ComponentActivity {
       LinearLayout item = column();
       item.setGravity(Gravity.CENTER);
       Icon i = new Icon(this, names[j], selected ? LIME : MUTED);
-      item.addView(i, new LinearLayout.LayoutParams(dp(48), dp(48)));
-      if (selected) i.setBackground(round(PANEL, dp(16)));
+      i.setGlyphSize(24);
+      item.addView(i, new LinearLayout.LayoutParams(dp(48), dp(40)));
+      if (selected) i.setBackground(round(0xff253526, dp(12)));
       i.setContentDescription(label);
       i.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
       TextView caption = text(label, 10, selected ? LIME : MUTED, selected);
@@ -495,7 +496,7 @@ public final class MainActivity extends ComponentActivity {
       caption.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
       item.addView(caption);
       caption.setOnClickListener(v -> item.performClick());
-      item.setMinimumHeight(dp(64));
+      item.setMinimumHeight(dp(60));
       item.setSelected(selected);
       item.setFocusable(true);
       item.setTooltipText(label);
@@ -528,7 +529,7 @@ public final class MainActivity extends ComponentActivity {
     mini.setPadding(dp(8), dp(8), dp(4), dp(5));
     mini.setMinimumHeight(dp(66));
     LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-1, -2);
-    p.setMargins(dp(14), dp(6), dp(14), dp(4));
+    p.setMargins(dp(20), dp(8), dp(20), dp(8));
     root.addView(mini, p);
     mini.setVisibility(View.GONE);
     LinearLayout line = row();
@@ -550,14 +551,17 @@ public final class MainActivity extends ComponentActivity {
     copy.addView(miniArtist);
     line.addView(copy, new LinearLayout.LayoutParams(0, -2, 1));
     miniPlay = icon("play", LIME, this::togglePlay);
+    miniPlay.setGlyphSize(24);
     line.addView(miniPlay);
-    line.addView(
+    Icon next =
         icon(
             "next",
             TEXT,
             () -> {
               if (controller != null) controller.seekToNextMediaItem();
-            }));
+            });
+    next.setGlyphSize(24);
+    line.addView(next);
     miniProgress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
     miniProgress.setMax(1000);
     miniProgress.setProgressTintList(android.content.res.ColorStateList.valueOf(LIME));
@@ -912,33 +916,35 @@ public final class MainActivity extends ComponentActivity {
         : term + " " + searchLanguage + " music";
   }
 
-  private void browseCategories(LinearLayout parent) {
-    TextView label = text("Browse categories", 20, TEXT, true);
-    label.setPadding(0, dp(14), 0, dp(12));
-    parent.addView(label);
-    TextView detail =
-        text("Search collections · choose a language, mood or genre", 12, MUTED, false);
-    parent.addView(detail);
-    gap(parent, 12);
-    for (String group : new String[] {"Genres", "Moods & activities", "Regional"}) {
-      parent.addView(text(group, 14, LIME, true));
-      gap(parent, 8);
-      LinearLayout line = null;
-      int count = 0;
-      for (MusicCategory category : MusicCategory.ALL)
-        if (category.group.equals(group)) {
-          if (count++ % 2 == 0) {
-            line = row();
-            parent.addView(line);
-          }
-          TextView card = text(category.name, 16, TEXT, true);
-          card.setGravity(Gravity.CENTER_VERTICAL);
-          card.setMinHeight(dp(68));
-          card.setPadding(dp(14), dp(12), dp(12), dp(12));
-          card.setBackground(round(category.color, dp(16)));
-          card.setContentDescription("Browse " + category.name + " music");
-          card.setOnClickListener(
-              v -> {
+  private void chooseSearchLanguage() {
+    String[] values = {"Any", "Sinhala", "Tamil", "English"};
+    String[] labels = {"All languages", "Sinhala", "Tamil", "English"};
+    int selected = Arrays.asList(values).indexOf(searchLanguage);
+    new AlertDialog.Builder(this)
+        .setTitle("Search language")
+        .setSingleChoiceItems(
+            labels,
+            Math.max(0, selected),
+            (dialog, which) -> {
+              searchLanguage = values[which];
+              searchGeneration++;
+              suggestions.cancel();
+              musicPreview.cancel();
+              dialog.dismiss();
+              if (searchCategory != null || !query.trim().isEmpty()) search();
+              else render();
+            })
+        .setNegativeButton("Cancel", null)
+        .show();
+  }
+
+  private void browseSearch(LinearLayout parent) {
+    parent.addView(
+        new SearchBrowsePanel(
+            this,
+            searchHistory.entries(),
+            new SearchBrowsePanel.Listener() {
+              public void category(MusicCategory category) {
                 searchCategory = category;
                 query = "";
                 online = true;
@@ -946,22 +952,77 @@ public final class MainActivity extends ComponentActivity {
                 suggestions.cancel();
                 musicPreview.cancel();
                 search();
-              });
-          LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, -2, 1);
-          params.setMargins(0, 0, dp(8), dp(8));
-          line.addView(card, params);
-        }
-      gap(parent, 8);
-    }
+              }
+
+              public void recent(String term) {
+                searchField.setText(term);
+                search();
+              }
+
+              public void remove(String term) {
+                searchHistory.remove(term);
+                requestSuggestions();
+              }
+
+              public void clear() {
+                searchHistory.clear();
+                requestSuggestions();
+              }
+
+              public void allRecent() {
+                List<String> terms = searchHistory.entries();
+                new AlertDialog.Builder(MainActivity.this)
+                    .setTitle("Recent searches")
+                    .setItems(
+                        terms.toArray(new String[0]), (dialog, which) -> recent(terms.get(which)))
+                    .setNegativeButton("Close", null)
+                    .setNeutralButton("Clear", (dialog, which) -> clear())
+                    .show();
+              }
+            }),
+        new LinearLayout.LayoutParams(-1, -2));
+  }
+
+  private TextView searchSource(String title, boolean selected, Runnable action) {
+    TextView control = text(title, 13, selected ? LIME : MUTED, selected);
+    control.setGravity(Gravity.CENTER);
+    control.setMinHeight(dp(48));
+    control.setPadding(dp(8), dp(8), dp(8), dp(8));
+    control.setMaxLines(2);
+    if (selected) control.setBackground(round(0xff2b3b2c, dp(10)));
+    control.setSelected(selected);
+    control.setOnClickListener(v -> action.run());
+    return control;
   }
 
   private void renderSearch() {
     LinearLayout h = column();
-    h.setPadding(dp(20), dp(12), dp(20), dp(8));
-    searchTitleView =
-        text(searchCategory == null ? "Search music" : searchCategory.name, 23, TEXT, true);
-    h.addView(searchTitleView);
-    gap(h, 10);
+    h.setPadding(dp(20), dp(8), dp(20), dp(8));
+    LinearLayout titleRow = row();
+    TextView title =
+        text(searchCategory == null ? "Search music" : searchCategory.name, 24, TEXT, true);
+    title.setMaxLines(2);
+    titleRow.addView(title, new LinearLayout.LayoutParams(0, -2, 1));
+    if (online) {
+      TextView language =
+          text(
+              (searchLanguage.equals("Any") ? "All languages" : searchLanguage) + " ▾",
+              12,
+              MUTED,
+              true);
+      language.setMinHeight(dp(48));
+      language.setMaxWidth(dp(132));
+      language.setMaxLines(2);
+      language.setPadding(dp(12), dp(8), 0, dp(8));
+      language.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+      language.setContentDescription("Choose search language. Current: " + searchLanguage);
+      language.setOnClickListener(v -> chooseSearchLanguage());
+      titleRow.addView(language);
+      searchLanguages = language;
+    }
+    searchTitleView = titleRow;
+    h.addView(titleRow);
+    gap(h, 8);
     content.addView(h);
     if (!addingToPlaylist.isEmpty()) {
       TextView done =
@@ -978,9 +1039,10 @@ public final class MainActivity extends ComponentActivity {
       gap(h, 8);
     }
     LinearLayout box = row();
-    box.setBackground(round(PANEL, dp(18)));
+    box.setBackground(round(PANEL, dp(16)));
     box.setPadding(dp(8), 0, dp(4), 0);
     Icon find = icon("search", LIME, this::search);
+    find.setGlyphSize(22);
     box.addView(find);
     searchField = new EditText(this);
     searchField.setTextColor(TEXT);
@@ -1031,27 +1093,33 @@ public final class MainActivity extends ComponentActivity {
           return false;
         });
     box.addView(searchField, new LinearLayout.LayoutParams(0, dp(56), 1));
-    box.addView(
+    Icon clearQuery =
         icon(
             "close",
             MUTED,
             () -> {
               searchField.setText("");
               query = "";
-            }));
+            });
+    clearQuery.setGlyphSize(20);
+    clearQuery.setContentDescription("Clear search query");
+    box.addView(clearQuery);
     h.addView(box);
-    gap(h, 14);
+    gap(h, 12);
     LinearLayout source = row();
+    source.setPadding(dp(4), dp(4), dp(4), dp(4));
+    source.setBackground(round(PANEL, dp(14)));
     source.addView(
-        chip(
+        searchSource(
             "YouTube",
             online,
             () -> {
               online = true;
               render();
-            }));
+            }),
+        new LinearLayout.LayoutParams(0, -2, 1));
     source.addView(
-        chip(
+        searchSource(
             "On this phone",
             !online,
             () -> {
@@ -1060,44 +1128,25 @@ public final class MainActivity extends ComponentActivity {
               searchGeneration++;
               searching = false;
               render();
-            }));
-    h.addView(source);
+            }),
+        new LinearLayout.LayoutParams(0, -2, 1));
+    h.addView(source, new LinearLayout.LayoutParams(-1, -2));
     searchSources = source;
-    if (online) {
-      HorizontalScrollView languages = new HorizontalScrollView(this);
-      languages.setHorizontalScrollBarEnabled(false);
-      LinearLayout options = row();
-      for (String language : new String[] {"Any", "Sinhala", "Tamil", "English"})
-        options.addView(
-            chip(
-                language,
-                language.equals(searchLanguage),
-                () -> {
-                  searchLanguage = language;
-                  searchGeneration++;
-                  suggestions.cancel();
-                  musicPreview.cancel();
-                  if (searchCategory != null || !query.trim().isEmpty()) search();
-                  else render();
-                }));
-      languages.addView(options);
-      h.addView(languages);
-      searchLanguages = languages;
-      if (searchCategory != null) {
-        searchCategoryBack =
-            button(
-                "‹ All categories",
-                () -> {
-                  searchCategory = null;
-                  query = "";
-                  results = new ArrayList<>();
-                  onlinePage = null;
-                  searching = false;
-                  searchGeneration++;
-                  render();
-                });
-        h.addView(searchCategoryBack);
-      }
+    if (online && searchCategory != null) {
+      searchCategoryBack = text("‹ All categories", 13, LIME, true);
+      ((TextView) searchCategoryBack).setMinHeight(dp(48));
+      ((TextView) searchCategoryBack).setGravity(Gravity.CENTER_VERTICAL);
+      searchCategoryBack.setOnClickListener(
+          v -> {
+            searchCategory = null;
+            query = "";
+            results = new ArrayList<>();
+            onlinePage = null;
+            searching = false;
+            searchGeneration++;
+            render();
+          });
+      h.addView(searchCategoryBack);
     }
     gap(h, 6);
     status =
@@ -1113,7 +1162,7 @@ public final class MainActivity extends ComponentActivity {
     h.addView(status);
     suggestionScroll = new ScrollView(this);
     suggestionBody = column();
-    suggestionBody.setPadding(dp(22), 0, dp(22), dp(12));
+    suggestionBody.setPadding(dp(20), dp(8), dp(20), dp(20));
     suggestionScroll.addView(suggestionBody);
     suggestionScroll.setVisibility(View.GONE);
     content.addView(suggestionScroll, new LinearLayout.LayoutParams(-1, 0, 1));
@@ -1157,12 +1206,16 @@ public final class MainActivity extends ComponentActivity {
     if (searchCategoryBack != null)
       searchCategoryBack.setVisibility(keyboardOpen ? View.GONE : View.VISIBLE);
     if (tab.equals("Search") && status != null)
-      status.setVisibility(keyboardOpen ? View.GONE : View.VISIBLE);
+      status.setVisibility(
+          keyboardOpen || online && query.trim().isEmpty() && searchCategory == null
+              ? View.GONE
+              : View.VISIBLE);
   }
 
   private void requestSuggestions() {
     if (searchField == null || suggestionBody == null || !online || !tab.equals("Search")) return;
     final String value = SearchHistory.clean(searchField.getText().toString());
+    boolean changed = !previewTerm.equals(value);
     previewTerm = value;
     previewTerms = new ArrayList<>();
     previewSongs = new ArrayList<>();
@@ -1170,6 +1223,12 @@ public final class MainActivity extends ComponentActivity {
     previewFailed = false;
     phraseFailed = false;
     showSuggestions(value, previewTerms, false);
+    if (changed && suggestionScroll != null) suggestionScroll.scrollTo(0, 0);
+    if (value.isEmpty()) {
+      suggestions.cancel();
+      musicPreview.cancel();
+      return;
+    }
     suggestions.request(
         value,
         RegionPolicy.current(this),
@@ -1220,7 +1279,10 @@ public final class MainActivity extends ComponentActivity {
     for (int i = 2; i < content.getChildCount(); i++)
       content.getChildAt(i).setVisibility(View.GONE);
     suggestionBody.removeAllViews();
-    if (term.trim().isEmpty() && searchCategory == null) browseCategories(suggestionBody);
+    if (term.trim().isEmpty() && searchCategory == null) {
+      browseSearch(suggestionBody);
+      return;
+    }
     List<String> recent = searchHistory.entries();
     List<String> choices = SearchHistory.merge(term, recent, remote);
     TextView title =
@@ -1322,6 +1384,7 @@ public final class MainActivity extends ComponentActivity {
                   searchHistory.remove(choice);
                   requestSuggestions();
                 });
+        remove.setGlyphSize(18);
         remove.setContentDescription("Remove recent search " + choice);
         row.addView(remove);
       }
@@ -1334,6 +1397,7 @@ public final class MainActivity extends ComponentActivity {
                 searchField.setSelection(choice.length());
                 searchField.requestFocus();
               });
+      fill.setGlyphSize(20);
       fill.setContentDescription("Use suggestion " + choice);
       row.addView(fill);
       suggestionBody.addView(row);
