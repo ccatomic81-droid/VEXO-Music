@@ -60,7 +60,8 @@ class MusicSurface extends ScrollView {
     t.setGravity(Gravity.CENTER);
     t.setPadding(dp(16), dp(13), dp(16), dp(13));
     t.setMinHeight(dp(48));
-    t.setBackground(round(primary ? LIME : PANEL, dp(24)));
+    if (primary) t.setBackground(round(LIME, dp(24)));
+    else Glass.apply(t, 22, false);
     t.setOnClickListener(v -> click.run());
     return t;
   }

@@ -10,7 +10,7 @@ export default {
     if (!url.pathname.startsWith("/__publish/")) return service.fetch(request, env);
     if (request.method !== "PUT") return json({ error: "Method not allowed" }, 405);
     const token = request.headers.get("Authorization")?.replace(/^Bearer /, "") || "";
-    if (!token || token.length > 200 || !/^[a-f0-9]{64}$/.test(env.PUBLISH_HASH || "")) return json({ error: "Unauthorized" }, 401);
+    if (!token || token.length > 200 || (env.PUBLISH_UNTIL && Date.now() > Number(env.PUBLISH_UNTIL)) || !/^[a-f0-9]{64}$/.test(env.PUBLISH_HASH || "")) return json({ error: "Unauthorized" }, 401);
     const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token));
     const expected = new Uint8Array(env.PUBLISH_HASH.match(/../g).map(v => parseInt(v, 16)));
     if (!crypto.subtle.timingSafeEqual(digest, expected)) return json({ error: "Unauthorized" }, 401);
@@ -24,14 +24,17 @@ export default {
         if (release.applicationId !== "space.vexo.music.radio" || !Number.isSafeInteger(release.versionCode) || release.versionCode < 1 || !/^\d+\.\d+\.\d+$/.test(release.versionName) || typeof release.summary !== "string" || !release.summary.trim() || release.summary.length > 12000 || !/^[a-f0-9]{64}$/.test(release.sha256 || "") || release.certificateSha256 !== certificate)
           return json({ error: "Invalid release" }, 400);
         const apk = `VEXO-Music-${release.versionName}.apk`, source = `VEXO-Music-${release.versionName}-Source.zip`;
-        if (release.downloadUrl !== `${url.origin}/releases/${apk}` || release.sourceUrl !== `${url.origin}/releases/${source}`) return json({ error: "Wrong download address" }, 400);
-        const stored = await env.RELEASES.head("releases/" + apk), sourceObject = await env.RELEASES.head("releases/" + source);
-        if (!stored || !sourceObject || stored.customMetadata?.sha256 !== release.sha256 || stored.size !== release.size) return json({ error: "Upload both artifacts before publishing" }, 409);
+        const publicSource = /^[a-f0-9]{40}$/.test(release.sourceCommit || "") && release.sourceUrl === `https://github.com/ccatomic81-droid/VEXO-Music/archive/${release.sourceCommit}.zip`;
+        if (release.downloadUrl !== `${url.origin}/releases/${apk}` || (!publicSource && release.sourceUrl !== `${url.origin}/releases/${source}`)) return json({ error: "Wrong download address" }, 400);
+        if (env.PUBLISH_VERSION && (release.versionName !== env.PUBLISH_VERSION || release.sha256 !== env.PUBLISH_APK_HASH)) return json({ error: "Unreviewed release" }, 400);
+        const stored = await env.RELEASES.head("releases/" + apk), sourceObject = publicSource || await env.RELEASES.head("releases/" + source);
+        if (!stored || !sourceObject || stored.customMetadata?.sha256 !== release.sha256 || stored.size !== release.size) return json({ error: "Upload verified artifacts before publishing" }, 409);
         await env.RELEASES.put("stable.json", JSON.stringify(release), { httpMetadata: { contentType: "application/json" } });
         return json({ published: true, version: release.versionName });
       }
-      if (!FILE.test(name)) return json({ error: "Not found" }, 404);
+      if (!FILE.test(name) || (env.PUBLISH_VERSION && name !== `VEXO-Music-${env.PUBLISH_VERSION}.apk`)) return json({ error: "Not found" }, 404);
       const sha256 = request.headers.get("X-Upload-Sha256") || "";
+      if (env.PUBLISH_APK_HASH && sha256 !== env.PUBLISH_APK_HASH) return json({ error: "Unreviewed artifact" }, 400);
       if (!/^[a-f0-9]{64}$/.test(sha256)) return json({ error: "Checksum required" }, 400);
       const key = "releases/" + name;
       const prior = await env.RELEASES.head(key);

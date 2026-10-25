@@ -7,13 +7,12 @@ import org.json.*;
 /** A release feed contains metadata only. Downloads always need a user tap. */
 final class AppRelease {
   static final String NOTES =
-      "• Early-morning greetings now begin at 4 AM.\n"
-          + "• Greetings follow phone time and time-zone changes immediately.\n"
-          + "• Refined Home cards, spacing, artwork shelves and mini-player.\n"
-          + "• Refresh & repair reloads temporary data while keeping saved music.\n"
-          + "• Optional automatic cache recovery after an app crash.\n"
-          + "• Review and email device diagnostics from Report a problem.\n"
-          + "• Bounded artwork loading helps devices with less memory.";
+      "• Cloud MindRadio understands music requests with a free daily allowance.\n"
+          + "• Create live listening rooms, share invites and request songs from multiple phones.\n"
+          + "• Host playback sync, fair request rotation and reconnect support.\n"
+          + "• Solid colors, refined navigation and a Smart tab after Settings.\n"
+          + "• Private history and memories remain on your device.\n"
+          + "• Shared playback timing depends on each device and connection.";
   final int code;
   final String version, summary, url;
 

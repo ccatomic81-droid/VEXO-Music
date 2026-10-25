@@ -1,0 +1,5 @@
+{
+ "name":"vexo-music-cloud","main":"worker.mjs","compatibility_date":"2026-10-25","compatibility_flags":["nodejs_compat"],"workers_dev":true,
+ "ai":{"binding":"AI"},"durable_objects":{"bindings":[{"name":"ROOMS","class_name":"MusicRoom"},{"name":"GATE","class_name":"DailyGate"}]},
+ "migrations":[{"tag":"v1","new_sqlite_classes":["MusicRoom","DailyGate"]}],"observability":{"enabled":true,"head_sampling_rate":0.01}
+}

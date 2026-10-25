@@ -1,0 +1,76 @@
+name: Prepare verified signed smart-experience candidate
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: vexo-smart-candidate
+  cancel-in-progress: false
+jobs:
+  candidate:
+    if: github.repository == 'ccatomic81-droid/VEXO-Music'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: write
+    env:
+      VEXO_KEYSTORE_PASSWORD: ${{ secrets.VEXO_KEYSTORE_PASSWORD }}
+      VEXO_KEY_ALIAS: ${{ secrets.VEXO_KEY_ALIAS }}
+      VEXO_KEY_PASSWORD: ${{ secrets.VEXO_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: false
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Install SDK
+        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Load original signing identity securely
+        env:
+          VEXO_KEYSTORE_BASE64: ${{ secrets.VEXO_KEYSTORE_BASE64 }}
+        run: |
+          python3 - <<'PY'
+          import base64, os, pathlib
+          required = ['VEXO_KEYSTORE_BASE64', 'VEXO_KEYSTORE_PASSWORD', 'VEXO_KEY_ALIAS', 'VEXO_KEY_PASSWORD']
+          if any(not os.environ.get(k) for k in required):
+              raise SystemExit('Configure the four VEXO signing secrets with the original signing identity before preparing a release.')
+          key = pathlib.Path(os.environ['RUNNER_TEMP']) / 'vexo-original.keystore'
+          key.write_bytes(base64.b64decode(os.environ['VEXO_KEYSTORE_BASE64'], validate=True))
+          key.chmod(0o600)
+          with open(os.environ['GITHUB_ENV'], 'a') as env:
+              env.write('VEXO_KEYSTORE_PATH=' + str(key) + '\n')
+          PY
+      - name: Test, lint and build signed candidate
+        run: |
+          bash gradlew --no-daemon testDebugUnitTest lintDebug assembleRelease
+          node --test update-service/service.test.mjs
+      - name: Verify certificate, metadata and package source
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          cp app/build/outputs/apk/release/app-release.apk dist/VEXO-Music-0.12.0.apk
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs dist/VEXO-Music-0.12.0.apk > dist/signature.txt
+          grep -qi 'Signer #1 certificate SHA-256 digest: 0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3' dist/signature.txt
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging dist/VEXO-Music-0.12.0.apk | grep "package: name='space.vexo.music.radio' versionCode='14' versionName='0.12.0'"
+          git archive --format=zip --output=dist/VEXO-Music-0.12.0-Source.zip HEAD
+          (cd dist && sha256sum VEXO-Music-0.12.0.apk VEXO-Music-0.12.0-Source.zip > SHA256SUMS.txt)
+      - name: Prepare draft prerelease for review
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release create vexo-v0.12.0 dist/VEXO-Music-0.12.0.apk dist/VEXO-Music-0.12.0-Source.zip dist/SHA256SUMS.txt --target "$GITHUB_SHA" --title 'VEXO Music 0.12.0 candidate' --notes-file release/notes-0.12.0.md --draft --prerelease
+      - uses: actions/upload-artifact@v4
+        with:
+          name: VEXO-Music-signed-candidate
+          path: dist/*
+      - name: Remove signing file
+        if: always()
+        run: rm -f "$RUNNER_TEMP/vexo-original.keystore"

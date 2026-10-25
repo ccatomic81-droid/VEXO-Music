@@ -2,7 +2,7 @@ package space.vexo.music;
 
 import android.app.Application;
 
-public final class VexoApplication extends Application {
+public class VexoApplication extends Application {
   @Override
   public void onCreate() {
     super.onCreate();

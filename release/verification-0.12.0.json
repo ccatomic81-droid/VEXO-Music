@@ -1,0 +1,21 @@
+{
+  "version": "0.12.0",
+  "versionCode": 14,
+  "applicationId": "space.vexo.music.radio",
+  "sourceCommit": "bc92d1a9c1423c5f20fc244978675e0e98dd6460",
+  "ciRun": 40172886577,
+  "sha256": "2c129fe7a0f3d39f64048b89d06f9c61a17b8107a4b9b7df7263931c1d28c034",
+  "size": 6494864,
+  "original_certificate_verified": true,
+  "certificateSha256": "0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3",
+  "apk_contents_match_ci": true,
+  "debuggable": false,
+  "android_tests": {
+    "total": 117,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 5
+  },
+  "lint_debug_and_release": "passed",
+  "physical_android_devices_tested": false
+}

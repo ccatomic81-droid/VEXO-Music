@@ -1,0 +1,7 @@
+{
+  "applicationId": "space.vexo.music.radio",
+  "versionCode": 12,
+  "versionName": "0.10.0-dev",
+  "summary": "Development candidate: private history search, memories, playlist recovery, anti-repeat, feedback, discovery and Home customization. MindRadio is local search-based; cloud AI, multi-device sessions and licensed lyrics are pending. New online offline saves require authorization.",
+  "downloadUrl": "https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.10.0-dev.apk"
+}

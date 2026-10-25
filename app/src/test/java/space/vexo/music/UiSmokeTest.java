@@ -112,8 +112,8 @@ public class UiSmokeTest {
               new UserProfile(org.robolectric.RuntimeEnvironment.getApplication()).greeting()
                   + ", Listener"));
       View nav = findDescription(root, "Settings tab");
-      assertNull("Navigation labels must be hidden", find((View) nav.getParent(), "Home"));
-      assertNull(find((View) nav.getParent(), "Search"));
+      assertNotNull("Navigation labels should be readable", find((View) nav.getParent(), "Home"));
+      assertNotNull(find((View) nav.getParent(), "Search"));
       assertNotNull(findDescription(root, "Play Second example song"));
       render(root, 360, 800, "home");
       assertNotNull(find(root, "Regional viral picks"));

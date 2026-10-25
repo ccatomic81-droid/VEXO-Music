@@ -112,6 +112,7 @@ public final class MainActivity extends ComponentActivity {
   private MusicPreview musicPreview;
   private MixCatalogue mixCatalogue;
   private MusicHomePanel homePanel;
+  private org.json.JSONObject pendingAiPlan;
   private final ThreadPoolExecutor mixIo = (ThreadPoolExecutor) Executors.newFixedThreadPool(2);
   private final Set<String> prefetchingMixes = new HashSet<>();
   private final Set<String> attemptedMixes = new HashSet<>();
@@ -144,6 +145,7 @@ public final class MainActivity extends ComponentActivity {
   private final android.content.SharedPreferences.OnSharedPreferenceChangeListener
       playbackStateChanged =
           (prefs, key) -> {
+            if (!destroyed && "connection_status".equals(key)) updatePlayback();
             if (!destroyed && radioStatus != null)
               radioStatus.setText(prefs.getString("autoplay_status", ""));
             if (!destroyed && queuePanel != null && queueDialog != null && queueDialog.isShowing())
@@ -228,7 +230,7 @@ public final class MainActivity extends ComponentActivity {
       profileDraft = state.getString("profile_draft", profile.name());
     }
     root = column();
-    root.setBackgroundColor(BG);
+    root.setBackground(Glass.backdrop());
     setContentView(root);
     androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(
         root,
@@ -268,7 +270,11 @@ public final class MainActivity extends ComponentActivity {
 
                   @Override
                   public void onPlayerError(PlaybackException e) {
-                    showPlaybackError();
+                    if (e.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED
+                        || e.errorCode
+                            == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT)
+                      message("Connection interrupted · VEXO will try to resume");
+                    else showPlaybackError();
                   }
                 });
             updatePlayback();
@@ -457,14 +463,15 @@ public final class MainActivity extends ComponentActivity {
   private void buildNav() {
     nav = row();
     nav.setPadding(dp(10), dp(2), dp(10), dp(4));
-    nav.setMinimumHeight(dp(64));
+    nav.setMinimumHeight(dp(72));
+    Glass.apply(nav, 26, false);
     root.addView(nav, new LinearLayout.LayoutParams(-1, -2));
   }
 
   private void refreshNav() {
     nav.removeAllViews();
-    String[] labels = {"Home", "Search", "Library", "Settings"};
-    String[] names = {"home", "search", "library", "settings"};
+    String[] labels = {"Home", "Search", "Library", "Settings", "Smart"};
+    String[] names = {"home", "search", "library", "settings", "smart"};
     for (int j = 0; j < labels.length; j++) {
       String label = labels[j];
       boolean selected = label.equals(tab);
@@ -475,11 +482,16 @@ public final class MainActivity extends ComponentActivity {
       if (selected) i.setBackground(round(PANEL, dp(16)));
       i.setContentDescription(label);
       i.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-      item.setMinimumHeight(dp(56));
+      TextView caption = text(label, 10, selected ? LIME : MUTED, selected);
+      caption.setGravity(Gravity.CENTER);
+      caption.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+      item.addView(caption);
+      caption.setOnClickListener(v -> item.performClick());
+      item.setMinimumHeight(dp(64));
       item.setSelected(selected);
       item.setFocusable(true);
       item.setTooltipText(label);
-      item.setContentDescription(label + " tab");
+      item.setContentDescription(label.equals("Smart") ? "Smart Experience tab" : label + " tab");
       item.setOnClickListener(
           v -> {
             if (searchField != null) query = searchField.getText().toString();
@@ -500,9 +512,8 @@ public final class MainActivity extends ComponentActivity {
   private void buildMini() {
     mini = column();
     android.graphics.drawable.GradientDrawable background =
-        new android.graphics.drawable.GradientDrawable(
-            android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT,
-            new int[] {0xff222d2b, PANEL});
+        new android.graphics.drawable.GradientDrawable();
+    background.setColor(PANEL);
     background.setCornerRadius(dp(18));
     background.setStroke(dp(1), 0xff303e39);
     mini.setBackground(background);
@@ -587,6 +598,9 @@ public final class MainActivity extends ComponentActivity {
         break;
       case "Library":
         renderLibrary();
+        break;
+      case "Smart":
+        showSmart(null, true);
         break;
       case "Settings":
         renderSettings();
@@ -713,6 +727,10 @@ public final class MainActivity extends ComponentActivity {
             homeError,
             homeFilter,
             new MusicHomePanel.Listener() {
+              public void smart() {
+                showSmart(null);
+              }
+
               public void region() {
                 chooseRegion();
               }
@@ -763,6 +781,13 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private void prefetchHomeMixes() {
+    try {
+      org.json.JSONObject smart = new SmartStore(this).preferences();
+      if (smart.optBoolean("focus") || smart.optBoolean("hide:Mood mixes")) return;
+    } catch (IllegalStateException unavailable) {
+      /* Existing Home remains available. */
+    }
+
     if (destroyed || !tab.equals("Home") || !activeMix.isEmpty() || !activeCollection.isEmpty())
       return;
     String country = RegionPolicy.current(this);
@@ -1271,11 +1296,22 @@ public final class MainActivity extends ComponentActivity {
                   });
             } else {
               OnlineMusic.Results found = OnlineMusic.search(request);
+              if (found.tracks.isEmpty()) {
+                for (String variant : SmartPolicy.variants(request)) {
+                  if (variant.equals(request)) continue;
+                  OnlineMusic.Results alternative = OnlineMusic.search(variant);
+                  if (!alternative.tracks.isEmpty()) {
+                    found = alternative;
+                    break;
+                  }
+                }
+              }
+              final OnlineMusic.Results delivered = found;
               main.post(
                   () -> {
                     if (destroyed || generation != searchGeneration) return;
-                    onlinePage = found;
-                    results = new ArrayList<>(found.tracks);
+                    onlinePage = delivered;
+                    results = new ArrayList<>(delivered.tracks);
                     searching = false;
                     if (tab.equals("Search")) render();
                   });
@@ -1401,7 +1437,12 @@ public final class MainActivity extends ComponentActivity {
                                     .setPositiveButton(
                                         "Delete",
                                         (x, y) -> {
-                                          store.deletePlaylist(name);
+                                          try {
+                                            store.deletePlaylist(name);
+                                          } catch (IllegalStateException error) {
+                                            message(error.getMessage());
+                                            return;
+                                          }
                                           render();
                                         })
                                     .show();
@@ -1612,7 +1653,12 @@ public final class MainActivity extends ComponentActivity {
         h.more.setContentDescription("Add " + t.title + " to " + addingToPlaylist);
         h.more.setOnClickListener(
             v -> {
-              store.addToPlaylist(addingToPlaylist, t);
+              try {
+                store.addToPlaylist(addingToPlaylist, t);
+              } catch (IllegalStateException error) {
+                message(error.getMessage());
+                return;
+              }
               message("Added to " + addingToPlaylist);
             });
       }
@@ -1654,12 +1700,19 @@ public final class MainActivity extends ComponentActivity {
         .hideSoftInputFromWindow(root.getWindowToken(), 0);
     if (tab.equals("Search") && searchField != null)
       searchHistory.add(searchField.getText().toString());
+    if (getSharedPreferences("playback_state", 0).getBoolean("room_active", false)) {
+      controller.sendCustomCommand(
+          new SessionCommand(PlaybackService.ROOM_LEAVE, Bundle.EMPTY), Bundle.EMPTY);
+      message("Leaving the listening room for your personal queue");
+    }
     List<MediaItem> queue = new ArrayList<>();
     int first = Math.max(0, index - 10),
         end = Math.min(tracks.size(), first + QueuePolicy.MAX_ITEMS);
     for (Track t : tracks.subList(first, end)) queue.add(t.mediaItem());
     Bundle queueArgs = new Bundle();
     queueArgs.putString("track", tracks.get(index).json().toString());
+    queueArgs.putString("ai_plan", pendingAiPlan == null ? "" : pendingAiPlan.toString());
+    pendingAiPlan = null;
     controller.sendCustomCommand(
         new SessionCommand(PlaybackService.NEW_QUEUE, Bundle.EMPTY), queueArgs);
     controller.setMediaItems(queue, index - first, 0);
@@ -1677,6 +1730,9 @@ public final class MainActivity extends ComponentActivity {
                 "Add to playlist",
                 "Play next",
                 "Add to queue"));
+    options.add("Smart feedback & song memory");
+    if (getSharedPreferences("playback_state", 0).getBoolean("room_active", false))
+      options.add("Request in listening room");
     if (track.online()) {
       options.add("Start song radio");
       options.add("Don’t recommend in radio");
@@ -1690,6 +1746,28 @@ public final class MainActivity extends ComponentActivity {
             options.toArray(new String[0]),
             (d, which) -> {
               String action = options.get(which);
+              if (action.equals("Request in listening room")) {
+                if (!RadioPolicy.music(track)) {
+                  message("Live rooms support online catalogue songs");
+                  return;
+                }
+                try {
+                  controller.sendCustomCommand(
+                      new SessionCommand(PlaybackService.ROOM_ACTION, Bundle.EMPTY),
+                      roomArgs(
+                          new org.json.JSONObject()
+                              .put("type", "add")
+                              .put("track", track.json())
+                              .toString()));
+                } catch (Exception error) {
+                  message("Couldn’t add the room request");
+                }
+                return;
+              }
+              if (action.equals("Smart feedback & song memory")) {
+                showSmart(track);
+                return;
+              }
               if (action.equals("Remove offline audio")) {
                 OfflineLibrary.get(this).remove(track.url);
                 return;
@@ -1732,7 +1810,12 @@ public final class MainActivity extends ComponentActivity {
                   else if (collection != null) {
                     List<Track> saved = store.tracks(collection);
                     saved.removeIf(x -> x.url.equals(track.url));
-                    store.save(collection, saved);
+                    try {
+                      store.save(collection, saved);
+                    } catch (IllegalStateException error) {
+                      message(error.getMessage());
+                      return;
+                    }
                     if (tab.equals("Library") || tab.equals("Home") || !activeCollection.isEmpty())
                       render();
                   }
@@ -1752,7 +1835,12 @@ public final class MainActivity extends ComponentActivity {
             (d, w) -> {
               if (w == names.size()) createPlaylist(track);
               else {
-                store.addToPlaylist(names.get(w), track);
+                try {
+                  store.addToPlaylist(names.get(w), track);
+                } catch (IllegalStateException error) {
+                  message(error.getMessage());
+                  return;
+                }
                 message("Added to " + names.get(w));
               }
             })
@@ -1914,7 +2002,18 @@ public final class MainActivity extends ComponentActivity {
               public void shuffle() {
                 if (collection.isEmpty()) return;
                 List<Track> shuffled = new ArrayList<>(collection);
-                Collections.shuffle(shuffled);
+                try {
+                  shuffled = SmartPolicy.shuffle(shuffled, new SmartStore(MainActivity.this));
+                } catch (IllegalStateException unavailable) {
+                  message(unavailable.getMessage());
+                  return;
+                }
+                if (shuffled.isEmpty()) {
+                  message(
+                      "All songs are restricted by anti-repeat or feedback. Adjust Smart experience"
+                          + " controls.");
+                  return;
+                }
                 if (controller != null) controller.setShuffleModeEnabled(false);
                 MainActivity.this.play(shuffled, 0);
               }
@@ -1958,8 +2057,14 @@ public final class MainActivity extends ComponentActivity {
     new AlertDialog.Builder(this)
         .setTitle(name)
         .setItems(
-            new String[] {"Rename playlist", "Remove songs", "Delete playlist"},
+            new String[] {
+              "Rename playlist", "Remove songs", "Delete playlist", "Time Machine / undo"
+            },
             (d, which) -> {
+              if (which == 3) {
+                showSmart(null);
+                return;
+              }
               if (which == 0) renamePlaylist(name);
               else if (which == 1) {
                 List<Track> songs = store.tracks("playlist:" + name);
@@ -1971,7 +2076,12 @@ public final class MainActivity extends ComponentActivity {
                         (x, index) -> {
                           List<Track> current = store.tracks("playlist:" + name);
                           current.removeIf(t -> t.url.equals(songs.get(index).url));
-                          store.save("playlist:" + name, current);
+                          try {
+                            store.save("playlist:" + name, current);
+                          } catch (IllegalStateException error) {
+                            message(error.getMessage());
+                            return;
+                          }
                           render();
                         })
                     .setNegativeButton("Close", null)
@@ -1984,7 +2094,12 @@ public final class MainActivity extends ComponentActivity {
                     .setPositiveButton(
                         "Delete",
                         (x, y) -> {
-                          store.deletePlaylist(name);
+                          try {
+                            store.deletePlaylist(name);
+                          } catch (IllegalStateException error) {
+                            message(error.getMessage());
+                            return;
+                          }
                           closeCollection();
                         })
                     .show();
@@ -2010,7 +2125,14 @@ public final class MainActivity extends ComponentActivity {
                 .setOnClickListener(
                     v -> {
                       String name = input.getText().toString().trim();
-                      if (!store.renamePlaylist(oldName, name)) {
+                      boolean renamed;
+                      try {
+                        renamed = store.renamePlaylist(oldName, name);
+                      } catch (IllegalStateException error) {
+                        message(error.getMessage());
+                        return;
+                      }
+                      if (!renamed) {
                         input.setError("Use a unique name between 1 and 60 characters");
                         return;
                       }
@@ -2130,6 +2252,229 @@ public final class MainActivity extends ComponentActivity {
     message("Report copied");
   }
 
+  private void showSmart(Track track) {
+    showSmart(track, false);
+  }
+
+  private void showSmart(Track track, boolean embedded) {
+    Dialog dialog = new Dialog(this);
+    SmartStore smart = new SmartStore(this);
+    final boolean[] closed = {false};
+    final int[] generation = {0};
+    SmartExperiencePanel panel =
+        new SmartExperiencePanel(
+            this,
+            smart,
+            store,
+            new SmartExperiencePanel.Listener() {
+              private org.json.JSONObject selectedAiPlan;
+
+              public void changed() {
+                radioChanged();
+                if (tab.equals("Home")) render();
+              }
+
+              public void play(List<Track> songs, int index, long moment) {
+                dialog.dismiss();
+                MainActivity.this.play(songs, index);
+                if (controller != null && moment > 0) controller.seekTo(moment);
+              }
+
+              public void fair(List<Track> tracks) {
+                if (controller == null) {
+                  message("Player is connecting. Try again in a moment.");
+                  return;
+                }
+                play(tracks, 0, 0);
+                controller.sendCustomCommand(
+                    new SessionCommand(PlaybackService.FAIR_QUEUE, Bundle.EMPTY), Bundle.EMPTY);
+              }
+
+              public void remote() {
+                showRemoteRoom();
+              }
+
+              public void discover(String query, boolean newArtists) {
+                selectedAiPlan = null;
+                discoverPlan(Collections.singletonList(query), Collections.emptySet(), newArtists);
+              }
+
+              public void radioPlan(org.json.JSONObject plan) {
+                selectedAiPlan = plan;
+                List<String> queries = new ArrayList<>();
+                org.json.JSONArray a = plan.optJSONArray("queries");
+                if (a != null) for (int i = 0; i < a.length(); i++) queries.add(a.optString(i));
+                Set<String> excluded = new HashSet<>();
+                org.json.JSONArray x = plan.optJSONArray("excludeArtists");
+                if (x != null)
+                  for (int i = 0; i < x.length(); i++)
+                    excluded.add(RadioPolicy.normalize(x.optString(i)));
+                discoverPlan(queries, excluded, false);
+              }
+
+              private void discoverPlan(
+                  List<String> queries, Set<String> excluded, boolean newArtists) {
+                int token = ++generation[0];
+                org.json.JSONObject chosenAiPlan = selectedAiPlan;
+                message("Finding your music…");
+                io.execute(
+                    () -> {
+                      try {
+                        LinkedHashMap<String, Track> pool = new LinkedHashMap<>();
+                        for (String query : queries)
+                          for (String variant : SmartPolicy.variants(query)) {
+                            if (closed[0] || destroyed || token != generation[0]) return;
+                            for (Track t : OnlineMusic.search(variant).tracks)
+                              pool.putIfAbsent(t.url, t);
+                          }
+                        List<Track> picks =
+                            SmartPolicy.rank(
+                                new ArrayList<>(pool.values()),
+                                smart,
+                                store.tracks("history"),
+                                newArtists);
+                        picks.removeIf(
+                            t ->
+                                excluded.stream()
+                                    .anyMatch(
+                                        artist ->
+                                            !artist.isEmpty()
+                                                && RadioPolicy.artist(t).contains(artist)));
+                        if (newArtists) {
+                          Set<String> known = new HashSet<>();
+                          for (Track t : store.tracks("history")) known.add(RadioPolicy.artist(t));
+                          picks.removeIf(t -> known.contains(RadioPolicy.artist(t)));
+                        }
+                        main.post(
+                            () -> {
+                              if (closed[0] || destroyed || token != generation[0]) return;
+                              if (picks.isEmpty()) {
+                                message(
+                                    "No eligible songs found. Try another clue or reduce"
+                                        + " anti-repeat restrictions.");
+                                return;
+                              }
+                              new AlertDialog.Builder(MainActivity.this)
+                                  .setTitle(
+                                      newArtists ? "Your discovery trail" : "Your MindRadio picks")
+                                  .setItems(
+                                      picks.stream()
+                                          .map(t -> t.title + " · " + t.artist)
+                                          .toArray(String[]::new),
+                                      (d, which) -> {
+                                        dialog.dismiss();
+                                        pendingAiPlan = chosenAiPlan;
+                                        MainActivity.this.play(picks, which);
+                                      })
+                                  .setNegativeButton("Close", null)
+                                  .show();
+                            });
+                      } catch (Exception error) {
+                        main.post(
+                            () -> {
+                              if (!closed[0] && !destroyed)
+                                message(
+                                    "Couldn’t load music. Check your connection and try again.");
+                            });
+                      }
+                    });
+              }
+            });
+    if (track != null)
+      panel.track(
+          track,
+          controller != null
+                  && controller.getCurrentMediaItem() != null
+                  && controller.getCurrentMediaItem().mediaId.equals(track.url)
+              ? controller.getCurrentPosition()
+              : 0);
+    panel.setBackground(Glass.backdrop());
+    panel.addOnAttachStateChangeListener(
+        new View.OnAttachStateChangeListener() {
+          public void onViewAttachedToWindow(View v) {}
+
+          public void onViewDetachedFromWindow(View v) {
+            closed[0] = true;
+            generation[0]++;
+          }
+        });
+    if (embedded) {
+      content.addView(panel, new LinearLayout.LayoutParams(-1, 0, 1));
+      return;
+    }
+    panel.setBackground(Glass.dialogBackdrop(this));
+    panel.setClipToOutline(true);
+    dialog.setContentView(panel);
+    dialog.setOnDismissListener(
+        d -> {
+          closed[0] = true;
+          generation[0]++;
+        });
+    dialog.show();
+    blurDialog(dialog);
+    if (dialog.getWindow() != null)
+      dialog
+          .getWindow()
+          .setLayout(-1, (int) (getResources().getDisplayMetrics().heightPixels * .88f));
+  }
+
+  private void blurDialog(Dialog dialog) {
+    Window window = dialog.getWindow();
+    if (window == null) return;
+    window.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
+    window.setDimAmount(.35f);
+  }
+
+  private Bundle roomArgs(String action) {
+    Bundle b = new Bundle();
+    b.putString("action", action);
+    return b;
+  }
+
+  private void showRemoteRoom() {
+    Dialog dialog = new Dialog(this);
+    RemoteRoomPanel panel =
+        new RemoteRoomPanel(
+            this,
+            store,
+            new RemoteRoomPanel.Actions() {
+              private void command(String name, Bundle args) {
+                if (controller == null) {
+                  message("Player is connecting. Try again.");
+                  return;
+                }
+                controller.sendCustomCommand(new SessionCommand(name, Bundle.EMPTY), args);
+              }
+
+              public void connect() {
+                command(PlaybackService.ROOM_JOIN, Bundle.EMPTY);
+              }
+
+              public void action(org.json.JSONObject value) {
+                command(PlaybackService.ROOM_ACTION, roomArgs(value.toString()));
+              }
+
+              public void follow(boolean value) {
+                Bundle b = new Bundle();
+                b.putBoolean("follow", value);
+                command(PlaybackService.ROOM_FOLLOW, b);
+              }
+
+              public void leave() {
+                command(PlaybackService.ROOM_LEAVE, Bundle.EMPTY);
+              }
+            });
+    panel.setBackground(Glass.dialogBackdrop(this));
+    panel.setClipToOutline(true);
+    dialog.setContentView(panel);
+    dialog.show();
+    blurDialog(dialog);
+    if (dialog.getWindow() != null)
+      dialog
+          .getWindow()
+          .setLayout(-1, (int) (getResources().getDisplayMetrics().heightPixels * .88f));
+  }
+
   private void renderSettings() {
     header("MAKE IT YOURS", "Settings");
     ScrollView scroll = new ScrollView(this);
@@ -2170,19 +2515,18 @@ public final class MainActivity extends ComponentActivity {
         this::chooseRegion);
     setting(
         body,
-        "Auto-save listened songs",
-        OfflineLibrary.get(this).enabled()
-            ? "On · automatically save online songs for offline listening"
-            : "Off · online songs won’t be saved",
+        "Offline playback authorization",
+        "Imported audio works offline. New online saves need provider authorization.",
         false,
         () -> {
-          boolean enabled = !OfflineLibrary.get(this).enabled();
-          getSharedPreferences("settings", 0).edit().putBoolean("auto_save", enabled).apply();
-          if (!enabled) OfflineLibrary.get(this).cancel();
-          if (controller != null)
-            controller.sendCustomCommand(
-                new SessionCommand(PlaybackService.OFFLINE_SETTINGS, Bundle.EMPTY), Bundle.EMPTY);
-          render();
+          new AlertDialog.Builder(this)
+              .setTitle("Authorized offline music")
+              .setMessage(
+                  "Your imported audio and existing saved music stay available. This source has no"
+                      + " verified download entitlement, so new online saves are disabled. A"
+                      + " licensed provider must authorize downloads before this can be enabled.")
+              .setPositiveButton("Close", null)
+              .show();
         });
     offlineSummary = text(offlineDescription(), 12, MUTED, false);
     offlineSummary.setPadding(dp(12), dp(4), dp(12), dp(16));
@@ -2522,18 +2866,18 @@ public final class MainActivity extends ComponentActivity {
       playerRepeat.set(
           controller.getRepeatMode() == Player.REPEAT_MODE_ONE ? "repeat_one" : "repeat",
           controller.getRepeatMode() == Player.REPEAT_MODE_OFF ? MUTED : LIME);
+      String connection =
+          getSharedPreferences("playback_state", 0).getString("connection_status", "");
       playerState.setText(
           controller.getPlayerError() != null
-              ? "Audio couldn’t load · Tap Retry or try another song"
+              ? connection.isEmpty()
+                  ? "Audio couldn’t load · Tap Retry or try another song"
+                  : connection
               : controller.getPlaybackState() == Player.STATE_BUFFERING
                   ? "Loading audio…"
                   : OfflineLibrary.get(this).complete(item.mediaId)
                       ? "SAVED OFFLINE"
-                      : Track.from(item).online()
-                          ? OfflineLibrary.get(this).enabled()
-                              ? "YOUTUBE AUDIO · AUTO-SAVE ON"
-                              : "YOUTUBE AUDIO"
-                          : "ON THIS PHONE");
+                      : Track.from(item).online() ? "YOUTUBE AUDIO" : "ON THIS PHONE");
     }
   }
 
@@ -2609,7 +2953,12 @@ public final class MainActivity extends ComponentActivity {
                     togglePlay();
                     break;
                   case "next":
-                    controller.seekToNextMediaItem();
+                    if (getSharedPreferences("playback_state", 0).getBoolean("room_active", false)
+                        && getSharedPreferences("playback_state", 0).getBoolean("room_host", false))
+                      controller.sendCustomCommand(
+                          new SessionCommand(PlaybackService.ROOM_ACTION, Bundle.EMPTY),
+                          roomArgs("{\"type\":\"next\"}"));
+                    else controller.seekToNextMediaItem();
                     break;
                   case "repeat":
                     int mode = controller.getRepeatMode();

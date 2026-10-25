@@ -72,7 +72,10 @@ final class SearchSuggestions implements AutoCloseable {
                       values = Collections.emptyList();
                       failed = true;
                     }
-                    final List<String> result = values;
+                    LinkedHashSet<String> expanded = new LinkedHashSet<>(values);
+                    List<String> variants = SmartPolicy.variants(term);
+                    if (variants.size() > 1) expanded.addAll(variants.subList(1, variants.size()));
+                    final List<String> result = new ArrayList<>(expanded);
                     final boolean unavailable = failed;
                     main.post(
                         () -> {

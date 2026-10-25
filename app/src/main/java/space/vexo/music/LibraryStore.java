@@ -8,8 +8,22 @@ import org.json.JSONArray;
 
 public final class LibraryStore {
   private final SharedPreferences prefs;
+  private final Context context;
+  private final SmartStore smart;
+
+  LibraryStore(Context c, SmartStore smart) {
+    context = c.getApplicationContext();
+    this.smart = smart;
+    prefs = c.getSharedPreferences("library", Context.MODE_PRIVATE);
+  }
+
+  private void checkpoint(String name, String reason) {
+    smart.snapshot(name, tracks("playlist:" + name), reason);
+  }
 
   public LibraryStore(Context c) {
+    context = c.getApplicationContext();
+    smart = new SmartStore(c);
     prefs = c.getSharedPreferences("library", Context.MODE_PRIVATE);
   }
 
@@ -24,6 +38,8 @@ public final class LibraryStore {
   }
 
   public synchronized void save(String key, List<Track> tracks) {
+    if (key.startsWith("playlist:") && prefs.contains(key))
+      checkpoint(key.substring(9), "Before edit / undo");
     JSONArray a = new JSONArray();
     for (Track t : tracks) a.put(t.json());
     prefs.edit().putString(key, a.toString()).apply();
@@ -65,7 +81,8 @@ public final class LibraryStore {
     prefs.edit().putString("playlists", new JSONArray(a).toString()).apply();
   }
 
-  public void deletePlaylist(String name) {
+  public synchronized void deletePlaylist(String name) {
+    if (playlists().contains(name)) checkpoint(name, "Before deletion");
     List<String> a = playlists();
     a.remove(name);
     prefs
@@ -88,6 +105,7 @@ public final class LibraryStore {
     for (String existing : names)
       if (!existing.equals(oldName) && existing.equalsIgnoreCase(name)) return false;
     if (oldName.equals(name)) return true;
+    checkpoint(oldName, "Before rename to " + name);
     JSONArray songs = new JSONArray();
     for (Track t : tracks("playlist:" + oldName)) songs.put(t.json());
     names.set(names.indexOf(oldName), name);

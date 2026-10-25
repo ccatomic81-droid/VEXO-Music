@@ -54,3 +54,17 @@ test("publishing rejects unauthenticated writes and refuses manifest before sign
   const live = await service.fetch(new Request("https://updates.test/stable.json"),env);
   assert.equal(live.status,200);assert.deepEqual(await live.json(),release);
 });
+
+test("reviewed release may link to existing public source and publishing capability expires", async () => {
+  crypto.subtle.timingSafeEqual = (a,b) => timingSafeEqual(Buffer.from(a),Buffer.from(b));
+  const token="reviewed capability", sha256=createHash("sha256").update(bytes).digest("hex"), sourceCommit="a".repeat(40);
+  const env={RELEASES:bucket(), PUBLISH_HASH:createHash("sha256").update(token).digest("hex"), PUBLISH_UNTIL:String(Date.now()+60000), PUBLISH_VERSION:"0.12.0", PUBLISH_APK_HASH:sha256};
+  env.RELEASES.make("releases/VEXO-Music-0.12.0.apk",bytes,{sha256});
+  const release={applicationId:"space.vexo.music.radio",versionCode:14,versionName:"0.12.0",summary:"Solid colors",downloadUrl:"https://updates.test/releases/VEXO-Music-0.12.0.apk",sourceCommit,sourceUrl:`https://github.com/ccatomic81-droid/VEXO-Music/archive/${sourceCommit}.zip`,sha256,size:bytes.length,certificateSha256:"0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3"};
+  function request(value){const body=JSON.stringify(value);return new Request("https://updates.test/__publish/stable.json",{method:"PUT",body,headers:{Authorization:"Bearer "+token,"Content-Length":String(Buffer.byteLength(body))}});}
+  assert.equal((await publisher.fetch(request({...release,sourceUrl:"https://github.com/another/repo/archive/"+sourceCommit+".zip"}),env)).status,400);
+  assert.equal((await publisher.fetch(request({...release,sha256:"0".repeat(64)}),env)).status,400);
+  assert.equal((await publisher.fetch(request(release),env)).status,200);
+  env.PUBLISH_UNTIL=String(Date.now()-1);
+  assert.equal((await publisher.fetch(request(release),env)).status,401);
+});

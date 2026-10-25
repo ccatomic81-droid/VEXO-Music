@@ -32,7 +32,7 @@ public class OfflineLibraryTest {
     for (int i = 0; i < audio.length; i++) audio[i] = (byte) (i % 251);
     File directory = Files.createTempDirectory("vexo-offline").toFile();
     OfflineLibrary first =
-        new OfflineLibrary(context, () -> new ByteArrayDataSource(audio), directory, 100_000);
+        new OfflineLibrary(context, () -> new ByteArrayDataSource(audio), directory, 100_000, true);
     first.request(song);
     first.awaitIdle();
     assertTrue(first.status(), first.complete(song.url));
@@ -70,7 +70,7 @@ public class OfflineLibraryTest {
     File directory = Files.createTempDirectory("vexo-budget").toFile();
     OfflineLibrary library =
         new OfflineLibrary(
-            context, () -> new ByteArrayDataSource(new byte[32_000]), directory, 1000);
+            context, () -> new ByteArrayDataSource(new byte[32_000]), directory, 1000, true);
     try {
       library.request(song);
       library.awaitIdle();
