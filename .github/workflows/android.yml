@@ -2,7 +2,9 @@ name: Build VEXO Music APK
 on:
   push:
     branches: [main]
+    paths: ['app/**', 'gradle/**', 'gradlew*', '*.gradle', 'gradle.properties', 'update-service/**', '.github/workflows/android.yml']
   pull_request:
+    paths: ['app/**', 'gradle/**', 'gradlew*', '*.gradle', 'gradle.properties', 'update-service/**', '.github/workflows/android.yml']
   workflow_dispatch:
 permissions:
   contents: read

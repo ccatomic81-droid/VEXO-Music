@@ -4,7 +4,7 @@ Developer: **Kavindu Kavishka**.
 
 Search now shows real song names, artwork and artists while typing, with direct play controls. Home has quick collection tiles, horizontally scrolling music cards, regional picks and VEXO mood mixes. Full playlist pages support Play all, a one-shot shuffled queue, adding songs, renaming and deleting a playlist, and removing individual tracks.
 
-The source is on `ccatomic81-droid/dayspace-android`, branch `vexo-music-build`, directory `vexo/`. Build instructions and the existing package/signing identity are unchanged. Install over the previous version to keep favourites, downloads and playlists.
+The canonical source is [ccatomic81-droid/VEXO-Music](https://github.com/ccatomic81-droid/VEXO-Music), branch `main`, at the repository root. Source history, build automation and releases have moved to this standalone repository. The app package, signing identity and built-in update address are unchanged. Install over the previous version to keep favourites, downloads and playlists.
 
 ## Refresh, repair and a calmer Home (0.9.0)
 

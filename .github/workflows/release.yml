@@ -1,0 +1,90 @@
+name: Publish signed VEXO Music release
+on:
+  push:
+    branches: [main]
+    paths: [".github/workflows/release.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: vexo-release-0.9.0
+  cancel-in-progress: false
+jobs:
+  release:
+    if: github.repository == 'ccatomic81-droid/VEXO-Music' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RELEASE_TAG: vexo-v0.9.0
+      RELEASE_TARGET: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Fetch and verify original signed release files
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist verify
+          base='https://vexo-music-updates.kavindukavishka785.workers.dev/releases'
+          for name in VEXO-Music-0.9.0.apk VEXO-Music-0.9.0-Source.zip; do
+            curl --fail --location --retry 3 --max-time 120 --user-agent 'okhttp/4.12.0' "$base/$name" --output "dist/$name"
+          done
+          cat > dist/SHA256SUMS.txt <<'SUMS'
+          4b8a86d6b3dd68a1ea8294ebdef988c69e6a583e71d939248802a7b412eea026  VEXO-Music-0.9.0.apk
+          1bad2b94f3c7d1b1738936e85c7e63054a32472d6a689ff9f046679802427b7b  VEXO-Music-0.9.0-Source.zip
+          SUMS
+          (cd dist && sha256sum --check SHA256SUMS.txt)
+          python3 - <<'PY'
+          import zipfile
+          for name in ['VEXO-Music-0.9.0.apk', 'VEXO-Music-0.9.0-Source.zip']:
+              with zipfile.ZipFile('dist/' + name) as archive:
+                  assert archive.testzip() is None
+          PY
+      - name: Create draft and attach verified files
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$RELEASE_TAG" --json isDraft,targetCommitish > dist/existing.json 2>/dev/null; then
+            python3 - <<'PY'
+          import json, os
+          release = json.load(open('dist/existing.json'))
+          assert release['targetCommitish'] == os.environ['RELEASE_TARGET'], 'Release target differs; refusing overwrite'
+          PY
+            if [ "$(python3 -c "import json; print(str(json.load(open('dist/existing.json'))['isDraft']).lower())")" = false ]; then
+              gh release download "$RELEASE_TAG" --dir verify --pattern 'VEXO-Music-0.9.0*' --pattern SHA256SUMS.txt
+              cmp dist/SHA256SUMS.txt verify/SHA256SUMS.txt
+              (cd verify && sha256sum --check SHA256SUMS.txt)
+              echo "Existing published release verified."
+              exit 0
+            fi
+            gh release upload "$RELEASE_TAG" dist/VEXO-Music-0.9.0.apk dist/VEXO-Music-0.9.0-Source.zip dist/SHA256SUMS.txt --clobber
+          else
+            gh release create "$RELEASE_TAG" dist/VEXO-Music-0.9.0.apk dist/VEXO-Music-0.9.0-Source.zip dist/SHA256SUMS.txt --target "$RELEASE_TARGET" --title 'VEXO Music 0.9.0' --notes-file release/notes-0.9.0.md --draft
+          fi
+      - name: Verify uploaded assets and publish
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -f verify/SHA256SUMS.txt ]; then
+            gh release download "$RELEASE_TAG" --dir verify --pattern 'VEXO-Music-0.9.0*' --pattern SHA256SUMS.txt
+          fi
+          cmp dist/SHA256SUMS.txt verify/SHA256SUMS.txt
+          (cd verify && sha256sum --check SHA256SUMS.txt)
+          gh release edit "$RELEASE_TAG" --draft=false --latest
+          gh release view "$RELEASE_TAG" --json url,isDraft,tagName,assets > dist/published.json
+          python3 - <<'PY'
+          import json, os
+          release = json.load(open('dist/published.json'))
+          assert release['isDraft'] is False
+          assert release['tagName'] == os.environ['RELEASE_TAG']
+          expected = {'VEXO-Music-0.9.0.apk', 'VEXO-Music-0.9.0-Source.zip', 'SHA256SUMS.txt'}
+          assert expected == {asset['name'] for asset in release['assets']}
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as summary:
+              summary.write('Published [VEXO Music 0.9.0](' + release['url'] + ') with verified APK, source and checksums.\n')
+          print(release['url'])
+          PY
