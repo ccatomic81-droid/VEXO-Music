@@ -14,14 +14,14 @@ Checked 25 October 2026.
 | Android 8 compatibility | Photo import and existing Home layout checks passed |
 | Artwork | Small images keep resolution; large images bound to 1024; known-host URL upgrades with fallback |
 | UI | First-open profile and personalized Home rendered and inspected at 320×640; existing small/large-text suites passed |
-| Public delivery | Built-in Cloudflare HTTPS feed and versioned signed APK/source downloads |
+| Public delivery | HTTPS endpoint built in; artifact publication awaits explicit approval |
 | Physical phone listening | Not verified here |
 
 The suite uses Robolectric and controlled metadata, not an Android emulator or physical phone. Rendered Home fixtures use placeholders; they do not represent a bundled music catalogue. These checks establish layout, persistence, image decoding and request logic, not physical-device audio or source-image availability. Existing search, playlist, radio, offline and crossfade tests passed.
 
 The optional live discovery probe requests real music metadata and artwork URLs; it does not listen to audio. Earlier live-network reports are historical. Source availability can still prevent playback. The app requests larger covers where supported but cannot improve detail absent from the source.
 
-Updates now use the compile-time public service with no configurable URL field. The delivered APK has the original signer; runner-signed CI artifacts remain clean-install test builds. Publication uploads files before the manifest, verifies checksums, and then removes all public publishing routes. See UPDATES.md and update-service/.
+Updates now use the compile-time public service with no configurable URL field. The delivered APK has the original signer; runner-signed CI artifacts remain clean-install test builds. The publication tool uploads files before the manifest and checks checksums. Automatic approval review blocked public APK/source publication, so no live release is advertised. The temporary publishing deployment has been replaced with the read-only service. See UPDATES.md and update-service/.
 
 Certificate SHA-256: `0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3`
 
