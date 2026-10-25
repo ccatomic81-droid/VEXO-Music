@@ -3,6 +3,7 @@ package space.vexo.music;
 import androidx.media3.common.Player;
 
 /** External controllers may operate existing playback, never inject media or VEXO room actions. */
+@androidx.annotation.OptIn(markerClass = androidx.media3.common.util.UnstableApi.class)
 final class ControllerAccess {
   static boolean app(int uid, int appUid) {
     return uid == appUid;
