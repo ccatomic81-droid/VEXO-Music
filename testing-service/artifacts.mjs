@@ -1,5 +1,21 @@
-// Public checksums of the verified opt-in test candidate. No credentials.
+// Current verified opt-in candidate. No credentials.
 export const ARTIFACTS = {
+  "VEXO-Music-0.13.1-dev.apk": {
+    "sha256": "4f13d3f378bde4c8da28d4cac59ba372bc5b4f2a179e465468bc6b7796fb645b",
+    "size": 6527688
+  },
+  "manifest.json": {
+    "sha256": "e12fd503f32a6ebd64bcababf84144c27e3e7c7b558f22389d4fa2254c8323c8",
+    "size": 1397
+  },
+  "SHA256SUMS.txt": {
+    "sha256": "5845b9ca15124563e70209e183cf5af5a69521d24ae4c098afa684b3384ac95f",
+    "size": 92
+  }
+};
+export const PREFIX = "testing/0.13.1-dev/";
+// Public checksums of the verified opt-in test candidate. No credentials.
+export const PREVIOUS_ARTIFACTS = {
   "VEXO-Music-0.13.0-dev.apk": {
     "sha256": "e344868e0131257e3746edcdb040e45111b9284056fbfdd27954f4e64ad9c7b0",
     "size": 6523592
@@ -13,9 +29,9 @@ export const ARTIFACTS = {
     "size": 92
   }
 };
-export const PREFIX = "testing/0.13.0-dev/";
+export const PREVIOUS_PREFIX = "testing/0.13.0-dev/";
 // Public checksums of the exact verified test release. No credentials.
-export const PREVIOUS_ARTIFACTS = {
+export const OLDER_ARTIFACTS = {
   "VEXO-Music-0.11.0-dev.apk": {
     "sha256": "23c48dfb8155e5477171a1add43596177a1ccf642eb497e6bd9a39404459e55c",
     "size": 8414039
@@ -29,7 +45,7 @@ export const PREVIOUS_ARTIFACTS = {
     "size": 92
   }
 };
-export const PREVIOUS_PREFIX = "testing/0.11.0-dev/";
+export const OLDER_PREFIX = "testing/0.11.0-dev/";
 // Public checksums of the exact reviewed APK and release information. No credentials.
 export const LEGACY_ARTIFACTS = {
   "VEXO-Music-0.10.0-dev.apk": {
