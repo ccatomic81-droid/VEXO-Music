@@ -2,7 +2,7 @@
 
 ## Built-in delivery
 
-The release endpoint is deployed, but public APK/source publication is awaiting explicit approval. Until publication, the feed returns a temporary-unavailable response and update checks offer retry. The APK itself is available separately. No update-source setup is required after publication.
+Version 0.8.0 (code 10) is publicly available. The built-in feed and signed APK/source downloads were verified after publication, including exact file checksums and resumable downloads. The production Worker has only its R2 binding and accepts GET/HEAD; temporary publishing access has been removed. Users do not configure an update address.
 
 VEXO Music 0.8.0 uses this public feed without account credentials or URL setup:
 
