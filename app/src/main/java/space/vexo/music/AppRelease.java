@@ -7,12 +7,16 @@ import org.json.*;
 /** A release feed contains metadata only. Downloads always need a user tap. */
 final class AppRelease {
   static final String NOTES =
-      "• Cloud MindRadio understands music requests with a free daily allowance.\n"
-          + "• Create live listening rooms, share invites and request songs from multiple phones.\n"
-          + "• Host playback sync, fair request rotation and reconnect support.\n"
-          + "• Solid colors, refined navigation and a Smart tab after Settings.\n"
-          + "• Private history and memories remain on your device.\n"
-          + "• Shared playback timing depends on each device and connection.";
+      "• Cleaner Search with compact language/source controls and recent searches.\n"
+          + "• Consistent category cards, spacing, mini-player margins and smaller navigation"
+          + " icons.\n"
+          + "• Private next-song learning, category/language search and Home Skip intros"
+          + " controls.\n"
+          + "• Intro markers apply to confirmed imported audio; full-version control stays"
+          + " available.\n"
+          + "• Encrypted private collections and authenticated future updates.\n"
+          + "• This is an opt-in test build. Existing accounts/push integrations are still"
+          + " pending.";
   final int code;
   final String version, summary, url;
   String sha256 = "";

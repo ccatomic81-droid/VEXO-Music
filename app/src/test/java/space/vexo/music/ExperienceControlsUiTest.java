@@ -102,7 +102,8 @@ public class ExperienceControlsUiTest {
       field(a, "keyboardOpen", true);
       call(a, "updateSearchChrome", new Class<?>[] {});
       assertEquals(
-          View.GONE, ((View) find.text(root, "Sinhala").getParent().getParent()).getVisibility());
+          View.GONE,
+          find.description(root, "Choose search language. Current: Sinhala").getVisibility());
       find.capture(root, "experience-category-keyboard-320", 420);
       View nav = find.description(root, "Settings tab");
       int[] xy = new int[2];

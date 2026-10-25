@@ -1,0 +1,14 @@
+{
+  "version": "0.13.1-dev",
+  "public_download_verified": true,
+  "original_signature_verified": true,
+  "head_and_range_verified": true,
+  "public_write_status": 405,
+  "stable_manifest_unchanged": true,
+  "old_test_apks_retained": true,
+  "source_archive_uploaded": false,
+  "physical_android_devices_tested": false,
+  "url": "https://vexo-music-testing.kavindukavishka785.workers.dev/",
+  "apk": "https://vexo-music-testing.kavindukavishka785.workers.dev/releases/VEXO-Music-0.13.1-dev.apk",
+  "publisher_bindings_removed": true
+}
