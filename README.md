@@ -1,10 +1,20 @@
-# VEXO Music 0.7.0
+# VEXO Music 0.8.0
 
 Developer: **Kavindu Kavishka**.
 
 Search now shows real song names, artwork and artists while typing, with direct play controls. Home has quick collection tiles, horizontally scrolling music cards, regional picks and VEXO mood mixes. Full playlist pages support Play all, a one-shot shuffled queue, adding songs, renaming and deleting a playlist, and removing individual tracks.
 
 The source is on `ccatomic81-droid/dayspace-android`, branch `vexo-music-build`, directory `vexo/`. Build instructions and the existing package/signing identity are unchanged. Install over the previous version to keep favourites, downloads and playlists.
+
+## Personal Home and built-in updates (0.8.0)
+
+On first launch, enter a name (1–40 characters) and optionally choose a photo using Android’s system picker. Tap the Home avatar or Settings → Your profile to edit it. VEXO copies a cropped photo into private app storage; no account, gallery-wide permission or photo upload is required. Existing playlists, favourites and downloads remain.
+
+Home uses the phone’s local time: morning 05:00–11:59, afternoon 12:00–16:59, evening 17:00–20:59 and night 21:00–04:59. The greeting refreshes while Home is open and when returning to the app.
+
+Update checks now use the public release service built into this APK. Users do not enter an address. Settings → Check for updates checks immediately; automatic checks are optional and run at most once a day when opening VEXO. Get update opens the signed APK in the browser; Android handles installation. See [UPDATES.md](UPDATES.md).
+
+Artwork now selects the largest thumbnail in source metadata and requests higher resolution from supported YouTube/Google image hosts, with original-URL fallback. Decoding retains full resolution for smaller images and bounds larger images to 1024 pixels. Source quality still sets the limit; unavailable artwork keeps its placeholder.
 
 ## Discovery and playlists (0.7.0)
 
@@ -16,7 +26,7 @@ Open a mix, then choose **Save to your playlists** to retain its current songs o
 
 Play all starts the displayed collection in its stored order. Shuffle starts a randomized copy, leaving saved order unchanged. Both use the existing player, radio, crossfade and queue limits. Saving playlist metadata does not automatically download audio; existing auto-save rules still apply when listening.
 
-Crossfade, song radio, offline saves, per-install What's new, recent-search controls, and update settings remain. A public update delivery feed is still not connected. See [UPDATES.md](UPDATES.md). GitHub Actions produces a clean-install test APK unless the existing signing key is configured securely; use the delivered signed APK to upgrade an installed version.
+Crossfade, song radio, offline saves, per-install What's new, recent-search controls, and automatic-update settings remain. Public update delivery is built in. See [UPDATES.md](UPDATES.md). GitHub Actions produces a clean-install test APK unless the existing signing key is configured securely; use the delivered signed APK to upgrade an installed version.
 
 ## Crossfade (0.5.0)
 
@@ -66,7 +76,7 @@ Auto-save is enabled by default and attempts to save the full audio of a played 
 
 ## Install or update VEXO Music
 
-Install `VEXO-Music-0.7.0.apk`. It appears as **VEXO Music**, package `space.vexo.music.radio`, version code 9.
+Install `VEXO-Music-0.8.0.apk`. It appears as **VEXO Music**, package `space.vexo.music.radio`, version code 10.
 
 The earlier delivery workspace and its signing key were reset. The v0.4.x line uses its backed-up development signing certificate and a separate app ID so it can coexist with v0.3.0. **Keep the old app installed to preserve its favourites, playlists and offline audio. That private app data does not automatically transfer to this build.** This APK is not an in-place update to v0.3.0.
 
@@ -86,7 +96,7 @@ YouTube song/artist search, direct YouTube links, phone music, favourites, named
 
 Upload this folder’s contents to a GitHub repository, including `.github`, `gradle`, `gradlew` and `gradlew.bat`. Run **Actions → Build VEXO Music APK → Run workflow**, then download **VEXO-Music-APK** when the run succeeds. The workflow tests, lints, builds and verifies the APK.
 
-The supplied APK uses a new development debug signing key. A new GitHub runner’s default debug key will be different. Configure a stable private release key in Actions secrets before using CI for future updates to an existing install. No keystore or credentials are in this source archive.
+The supplied APK uses the existing backed-up development signing key. A new GitHub runner’s default debug key will be different. Configure a stable private release key in Actions secrets before using CI for future updates to an existing install. No keystore or credentials are in this source archive.
 
 ## Build locally
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.8.0 — Your Home (25 October 2026)
+
+- First-open name setup, optional private profile photo and profile editing.
+- Home greets you by name using the phone’s local time.
+- Built-in public update service and signed APK delivery; removed the update-source field.
+- Larger source thumbnails, high-resolution URL requests with fallback, and sharper bitmap decoding.
+- Existing discovery, search suggestions, playlists, offline saves, crossfade and signing identity retained.
+
 ## 0.7.0 — Discovery and playlists (24 October 2026)
 
 - Real playable song matches while typing, with artwork, artists/channels, direct play and cached matches.

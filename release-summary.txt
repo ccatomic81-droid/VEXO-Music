@@ -1,0 +1,5 @@
+Your Home, with your name and optional profile photo.
+Time-based morning, afternoon, evening and night greetings.
+Built-in update checks and signed downloads; no URL setup.
+Sharper cover art with higher-resolution sources and decoding.
+Search suggestions, playlists, offline saves and crossfade remain.

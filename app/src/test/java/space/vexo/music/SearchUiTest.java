@@ -24,6 +24,8 @@ public class SearchUiTest {
   @Before
   public void isolate() {
     Application app = RuntimeEnvironment.getApplication();
+    new UpdateChecker(app).automatic(false);
+    new UserProfile(app).saveName("Listener");
     new UpdateChecker(app).seen(BuildConfig.VERSION_CODE);
     app.getSharedPreferences("settings", 0).edit().putString("region", "LK").commit();
     new RegionalFeed(
@@ -128,12 +130,8 @@ public class SearchUiTest {
           "What’s new in " + BuildConfig.VERSION_NAME,
           org.robolectric.Shadows.shadowOf(dialog).getTitle().toString());
       dialog.dismiss();
-      ((View) text(root, "Check for updates").getParent().getParent()).performClick();
-      dialog = (AlertDialog) org.robolectric.shadows.ShadowDialog.getLatestDialog();
-      assertEquals(
-          "Update source not connected",
-          org.robolectric.Shadows.shadowOf(dialog).getTitle().toString());
-      dialog.dismiss();
+      assertNotNull(text(root, "Check for updates"));
+      assertNull(text(root, "Update source"));
     }
   }
 }

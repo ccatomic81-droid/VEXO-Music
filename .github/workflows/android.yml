@@ -25,13 +25,15 @@ jobs:
         run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
       - name: Check and build
         run: bash gradlew --no-daemon testDebugUnitTest lintDebug assembleDebug
+      - name: Check update service
+        run: node --test update-service/service.test.mjs
       - name: Package APK
         run: |
           mkdir -p dist
-          cp app/build/outputs/apk/debug/app-debug.apk dist/VEXO-Music-0.7.0.apk
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose dist/VEXO-Music-0.7.0.apk
-          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging dist/VEXO-Music-0.7.0.apk | grep "versionCode='9' versionName='0.7.0'"
-          sha256sum dist/VEXO-Music-0.7.0.apk > dist/SHA256SUMS.txt
+          cp app/build/outputs/apk/debug/app-debug.apk dist/VEXO-Music-0.8.0.apk
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose dist/VEXO-Music-0.8.0.apk
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging dist/VEXO-Music-0.8.0.apk | grep "versionCode='10' versionName='0.8.0'"
+          sha256sum dist/VEXO-Music-0.8.0.apk > dist/SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
           name: VEXO-Music-CI-Test-APK

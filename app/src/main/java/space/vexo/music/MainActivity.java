@@ -37,6 +37,47 @@ public final class MainActivity extends ComponentActivity {
   private final ExecutorService io = Executors.newFixedThreadPool(3);
   private final Handler main = new Handler(Looper.getMainLooper());
   private LibraryStore store;
+  private UserProfile profile;
+  private ProfilePanel profilePanel;
+  private boolean profileEditing, profilePhotoLoading;
+  private String profileDraft = "";
+  private final ActivityResultLauncher<String[]> profilePhotoPicker =
+      registerForActivityResult(
+          new ActivityResultContracts.OpenDocument(),
+          uri -> {
+            if (uri == null || profilePhotoLoading) return;
+            profilePhotoLoading = true;
+            io.execute(
+                () -> {
+                  String error = "";
+                  try {
+                    profile.importPhoto(uri);
+                  } catch (Exception e) {
+                    error =
+                        e instanceof java.io.IOException && e.getMessage() != null
+                            ? e.getMessage()
+                            : "Couldn’t use that photo. Try a different image.";
+                  }
+                  String message = error;
+                  main.post(
+                      () -> {
+                        profilePhotoLoading = false;
+                        if (MainActivity.this.destroyed) return;
+                        if (profilePanel != null) profilePanel.refreshPhoto();
+                        if (MainActivity.this.homePanel != null)
+                          MainActivity.this.homePanel.personalize();
+                        if (!message.isEmpty()) message(message);
+                      });
+                });
+          });
+  private final Runnable greetingClock =
+      new Runnable() {
+        public void run() {
+          if (destroyed) return;
+          if (homePanel != null) homePanel.personalize();
+          main.postDelayed(this, 60_000);
+        }
+      };
   private MediaController controller;
   private ListenableFuture<MediaController> controllerFuture;
   private LinearLayout root, content, mini, nav;
@@ -157,6 +198,7 @@ public final class MainActivity extends ComponentActivity {
   @Override
   public void onCreate(Bundle state) {
     super.onCreate(state);
+    profile = new UserProfile(this);
     store = new LibraryStore(this);
     searchHistory = new SearchHistory(this);
     suggestions =
@@ -178,6 +220,8 @@ public final class MainActivity extends ComponentActivity {
       activeMix = state.getString("mix", "");
       homeFilter = state.getString("home_filter", "All");
       addingToPlaylist = state.getString("adding_playlist", "");
+      profileEditing = state.getBoolean("profile_editing", false);
+      profileDraft = state.getString("profile_draft", profile.name());
     }
     root = column();
     root.setBackgroundColor(BG);
@@ -235,6 +279,16 @@ public final class MainActivity extends ComponentActivity {
             new OnBackPressedCallback(true) {
               @Override
               public void handleOnBackPressed() {
+                if (!profile.complete()) {
+                  finish();
+                  return;
+                }
+                if (profileEditing) {
+                  profileEditing = false;
+                  profileDraft = profile.name();
+                  render();
+                  return;
+                }
                 if (!activeCollection.isEmpty() || !activeMix.isEmpty()) {
                   closeCollection();
                   return;
@@ -257,14 +311,21 @@ public final class MainActivity extends ComponentActivity {
     loadHome(false);
     if (!activeMix.isEmpty()) loadMix(false);
     main.post(tick);
-    main.postDelayed(
-        () -> {
-          if (destroyed || isFinishing()) return;
-          if (updates.shouldAnnounceInstalled(BuildConfig.VERSION_CODE)) showWhatsNew(true);
-          else if (updates.automatic() && updates.shouldCheck(System.currentTimeMillis()))
-            checkUpdates(false);
-        },
-        700);
+    main.post(greetingClock);
+    main.postDelayed(this::announceOrCheckUpdates, 700);
+  }
+
+  private void announceOrCheckUpdates() {
+    if (destroyed || isFinishing() || !profile.complete() || profileEditing) return;
+    if (updates.shouldAnnounceInstalled(BuildConfig.VERSION_CODE)) showWhatsNew(true);
+    else if (updates.automatic() && updates.shouldCheck(System.currentTimeMillis()))
+      checkUpdates(false);
+  }
+
+  @Override
+  protected void onResume() {
+    super.onResume();
+    if (homePanel != null) homePanel.personalize();
   }
 
   @Override
@@ -279,6 +340,8 @@ public final class MainActivity extends ComponentActivity {
     b.putString("mix", activeMix);
     b.putString("home_filter", homeFilter);
     b.putString("adding_playlist", addingToPlaylist);
+    b.putBoolean("profile_editing", profileEditing);
+    b.putString("profile_draft", profilePanel == null ? profileDraft : profilePanel.draft());
     super.onSaveInstanceState(b);
   }
 
@@ -451,12 +514,21 @@ public final class MainActivity extends ComponentActivity {
     suggestionsVisible = false;
     suggestionScroll = null;
     suggestionBody = null;
+    if (profilePanel != null) profileDraft = profilePanel.draft();
+    profilePanel = null;
     content.removeAllViews();
     listAdapter = null;
     searchField = null;
     status = null;
     offlineSummary = null;
     refreshNav();
+    if (!profile.complete() || profileEditing) {
+      nav.setVisibility(View.GONE);
+      mini.setVisibility(View.GONE);
+      renderProfile();
+      return;
+    }
+    nav.setVisibility(View.VISIBLE);
     if (!activeCollection.isEmpty() || !activeMix.isEmpty()) {
       renderCollection();
       return;
@@ -476,6 +548,54 @@ public final class MainActivity extends ComponentActivity {
     }
   }
 
+  private void openProfile() {
+    profileEditing = true;
+    profileDraft = profile.name();
+    render();
+  }
+
+  private void renderProfile() {
+    profilePanel =
+        new ProfilePanel(
+            this,
+            profile,
+            !profile.complete(),
+            profileDraft,
+            new ProfilePanel.Listener() {
+              public void photo() {
+                if (!profilePhotoLoading) profilePhotoPicker.launch(new String[] {"image/*"});
+              }
+
+              public void removePhoto() {
+                profile.removePhoto();
+                if (profilePanel != null) profilePanel.refreshPhoto();
+              }
+
+              public void save(String name) {
+                if (!profile.saveName(name)) {
+                  if (profilePanel != null) profilePanel.nameError();
+                  return;
+                }
+                profileDraft = profile.name();
+                profileEditing = false;
+                ((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE))
+                    .hideSoftInputFromWindow(root.getWindowToken(), 0);
+                render();
+                updatePlayback();
+                loadHome(false);
+                main.postDelayed(MainActivity.this::announceOrCheckUpdates, 600);
+              }
+
+              public void back() {
+                profileEditing = false;
+                profileDraft = profile.name();
+                render();
+                updatePlayback();
+              }
+            });
+    content.addView(profilePanel, new LinearLayout.LayoutParams(-1, 0, 1));
+  }
+
   private LinearLayout header(String eyebrow, String title) {
     LinearLayout h = column();
     h.setPadding(dp(22), dp(18), dp(22), dp(12));
@@ -493,6 +613,7 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private void loadHome(boolean force) {
+    if (!profile.complete()) return;
     String country = RegionPolicy.current(this);
     if (homeLoading) return;
     if (!force
@@ -541,6 +662,10 @@ public final class MainActivity extends ComponentActivity {
             new MusicHomePanel.Listener() {
               public void region() {
                 chooseRegion();
+              }
+
+              public void profile() {
+                openProfile();
               }
 
               public void refresh() {
@@ -1065,8 +1190,7 @@ public final class MainActivity extends ComponentActivity {
               org.schabi.newpipe.extractor.stream.StreamInfo info =
                   org.schabi.newpipe.extractor.stream.StreamInfo.getInfo(
                       org.schabi.newpipe.extractor.ServiceList.YouTube, request);
-              String artwork =
-                  info.getThumbnails().isEmpty() ? "" : info.getThumbnails().get(0).getUrl();
+              String artwork = ArtworkQuality.best(info.getThumbnails());
               List<Track> tracks =
                   Collections.singletonList(
                       new Track(
@@ -1853,6 +1977,7 @@ public final class MainActivity extends ComponentActivity {
     body.setPadding(dp(22), dp(8), dp(22), dp(24));
     scroll.addView(body);
     content.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
+    setting(body, "Your profile", profile.name() + " · name and photo", false, this::openProfile);
     setting(
         body,
         "Music region",
@@ -1983,9 +2108,7 @@ public final class MainActivity extends ComponentActivity {
     setting(
         body,
         "Check for updates",
-        updates.source().isEmpty()
-            ? "Connect a public update feed to receive new versions"
-            : "Installed " + BuildConfig.VERSION_NAME + " · tap to check",
+        "Installed " + BuildConfig.VERSION_NAME + " · tap to check",
         false,
         () -> checkUpdates(true));
     setting(
@@ -1999,12 +2122,6 @@ public final class MainActivity extends ComponentActivity {
           updates.automatic(!updates.automatic());
           render();
         });
-    setting(
-        body,
-        "Update source",
-        updates.source().isEmpty() ? "Not connected" : "Public release feed connected",
-        false,
-        this::chooseUpdateSource);
     setting(
         body,
         "Clear recent searches",
@@ -2025,10 +2142,11 @@ public final class MainActivity extends ComponentActivity {
                 .setMessage(
                     "Developer: Kavindu Kavishka\n\n"
                         + "An independent music player with YouTube search and a private phone"
-                        + " library. No account is required.\n\n"
+                        + " library. Your name and optional profile photo stay on this phone. No"
+                        + " account is required.\n\n"
                         + "Search suggestions, searches and online playback contact YouTube. Recent"
                         + " search terms stay on this phone and can be cleared in Settings. Update"
-                        + " checks contact the configured public release feed. Artwork is loaded"
+                        + " checks contact the built-in VEXO release service. Artwork is loaded"
                         + " from the source shown by YouTube. Favourites, playlists and listening"
                         + " history are stored on this device. No analytics server is used.\n\n"
                         + "VEXO Music is not affiliated with YMusic or YouTube. Online availability"
@@ -2087,51 +2205,9 @@ public final class MainActivity extends ComponentActivity {
     updateDialog.show();
   }
 
-  private void chooseUpdateSource() {
-    EditText input = new EditText(this);
-    input.setSingleLine();
-    input.setText(updates.source());
-    input.setHint("https://…/stable.json");
-    input.setInputType(
-        android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_URI);
-    AlertDialog dialog =
-        new AlertDialog.Builder(this)
-            .setTitle("Update source")
-            .setMessage("Public HTTPS release feed. Leave empty to disconnect.")
-            .setView(input)
-            .setNegativeButton("Cancel", null)
-            .setPositiveButton("Save", null)
-            .create();
-    dialog.setOnShowListener(
-        d ->
-            dialog
-                .getButton(AlertDialog.BUTTON_POSITIVE)
-                .setOnClickListener(
-                    v -> {
-                      try {
-                        updates.source(input.getText().toString());
-                        dialog.dismiss();
-                        render();
-                      } catch (java.io.IOException e) {
-                        input.setError(e.getMessage());
-                      }
-                    }));
-    dialog.show();
-  }
-
   private void checkUpdates(boolean manual) {
     if (updateChecking) {
       if (manual) message("Checking for updates…");
-      return;
-    }
-    if (updates.source().isEmpty()) {
-      if (manual)
-        new AlertDialog.Builder(this)
-            .setTitle("Update source not connected")
-            .setMessage("A public release feed is needed to check for new versions.")
-            .setNegativeButton("Close", null)
-            .setPositiveButton("Connect", (d, w) -> chooseUpdateSource())
-            .show();
       return;
     }
     final String updateSource = updates.source();
@@ -2172,7 +2248,7 @@ public final class MainActivity extends ComponentActivity {
                   updateChecking = false;
                   if (!destroyed && manual)
                     message(
-                        "Couldn’t check for updates. Check your connection and update source, then"
+                        "Couldn’t check for updates. Check your connection, then"
                             + " try again.");
                 });
           }
@@ -2234,7 +2310,8 @@ public final class MainActivity extends ComponentActivity {
     if (controller == null || destroyed) return;
     refreshQueue();
     MediaItem item = controller.getCurrentMediaItem();
-    mini.setVisibility(item == null ? View.GONE : View.VISIBLE);
+    mini.setVisibility(
+        item == null || !profile.complete() || profileEditing ? View.GONE : View.VISIBLE);
     if (item == null) {
       if (playerDialog != null) playerDialog.dismiss();
       return;

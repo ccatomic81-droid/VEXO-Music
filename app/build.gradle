@@ -6,13 +6,13 @@ android {
         applicationId 'space.vexo.music.radio'
         minSdk 26
         targetSdk 35
-        versionCode 9
-        versionName '0.7.0'
+        versionCode 10
+        versionName '0.8.0'
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
     buildFeatures { buildConfig true }
     defaultConfig {
-        def updateFeed = providers.environmentVariable('VEXO_UPDATE_FEED_URL').getOrElse('')
+        def updateFeed = 'https://vexo-music-updates.kavindukavishka785.workers.dev/stable.json'
         buildConfigField 'String', 'UPDATE_FEED_URL', groovy.json.JsonOutput.toJson(updateFeed)
     }
     compileOptions {

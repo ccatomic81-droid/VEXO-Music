@@ -125,10 +125,7 @@ public final class OnlineMusic {
       if (i instanceof StreamInfoItem) {
         StreamInfoItem t = (StreamInfoItem) i;
         if (t.getDuration() == 0) continue;
-        String art =
-            t.getThumbnails().isEmpty()
-                ? ""
-                : t.getThumbnails().get(t.getThumbnails().size() - 1).getUrl();
+        String art = ArtworkQuality.best(t.getThumbnails());
         tracks.add(new Track(t.getUrl(), t.getName(), t.getUploaderName(), art, t.getDuration()));
       }
     return tracks;

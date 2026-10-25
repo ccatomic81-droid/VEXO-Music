@@ -8,6 +8,40 @@ import android.widget.*;
 import java.util.*;
 
 final class MusicHomePanel extends MusicSurface {
+  private TextView greeting;
+  private FrameLayout profileAvatar;
+  private long avatarVersion = Long.MIN_VALUE;
+
+  void personalize() {
+    UserProfile profile = new UserProfile(getContext());
+    if (greeting != null)
+      greeting.setText(
+          profile.complete() ? profile.greeting() + ", " + profile.name() : "Made for your day.");
+    if (profileAvatar != null && profile.photoVersion() != avatarVersion) {
+      avatarVersion = profile.photoVersion();
+      profileAvatar.removeAllViews();
+      android.graphics.Bitmap photo = profile.avatar();
+      if (photo != null) {
+        ImageView image = new ImageView(getContext());
+        image.setImageBitmap(photo);
+        image.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        profileAvatar.addView(image, new FrameLayout.LayoutParams(-1, -1));
+      } else {
+        String name = profile.name();
+        TextView initial =
+            text(
+                name.isEmpty()
+                    ? "V"
+                    : new String(Character.toChars(name.codePointAt(0))).toUpperCase(Locale.ROOT),
+                20,
+                BG,
+                true);
+        initial.setGravity(Gravity.CENTER);
+        profileAvatar.addView(initial, new FrameLayout.LayoutParams(-1, -1));
+      }
+    }
+  }
+
   private final Map<String, LinearLayout> mixCards = new HashMap<>();
 
   void updateMix(MixCatalogue.Mix mix, List<Track> songs) {
@@ -19,6 +53,8 @@ final class MusicHomePanel extends MusicSurface {
 
   interface Listener {
     void region();
+
+    void profile();
 
     void refresh();
 
@@ -49,10 +85,16 @@ final class MusicHomePanel extends MusicSurface {
       Listener listener) {
     super(c);
     LinearLayout brand = row();
-    TextView mark = text("V", 20, BG, true);
-    mark.setGravity(Gravity.CENTER);
-    mark.setBackground(round(LIME, dp(30)));
-    brand.addView(mark, new LinearLayout.LayoutParams(dp(40), dp(40)));
+    profileAvatar = new FrameLayout(c);
+    android.graphics.drawable.GradientDrawable avatarBackground =
+        new android.graphics.drawable.GradientDrawable();
+    avatarBackground.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+    avatarBackground.setColor(LIME);
+    profileAvatar.setBackground(avatarBackground);
+    profileAvatar.setClipToOutline(true);
+    profileAvatar.setContentDescription("Edit your profile");
+    profileAvatar.setOnClickListener(v -> listener.profile());
+    brand.addView(profileAvatar, new LinearLayout.LayoutParams(dp(48), dp(48)));
     TextView word = text("VEXO MUSIC", 12, TEXT, true);
     word.setLetterSpacing(.12f);
     word.setPadding(dp(12), 0, 0, 0);
@@ -66,7 +108,11 @@ final class MusicHomePanel extends MusicSurface {
     brand.addView(region);
     body.addView(brand);
     gap(body, 20);
-    body.addView(text("Made for your day.", 27, TEXT, true));
+    greeting = text("", 27, TEXT, true);
+    greeting.setMaxLines(3);
+    greeting.setEllipsize(android.text.TextUtils.TruncateAt.END);
+    body.addView(greeting);
+    personalize();
     gap(body, 16);
     HorizontalScrollView filters = new HorizontalScrollView(c);
     filters.setHorizontalScrollBarEnabled(false);

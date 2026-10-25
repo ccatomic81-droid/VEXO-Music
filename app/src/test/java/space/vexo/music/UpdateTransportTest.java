@@ -30,7 +30,6 @@ public class UpdateTransportTest {
                 })
             .build();
     UpdateChecker checker = new UpdateChecker(RuntimeEnvironment.getApplication(), client);
-    checker.source("https://example.com/stable.json");
     return checker;
   }
 

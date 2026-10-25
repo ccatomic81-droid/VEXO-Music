@@ -1,0 +1,9 @@
+{
+  "name": "vexo-music-updates",
+  "main": "service.mjs",
+  "compatibility_date": "2026-10-24",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "r2_buckets": [{ "binding": "RELEASES", "bucket_name": "vexo-music-releases" }],
+  "observability": { "enabled": true, "head_sampling_rate": 0.1 }
+}

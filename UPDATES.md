@@ -1,39 +1,35 @@
 # App updates and releases
 
-## Current delivery state
+## Built-in delivery
 
-VEXO Music 0.7.0 has working update-check and release-notice UI, but its public release feed is **not connected**. Source is pushed to a private GitHub repository. A private GitHub raw-file URL cannot be used by installed apps without authentication; no GitHub credential is shipped in the app. The installed-version summary works offline without a feed.
+VEXO Music 0.8.0 uses this public feed without account credentials or URL setup:
 
-To enable update delivery, publish `stable.json` and the signed APK on an HTTPS host users can read without signing in. Then paste the public JSON URL in Settings → Update source. Future builds may set `VEXO_UPDATE_FEED_URL` to that same public URL when compiling, so users do not need to configure it.
+https://vexo-music-updates.kavindukavishka785.workers.dev/stable.json
 
-Example feed, with real public URLs substituted before publishing:
+Settings → Check for updates fetches it immediately. Optional automatic checks run at most once per 24 hours when the app opens. A current or older version code does not prompt an update. Dismissing a remote release snoozes that version; a manual check can show it again. What's new also works offline for the installed release.
 
-```json
-{
-  "applicationId": "space.vexo.music.radio",
-  "versionCode": 10,
-  "versionName": "0.8.0",
-  "summary": "Describe what changed in this release.",
-  "downloadUrl": "https://YOUR-PUBLIC-HOST/VEXO-Music-0.8.0.apk"
-}
-```
+Get update opens the signed APK in the browser after a user tap. Android controls installation. This is foreground checking, not background push or silent installation. Version codes must increase; 0.8.0 uses code 10. The JSON response is limited to 64 KiB and release summaries to 12,000 characters. App identity and HTTPS URLs are validated, redirects must stay HTTPS, and requests time out. Failed automatic checks do not interrupt listening; manual failures offer retry.
 
-Version codes must increase for every release; 0.7.0 uses code 9. A current or older code does not prompt an update. The JSON response is limited to 64 KiB; the release summary to 12,000 characters. App identity and HTTPS URLs are validated, and at most three HTTPS redirects are followed. Feed errors show a retry message during manual checks and do not interrupt automatic checks. Requests have a 12-second timeout each (including each allowed redirect).
+The public service serves release metadata and versioned APK/source downloads from Cloudflare R2. Its production Worker accepts GET/HEAD only, supports resumable downloads and caches immutable versioned files. It does not receive profile names, pictures or listening history. Standard hosting request logs may include IP address and request metadata.
 
-Automatic checks run at most once per 24 hours when the app opens, if enabled and connected. This is not background push notification delivery. Dismissing a remote version snoozes it until a newer version arrives; a manual check can show it again. Downloading opens the browser only after the user taps Get update; Android controls installation. No automatic APK install permission is requested. Keep this feed under developer control: metadata validation does not replace APK signing.
+## Publish a future release
+
+The service source, HTTP contract tests and deployment configuration are in `update-service/`. Build and verify a new APK with the same private signing key. Temporarily deploy `publisher.mjs` with an independently generated short-lived publishing token hash, upload the signed APK and source using `publish-release.py`, and publish the manifest last. The publisher validates file checksums, app identity, own-host URLs and the expected certificate field. Verify the actual APK signature separately; metadata is not a substitute for Android signing.
+
+After publication, deploy `service.mjs` with only its R2 binding, removing the publishing module and token hash. Verify public reads and rejected writes, then destroy the private temporary token. Never commit tokens or signing keys. `wrangler.jsonc` targets this read-only production configuration.
 
 ## Preserve app data and upgrade signing
 
-Use the same signing certificate as 0.4.x/0.5.0. The delivered local APK uses the existing key, verified against certificate SHA-256:
+The delivered APK retains the package and backed-up development signing certificate used by the v0.4.x–v0.7.x line:
 
 `0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3`
 
-Install over the existing app; uninstalling removes its local data. The signing key is deliberately absent from source control and source ZIPs.
+Install over the existing app to retain its data. Uninstalling removes private data. The key is absent from source control and source ZIPs.
 
-GitHub Actions creates a test/debug APK with the runner’s debug key by default. That CI artifact is for clean test installations, and **cannot update this signed installation** until the original key is configured securely. Do not publish the runner-signed APK as an upgrade. The workflow does not publish releases automatically.
+GitHub Actions creates a test APK with the runner’s debug key. It cannot update the delivered signed installation until the existing key is configured securely. Do not publish the runner-signed APK as an upgrade. The workflow does not publish releases automatically.
 
 ## Search privacy
 
-Typing at least two characters fetches phrase suggestions and playable song metadata from YouTube through NewPipe Extractor. Home also fetches metadata for its first three mixes. The selected music country is supplied. Up to eight suggestions are shown; recent matching searches come first. At most 20 recent terms are stored in private device preferences. URLs are not added to history. Settings and the search screen provide clear/remove controls. Local phone-music search does not request remote suggestions. No analytics backend is used.
+Typing at least two characters fetches suggestions and playable song metadata from YouTube through NewPipe Extractor. Home fetches its first three mixes. The selected country is supplied. At most 20 recent terms are stored privately on the device, with clear/remove controls. Local phone-music searches do not request remote suggestions. No analytics backend is used.
 
-Primary API reference for suggestions: https://teamnewpipe.github.io/NewPipeExtractor/javadoc/org/schabi/newpipe/extractor/suggestion/SuggestionExtractor.html
+Primary suggestion API reference: https://teamnewpipe.github.io/NewPipeExtractor/javadoc/org/schabi/newpipe/extractor/suggestion/SuggestionExtractor.html

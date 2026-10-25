@@ -59,15 +59,17 @@ public class AppReleaseTest {
     updates.snooze(release);
     assertTrue(new UpdateChecker(c).snoozed(release));
     assertFalse(updates.snoozed(new AppRelease(10, "next", "summary", "https://example.com")));
-    updates.source("https://example.com/stable.json");
-    assertFalse(updates.snoozed(release));
+    c.getSharedPreferences("app_updates", 0)
+        .edit()
+        .putString("source", "https://example.com/old-custom.json")
+        .commit();
+    assertEquals(BuildConfig.UPDATE_FEED_URL, updates.source());
     assertTrue(updates.shouldCheck(System.currentTimeMillis()));
     c.getSharedPreferences("app_updates", 0)
         .edit()
         .putLong("checked_at", System.currentTimeMillis())
         .commit();
     assertFalse(updates.shouldCheck(System.currentTimeMillis()));
-    updates.source("");
-    assertFalse(updates.shouldCheck(System.currentTimeMillis()));
+    assertTrue(updates.source().startsWith("https://"));
   }
 }

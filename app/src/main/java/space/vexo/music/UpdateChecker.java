@@ -28,12 +28,7 @@ final class UpdateChecker {
   }
 
   String source() {
-    return prefs.getString("source", BuildConfig.UPDATE_FEED_URL);
-  }
-
-  void source(String value) throws IOException {
-    String url = value.trim().isEmpty() ? "" : AppRelease.https(value.trim());
-    prefs.edit().putString("source", url).remove("checked_at").remove("snoozed").apply();
+    return BuildConfig.UPDATE_FEED_URL;
   }
 
   boolean shouldCheck(long now) {

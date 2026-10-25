@@ -25,7 +25,11 @@ public final class Visuals {
   }
 
   private static final LruCache<String, Bitmap> cache =
-      new LruCache<String, Bitmap>(12 * 1024 * 1024) {
+      new LruCache<String, Bitmap>(
+          (int)
+              Math.min(
+                  24L * 1024 * 1024,
+                  Math.max(8L * 1024 * 1024, Runtime.getRuntime().maxMemory() / 16))) {
         @Override
         protected int sizeOf(String k, Bitmap b) {
           return b.getByteCount();
@@ -53,35 +57,42 @@ public final class Visuals {
             if (url.startsWith("content://")) {
               try (java.io.InputStream in =
                   context.getContentResolver().openInputStream(android.net.Uri.parse(url))) {
-                bitmap = decode(in);
+                bitmap = ArtworkQuality.decode(in);
               }
             } else {
               if (!url.startsWith("https://")) return;
-              try (okhttp3.Response r =
-                  OnlineMusic.HTTP
-                      .newCall(new okhttp3.Request.Builder().url(url).build())
-                      .execute()) {
-                if (!r.isSuccessful() || r.body() == null) return;
-                try (java.io.InputStream in = r.body().byteStream()) {
-                  bitmap = decode(in);
+              bitmap = null;
+              String better = ArtworkQuality.higherResolution(url);
+              for (String candidate :
+                  better.equals(url) ? new String[] {url} : new String[] {better, url}) {
+                try (okhttp3.Response r =
+                    OnlineMusic.HTTP
+                        .newCall(new okhttp3.Request.Builder().url(candidate).build())
+                        .execute()) {
+                  if (!r.isSuccessful() || r.body() == null) continue;
+                  try (java.io.InputStream in = r.body().byteStream()) {
+                    bitmap = ArtworkQuality.decode(in);
+                  }
+                  if (bitmap != null && !candidate.equals(url) && bitmap.getWidth() <= 120) {
+                    bitmap.recycle();
+                    bitmap = null;
+                    continue;
+                  }
+                  if (bitmap != null) break;
+                } catch (Exception ignored) {
                 }
               }
             }
             if (bitmap == null) return;
             cache.put(url, bitmap);
+            final Bitmap loaded = bitmap;
             view.post(
                 () -> {
-                  if (url.equals(view.getTag())) view.setImageBitmap(bitmap);
+                  if (url.equals(view.getTag())) view.setImageBitmap(loaded);
                 });
           } catch (Exception ignored) {
           }
         });
-  }
-
-  private static Bitmap decode(java.io.InputStream in) {
-    BitmapFactory.Options o = new BitmapFactory.Options();
-    o.inSampleSize = 2;
-    return BitmapFactory.decodeStream(in, null, o);
   }
 
   private static final class CoverPlaceholder extends android.graphics.drawable.Drawable {

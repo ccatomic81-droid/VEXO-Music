@@ -37,6 +37,8 @@ public class DiscoveryUiTest {
   @Before
   public void seed() {
     Application app = RuntimeEnvironment.getApplication();
+    new UpdateChecker(app).automatic(false);
+    new UserProfile(app).saveName("Listener");
     new UpdateChecker(app).seen(BuildConfig.VERSION_CODE);
     app.getSharedPreferences("settings", 0).edit().putString("region", "LK").commit();
     Shadows.shadowOf(app)

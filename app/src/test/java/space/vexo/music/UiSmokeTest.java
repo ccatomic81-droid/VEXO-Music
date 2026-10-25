@@ -27,6 +27,8 @@ public class UiSmokeTest {
     // Robolectric does not implement Media3's real service binder. These checks
     // cover UI and storage; playback is verified separately on a device.
     android.app.Application app = org.robolectric.RuntimeEnvironment.getApplication();
+    new UpdateChecker(app).automatic(false);
+    new UserProfile(app).saveName("Listener");
     app.getSharedPreferences("settings", 0).edit().putString("region", "LK").commit();
     new RegionalFeed(
             "LK",
@@ -104,7 +106,11 @@ public class UiSmokeTest {
         Robolectric.buildActivity(MainActivity.class).setup()) {
       MainActivity a = activity.get();
       View root = a.findViewById(android.R.id.content);
-      assertNotNull(find(root, "Made for your day."));
+      assertNotNull(
+          find(
+              root,
+              new UserProfile(org.robolectric.RuntimeEnvironment.getApplication()).greeting()
+                  + ", Listener"));
       View nav = findDescription(root, "Settings tab");
       assertNull("Navigation labels must be hidden", find((View) nav.getParent(), "Home"));
       assertNull(find((View) nav.getParent(), "Search"));
@@ -149,7 +155,11 @@ public class UiSmokeTest {
     try (ActivityController<MainActivity> activity =
         Robolectric.buildActivity(MainActivity.class).setup()) {
       View root = activity.get().findViewById(android.R.id.content);
-      assertNotNull(find(root, "Made for your day."));
+      assertNotNull(
+          find(
+              root,
+              new UserProfile(org.robolectric.RuntimeEnvironment.getApplication()).greeting()
+                  + ", Listener"));
       render(root, 360, 640, "home-android8");
     }
   }
