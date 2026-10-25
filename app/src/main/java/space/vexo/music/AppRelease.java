@@ -10,9 +10,9 @@ final class AppRelease {
       "• Cloud MindRadio understands music requests with a free daily allowance.\n"
           + "• Create live listening rooms, share invites and request songs from multiple phones.\n"
           + "• Host playback sync, fair request rotation and reconnect support.\n"
-          + "• New glass surfaces, refined navigation and a Smart tab after Settings.\n"
+          + "• Solid colors, refined navigation and a Smart tab after Settings.\n"
           + "• Private history and memories remain on your device.\n"
-          + "• Development test build: playback timing depends on each device and connection.";
+          + "• Shared playback timing depends on each device and connection.";
   final int code;
   final String version, summary, url;
 

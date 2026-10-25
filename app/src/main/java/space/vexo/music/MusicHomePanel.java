@@ -118,9 +118,8 @@ final class MusicHomePanel extends MusicSurface {
     gap(body, 22);
     LinearLayout welcome = column();
     android.graphics.drawable.GradientDrawable glow =
-        new android.graphics.drawable.GradientDrawable(
-            android.graphics.drawable.GradientDrawable.Orientation.TL_BR,
-            new int[] {0xff29362b, 0xff141e21});
+        new android.graphics.drawable.GradientDrawable();
+    glow.setColor(0xff202e24);
     glow.setCornerRadius(dp(20));
     glow.setStroke(dp(1), 0xff344638);
     welcome.setBackground(glow);

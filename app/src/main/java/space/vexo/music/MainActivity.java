@@ -512,9 +512,8 @@ public final class MainActivity extends ComponentActivity {
   private void buildMini() {
     mini = column();
     android.graphics.drawable.GradientDrawable background =
-        new android.graphics.drawable.GradientDrawable(
-            android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT,
-            new int[] {0xff222d2b, PANEL});
+        new android.graphics.drawable.GradientDrawable();
+    background.setColor(PANEL);
     background.setCornerRadius(dp(18));
     background.setStroke(dp(1), 0xff303e39);
     mini.setBackground(background);
@@ -2424,11 +2423,6 @@ public final class MainActivity extends ComponentActivity {
     if (window == null) return;
     window.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
     window.setDimAmount(.35f);
-    if (Build.VERSION.SDK_INT >= 31)
-      try {
-        if (getWindowManager().isCrossWindowBlurEnabled()) window.setBackgroundBlurRadius(dp(24));
-      } catch (RuntimeException unavailable) {
-      }
   }
 
   private Bundle roomArgs(String action) {

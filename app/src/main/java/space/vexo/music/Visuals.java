@@ -20,11 +20,8 @@ public final class Visuals {
 
   public static GradientDrawable round(int color, float radius) {
     GradientDrawable d = new GradientDrawable();
-    if (color == PANEL) {
-      d.setColors(new int[] {0xd53b4757, 0xc91c2432});
-      d.setOrientation(GradientDrawable.Orientation.TL_BR);
-      d.setStroke(1, 0x467c96aa);
-    } else d.setColor(color);
+    d.setColor(color);
+    if (color == PANEL) d.setStroke(1, 0xff343d4c);
     d.setCornerRadius(radius);
     return d;
   }

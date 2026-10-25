@@ -5,7 +5,7 @@ import android.graphics.*;
 import android.graphics.drawable.Drawable;
 import android.view.View;
 
-/** Lightweight glass material: refraction-style highlights, translucent fill, no per-frame blur. */
+/** Opaque VEXO surfaces. The helper name is retained for existing view integrations. */
 final class Glass extends Drawable {
   private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
   private final float radius;
@@ -21,29 +21,12 @@ final class Glass extends Drawable {
     RectF b = new RectF(getBounds());
     b.inset(1, 1);
     p.setStyle(Paint.Style.FILL);
-    p.setShader(
-        new LinearGradient(
-            b.left,
-            b.top,
-            b.right,
-            b.bottom,
-            new int[] {accent ? 0x454e6647 : 0x503d475d, 0xb91b2333, 0xd2151c2a},
-            null,
-            Shader.TileMode.CLAMP));
+    p.setColor(accent ? 0xff253526 : Visuals.PANEL);
     c.drawRoundRect(b, radius, radius, p);
     p.setStyle(Paint.Style.STROKE);
     p.setStrokeWidth(1.2f);
-    p.setShader(
-        new LinearGradient(
-            b.left,
-            b.top,
-            b.right,
-            b.bottom,
-            new int[] {0x77ffffff, 0x154f7c8d, 0x395f7288},
-            null,
-            Shader.TileMode.CLAMP));
+    p.setColor(accent ? 0xff40543a : 0xff343d4c);
     c.drawRoundRect(b, radius, radius, p);
-    p.setShader(null);
     p.setStyle(Paint.Style.FILL);
   }
 
@@ -76,19 +59,13 @@ final class Glass extends Drawable {
   }
 
   static Drawable dialogBackdrop(Context context) {
-    android.graphics.drawable.GradientDrawable d =
-        new android.graphics.drawable.GradientDrawable(
-            android.graphics.drawable.GradientDrawable.Orientation.TL_BR,
-            new int[] {0xdf203a3b, 0xee131c2c, 0xe729243d});
+    android.graphics.drawable.GradientDrawable d = new android.graphics.drawable.GradientDrawable();
+    d.setColor(Visuals.PANEL);
     d.setCornerRadius(24 * context.getResources().getDisplayMetrics().density);
     return d;
   }
 
   static Drawable backdrop() {
-    android.graphics.drawable.GradientDrawable d =
-        new android.graphics.drawable.GradientDrawable(
-            android.graphics.drawable.GradientDrawable.Orientation.TL_BR,
-            new int[] {0xff172b2d, 0xff101522, 0xff211b31});
-    return d;
+    return new android.graphics.drawable.ColorDrawable(Visuals.BG);
   }
 }

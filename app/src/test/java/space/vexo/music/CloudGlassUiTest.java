@@ -45,7 +45,7 @@ public class CloudGlassUiTest {
         Robolectric.buildActivity(MainActivity.class).setup()) {
       MainActivity activity = a.get();
       View root = activity.findViewById(android.R.id.content);
-      capture(root, "glass-home-320");
+      capture(root, "solid-home-320");
       View smart = find.description(root, "Smart Experience tab"),
           settings = find.description(root, "Settings tab");
       assertNotNull(smart);
@@ -55,17 +55,17 @@ public class CloudGlassUiTest {
               > ((ViewGroup) settings.getParent()).indexOfChild(settings));
       smart.performClick();
       assertNotNull(find.text(root, "Your music. Your way."));
-      capture(root, "glass-smart-320");
+      capture(root, "solid-smart-320");
       find.text(root, "VEXO MindRadio").performClick();
       assertNotNull(find.text(root, "Ask MindRadio"));
       assertNotNull(find.text(root, "Build local radio"));
-      capture(root, "glass-mindradio-320");
+      capture(root, "solid-mindradio-320");
       find.text(root, "‹ Smart experience").performClick();
       find.text(root, "FairPlay · listen together").performClick();
       Dialog dialog = ShadowDialog.getLatestDialog();
       assertNotNull(dialog);
       assertNotNull(find.text(dialog.getWindow().getDecorView(), "Create a listening room"));
-      capture(dialog.getWindow().getDecorView(), "glass-room-320");
+      capture(dialog.getWindow().getDecorView(), "solid-room-320");
       dialog.dismiss();
     }
   }
