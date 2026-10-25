@@ -53,6 +53,7 @@ public final class MainActivity extends ComponentActivity {
                   try {
                     profile.importPhoto(uri);
                   } catch (Exception e) {
+                    AppDiagnostics.record(MainActivity.this, "profile_photo", e);
                     error =
                         e instanceof java.io.IOException && e.getMessage() != null
                             ? e.getMessage()
@@ -70,12 +71,14 @@ public final class MainActivity extends ComponentActivity {
                       });
                 });
           });
-  private final Runnable greetingClock =
-      new Runnable() {
-        public void run() {
-          if (destroyed) return;
-          if (homePanel != null) homePanel.personalize();
-          main.postDelayed(this, 60_000);
+  private boolean clockRegistered;
+  private int discoveryEpoch;
+  private Future<?> homeTask;
+  private final BroadcastReceiver clockChanged =
+      new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+          if (!destroyed && homePanel != null) homePanel.personalize();
         }
       };
   private MediaController controller;
@@ -84,6 +87,7 @@ public final class MainActivity extends ComponentActivity {
   private TextView miniTitle, miniArtist;
   private ImageView miniArt;
   private Icon miniPlay;
+  private ProgressBar miniProgress;
   private String tab = "Home", shelf = "Phone", query = "";
   private List<Track> local = new ArrayList<>(), results = new ArrayList<>();
   private OnlineMusic.Results onlinePage;
@@ -108,7 +112,7 @@ public final class MainActivity extends ComponentActivity {
   private MusicPreview musicPreview;
   private MixCatalogue mixCatalogue;
   private MusicHomePanel homePanel;
-  private final ExecutorService mixIo = Executors.newFixedThreadPool(2);
+  private final ThreadPoolExecutor mixIo = (ThreadPoolExecutor) Executors.newFixedThreadPool(2);
   private final Set<String> prefetchingMixes = new HashSet<>();
   private final Set<String> attemptedMixes = new HashSet<>();
   private String homeFilter = "All",
@@ -269,7 +273,8 @@ public final class MainActivity extends ComponentActivity {
                 });
             updatePlayback();
           } catch (Exception e) {
-            message("Could not connect to the player. Reopen the app.");
+            AppDiagnostics.record(this, "player_connection", e);
+            message("Could not connect to the player. Try Refresh & repair in Settings.");
           }
         },
         androidx.core.content.ContextCompat.getMainExecutor(this));
@@ -310,8 +315,6 @@ public final class MainActivity extends ComponentActivity {
     scanPhone();
     loadHome(false);
     if (!activeMix.isEmpty()) loadMix(false);
-    main.post(tick);
-    main.post(greetingClock);
     main.postDelayed(this::announceOrCheckUpdates, 700);
   }
 
@@ -322,10 +325,39 @@ public final class MainActivity extends ComponentActivity {
       checkUpdates(false);
   }
 
+  @android.annotation.SuppressLint(
+      "UnspecifiedRegisterReceiverFlag") // Only protected system actions below.
   @Override
   protected void onResume() {
     super.onResume();
+    main.removeCallbacks(tick);
+    main.post(tick);
     if (homePanel != null) homePanel.personalize();
+    if (!clockRegistered) {
+      IntentFilter filter = new IntentFilter(Intent.ACTION_TIME_TICK);
+      filter.addAction(Intent.ACTION_TIME_CHANGED);
+      filter.addAction(Intent.ACTION_TIMEZONE_CHANGED);
+      // All three actions are protected system broadcasts. Older Android versions do not
+      // require AndroidX's app-private receiver permission for this system-only receiver.
+      if (Build.VERSION.SDK_INT >= 33)
+        registerReceiver(clockChanged, filter, Context.RECEIVER_NOT_EXPORTED);
+      else registerReceiver(clockChanged, filter);
+      clockRegistered = true;
+    }
+  }
+
+  private void stopClock() {
+    if (clockRegistered) {
+      unregisterReceiver(clockChanged);
+      clockRegistered = false;
+    }
+  }
+
+  @Override
+  protected void onPause() {
+    stopClock();
+    main.removeCallbacks(tick);
+    super.onPause();
   }
 
   @Override
@@ -348,6 +380,9 @@ public final class MainActivity extends ComponentActivity {
   @Override
   protected void onDestroy() {
     destroyed = true;
+    stopClock();
+    discoveryEpoch++;
+    if (homeTask != null) homeTask.cancel(true);
     homeGeneration++;
     suggestions.close();
     musicPreview.close();
@@ -436,8 +471,7 @@ public final class MainActivity extends ComponentActivity {
       LinearLayout item = column();
       item.setGravity(Gravity.CENTER);
       Icon i = new Icon(this, names[j], selected ? LIME : MUTED);
-      item.addView(i, new LinearLayout.LayoutParams(dp(42), dp(38)));
-      i.setLayoutParams(new LinearLayout.LayoutParams(dp(48), dp(48)));
+      item.addView(i, new LinearLayout.LayoutParams(dp(48), dp(48)));
       if (selected) i.setBackground(round(PANEL, dp(16)));
       i.setContentDescription(label);
       i.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
@@ -464,17 +498,28 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private void buildMini() {
-    mini = row();
-    mini.setPadding(dp(10), dp(5), dp(4), dp(5));
-    mini.setBackground(round(PANEL, dp(18)));
-    LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-1, dp(68));
+    mini = column();
+    android.graphics.drawable.GradientDrawable background =
+        new android.graphics.drawable.GradientDrawable(
+            android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT,
+            new int[] {0xff222d2b, PANEL});
+    background.setCornerRadius(dp(18));
+    background.setStroke(dp(1), 0xff303e39);
+    mini.setBackground(background);
+    mini.setPadding(dp(8), dp(8), dp(4), dp(5));
+    mini.setMinimumHeight(dp(66));
+    LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-1, -2);
     p.setMargins(dp(14), dp(6), dp(14), dp(4));
     root.addView(mini, p);
     mini.setVisibility(View.GONE);
+    LinearLayout line = row();
+    mini.addView(line, new LinearLayout.LayoutParams(-1, -2));
     miniArt = new ImageView(this);
-    mini.addView(miniArt, new LinearLayout.LayoutParams(dp(46), dp(46)));
+    miniArt.setBackground(round(PANEL, dp(9)));
+    miniArt.setClipToOutline(true);
+    line.addView(miniArt, new LinearLayout.LayoutParams(dp(44), dp(44)));
     LinearLayout copy = column();
-    copy.setPadding(dp(12), 0, 0, 0);
+    copy.setPadding(dp(10), 0, dp(4), 0);
     miniTitle = text("", 14, TEXT, true);
     miniTitle.setSingleLine();
     miniTitle.setEllipsize(TextUtils.TruncateAt.END);
@@ -482,25 +527,28 @@ public final class MainActivity extends ComponentActivity {
     miniArtist.setSingleLine();
     miniArtist.setEllipsize(TextUtils.TruncateAt.END);
     copy.addView(miniTitle);
-    gap(copy, 5);
+    gap(copy, 4);
     copy.addView(miniArtist);
-    mini.addView(copy, new LinearLayout.LayoutParams(0, -2, 1));
-    miniPlay =
-        icon(
-            "play",
-            LIME,
-            () -> {
-              togglePlay();
-              showPlayer();
-            });
-    mini.addView(miniPlay);
-    mini.addView(
+    line.addView(copy, new LinearLayout.LayoutParams(0, -2, 1));
+    miniPlay = icon("play", LIME, this::togglePlay);
+    line.addView(miniPlay);
+    line.addView(
         icon(
             "next",
             TEXT,
             () -> {
               if (controller != null) controller.seekToNextMediaItem();
             }));
+    miniProgress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+    miniProgress.setMax(1000);
+    miniProgress.setProgressTintList(android.content.res.ColorStateList.valueOf(LIME));
+    miniProgress.setProgressBackgroundTintList(
+        android.content.res.ColorStateList.valueOf(0xff3b4544));
+    miniProgress.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+    LinearLayout.LayoutParams progress = new LinearLayout.LayoutParams(-1, dp(2));
+    progress.setMargins(dp(5), dp(5), dp(5), 0);
+    mini.addView(miniProgress, progress);
+    mini.setContentDescription("Open now playing");
     mini.setOnClickListener(v -> showPlayer());
   }
 
@@ -615,37 +663,42 @@ public final class MainActivity extends ComponentActivity {
   private void loadHome(boolean force) {
     if (!profile.complete()) return;
     String country = RegionPolicy.current(this);
-    if (homeLoading) return;
+    if (homeLoading && !force) return;
+    if (force && homeTask != null) homeTask.cancel(true);
     if (!force
         && homeFeed != null
         && homeFeed.country.equals(country)
+        && System.currentTimeMillis() >= homeFeed.fetchedAt
         && System.currentTimeMillis() - homeFeed.fetchedAt < 30 * 60_000L) return;
     homeLoading = true;
     homeError = "";
     int generation = ++homeGeneration;
     if (tab.equals("Home")) render();
-    io.execute(
-        () -> {
-          try {
-            RegionalFeed found = RegionalFeed.fetch(country);
-            found.persist(this);
-            main.post(
-                () -> {
-                  if (destroyed || generation != homeGeneration) return;
-                  homeFeed = found;
-                  homeLoading = false;
-                  if (tab.equals("Home")) render();
-                });
-          } catch (Exception error) {
-            main.post(
-                () -> {
-                  if (destroyed || generation != homeGeneration) return;
-                  homeLoading = false;
-                  homeError = "Couldn’t refresh this region. Check your connection and retry.";
-                  if (tab.equals("Home")) render();
-                });
-          }
-        });
+    homeTask =
+        io.submit(
+            () -> {
+              try {
+                RegionalFeed found = RegionalFeed.fetch(country);
+                main.post(
+                    () -> {
+                      if (destroyed || generation != homeGeneration) return;
+                      found.persist(this);
+                      homeFeed = found;
+                      homeLoading = false;
+                      if (tab.equals("Home")) render();
+                    });
+              } catch (Exception error) {
+                if (!Thread.currentThread().isInterrupted())
+                  AppDiagnostics.record(this, "home_refresh", error);
+                main.post(
+                    () -> {
+                      if (destroyed || generation != homeGeneration) return;
+                      homeLoading = false;
+                      homeError = "Couldn’t refresh this region. Check your connection and retry.";
+                      if (tab.equals("Home")) render();
+                    });
+              }
+            });
   }
 
   private void renderHome() {
@@ -669,7 +722,7 @@ public final class MainActivity extends ComponentActivity {
               }
 
               public void refresh() {
-                loadHome(true);
+                refreshApp();
               }
 
               public void search() {
@@ -713,6 +766,7 @@ public final class MainActivity extends ComponentActivity {
     if (destroyed || !tab.equals("Home") || !activeMix.isEmpty() || !activeCollection.isEmpty())
       return;
     String country = RegionPolicy.current(this);
+    final int epoch = discoveryEpoch;
     List<MixCatalogue.Mix> mixes = MixCatalogue.mixes(country);
     for (MixCatalogue.Mix mix : mixes.subList(0, Math.min(3, mixes.size()))) {
       String key = country + ":" + mix.id;
@@ -727,16 +781,21 @@ public final class MainActivity extends ComponentActivity {
             try {
               songs = MixCatalogue.songs(OnlineMusic.preview(mix.query, country));
               if (songs.isEmpty()) failed = true;
-              else mixCatalogue.save(mix, country, songs);
-            } catch (Exception ignored) {
+              // Cache only after the foreground generation check below.
+            } catch (Exception error) {
               failed = true;
+              if (!Thread.currentThread().isInterrupted())
+                AppDiagnostics.record(this, "mix_refresh", error);
             }
             List<Track> found = songs;
             boolean unavailable = failed;
             main.post(
                 () -> {
+                  if (destroyed
+                      || epoch != discoveryEpoch
+                      || !country.equals(RegionPolicy.current(this))) return;
                   prefetchingMixes.remove(key);
-                  if (destroyed || !country.equals(RegionPolicy.current(this))) return;
+                  if (!unavailable) mixCatalogue.save(mix, country, found);
                   if (homePanel != null && !unavailable) homePanel.updateMix(mix, found);
                   if (activeMix.equals(mix.id)) {
                     mixLoading = false;
@@ -771,6 +830,10 @@ public final class MainActivity extends ComponentActivity {
                   .edit()
                   .putString("region", w == 0 ? "" : codes.get(w - 1))
                   .apply();
+              discoveryEpoch++;
+              mixIo.getQueue().clear();
+              attemptedMixes.clear();
+              prefetchingMixes.clear();
               homeGeneration++;
               homeLoading = false;
               homeError = "";
@@ -1786,17 +1849,19 @@ public final class MainActivity extends ComponentActivity {
           try {
             List<Track> songs = MixCatalogue.songs(OnlineMusic.regionalSearch(mix.query, country));
             if (songs.isEmpty()) throw new java.io.IOException("No songs in this mix");
-            mixCatalogue.save(mix, country, songs);
             main.post(
                 () -> {
                   if (destroyed
                       || generation != mixGeneration
                       || !country.equals(RegionPolicy.current(this))) return;
+                  mixCatalogue.save(mix, country, songs);
                   mixLoading = false;
                   mixError = "";
                   if (activeMix.equals(mix.id)) render();
                 });
           } catch (Exception e) {
+            if (!Thread.currentThread().isInterrupted())
+              AppDiagnostics.record(this, "mix_refresh", e);
             main.post(
                 () -> {
                   if (destroyed || generation != mixGeneration) return;
@@ -1970,6 +2035,101 @@ public final class MainActivity extends ComponentActivity {
     return tab.equals("Settings") ? usage : usage + "\n" + offline.status();
   }
 
+  private void refreshApp() {
+    if (destroyed) return;
+    discoveryEpoch++;
+    mixIo.getQueue().clear();
+    homeGeneration++;
+    mixGeneration++;
+    if (homeTask != null) homeTask.cancel(true);
+    homeLoading = false;
+    mixLoading = false;
+    attemptedMixes.clear();
+    prefetchingMixes.clear();
+    suggestions.clearCache();
+    musicPreview.clearCache();
+    AppRecovery.refresh(this);
+    homeFeed = null;
+    homeError = "";
+    mixError = "";
+    activeMix = "";
+    activeCollection = "";
+    tab = "Home";
+    render();
+    updatePlayback();
+    loadHome(true);
+    scanPhone();
+    message("Temporary data refreshed. Reloading music… Your saved music stays.");
+  }
+
+  private void reportProblem() {
+    String report = new AppDiagnostics(this).report();
+    ScrollView scroll = new ScrollView(this);
+    LinearLayout body = column();
+    body.setPadding(dp(20), dp(8), dp(20), dp(16));
+    scroll.addView(body);
+    TextView intro =
+        text(
+            "To: "
+                + AppDiagnostics.EMAIL
+                + "\n\n"
+                + "Review the report below. Your email app opens so you can choose whether to send"
+                + " it.",
+            14,
+            TEXT,
+            false);
+    body.addView(intro);
+    gap(body, 16);
+    EditText description = new EditText(this);
+    description.setTextColor(TEXT);
+    description.setHintTextColor(MUTED);
+    description.setHint("What happened? (optional)");
+    description.setContentDescription("Describe the problem");
+    description.setInputType(
+        android.text.InputType.TYPE_CLASS_TEXT
+            | android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE
+            | android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+    description.setFilters(
+        new android.text.InputFilter[] {new android.text.InputFilter.LengthFilter(2000)});
+    body.addView(description);
+    gap(body, 14);
+    TextView details = text(report, 12, MUTED, false);
+    details.setTextIsSelectable(true);
+    body.addView(details);
+    new AlertDialog.Builder(this)
+        .setTitle("Report a problem")
+        .setView(scroll)
+        .setNegativeButton("Cancel", null)
+        .setNeutralButton(
+            "Copy report", (d, w) -> copyReport(description.getText() + "\n\n" + report))
+        .setPositiveButton(
+            "Open email",
+            (d, w) -> {
+              try {
+                startActivity(AppDiagnostics.email(report, description.getText().toString()));
+              } catch (ActivityNotFoundException noEmail) {
+                new AlertDialog.Builder(this)
+                    .setTitle("No email app available")
+                    .setMessage(
+                        "Copy this report and send it to "
+                            + AppDiagnostics.EMAIL
+                            + " from your email service.")
+                    .setPositiveButton(
+                        "Copy report",
+                        (x, y) -> copyReport(description.getText() + "\n\n" + report))
+                    .setNegativeButton("Close", null)
+                    .show();
+              }
+            })
+        .show();
+  }
+
+  private void copyReport(String report) {
+    ((android.content.ClipboardManager) getSystemService(CLIPBOARD_SERVICE))
+        .setPrimaryClip(android.content.ClipData.newPlainText("VEXO diagnostic report", report));
+    message("Report copied");
+  }
+
   private void renderSettings() {
     header("MAKE IT YOURS", "Settings");
     ScrollView scroll = new ScrollView(this);
@@ -1978,6 +2138,30 @@ public final class MainActivity extends ComponentActivity {
     scroll.addView(body);
     content.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
     setting(body, "Your profile", profile.name() + " · name and photo", false, this::openProfile);
+    setting(
+        body,
+        "Refresh & repair",
+        "Reload music and temporary data · saved music stays",
+        false,
+        this::refreshApp);
+    setting(
+        body,
+        "Report a problem",
+        "Review device diagnostics and email " + AppDiagnostics.EMAIL,
+        false,
+        this::reportProblem);
+    setting(
+        body,
+        "Automatic recovery",
+        getSharedPreferences("settings", 0).getBoolean("auto_repair", true)
+            ? "On · refresh temporary data after an app crash"
+            : "Off · use Refresh & repair manually",
+        false,
+        () -> {
+          android.content.SharedPreferences prefs = getSharedPreferences("settings", 0);
+          prefs.edit().putBoolean("auto_repair", !prefs.getBoolean("auto_repair", true)).apply();
+          render();
+        });
     setting(
         body,
         "Music region",
@@ -2243,13 +2427,13 @@ public final class MainActivity extends ComponentActivity {
                   updateDialog.show();
                 });
           } catch (Exception e) {
+            AppDiagnostics.record(this, "update_check", e);
             main.post(
                 () -> {
                   updateChecking = false;
                   if (!destroyed && manual)
                     message(
-                        "Couldn’t check for updates. Check your connection, then"
-                            + " try again.");
+                        "Couldn’t check for updates. Check your connection, then" + " try again.");
                 });
           }
         });
@@ -2358,6 +2542,13 @@ public final class MainActivity extends ComponentActivity {
         @Override
         public void run() {
           if (destroyed) return;
+          if (controller != null && miniProgress != null) {
+            long duration = controller.getDuration();
+            miniProgress.setProgress(
+                duration > 0
+                    ? (int) Math.min(1000, controller.getCurrentPosition() * 1000 / duration)
+                    : 0);
+          }
           if (controller != null
               && seek != null
               && playerDialog != null

@@ -27,7 +27,8 @@ public class ProfileAndArtworkTest {
     assertEquals("Kavindu Kavishka", profile.name());
     assertTrue(profile.saveName("ක්‍රිෂාන්"));
     assertEquals("ක්‍රිෂාන්", profile.name());
-    assertEquals("Good night", UserProfile.greeting(4));
+    assertEquals("Good night", UserProfile.greeting(3));
+    assertEquals("Good morning", UserProfile.greeting(4));
     assertEquals("Good morning", UserProfile.greeting(5));
     assertEquals("Good morning", UserProfile.greeting(11));
     assertEquals("Good afternoon", UserProfile.greeting(12));

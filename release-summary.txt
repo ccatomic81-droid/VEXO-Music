@@ -1,5 +1,6 @@
-Your Home, with your name and optional profile photo.
-Time-based morning, afternoon, evening and night greetings.
-Built-in update checks and signed downloads; no URL setup.
-Sharper cover art with higher-resolution sources and decoding.
-Search suggestions, playlists, offline saves and crossfade remain.
+Early-morning greetings now start at 4 AM and follow phone time changes immediately.
+Refined Home layout, responsive covers, improved spacing and mini-player progress.
+Refresh & repair reloads temporary data while preserving saved music and playlists.
+Optional automatic cache recovery on the next launch after a recorded crash.
+Review and email local diagnostic reports to ccatomic81@gmail.com.
+Bounded artwork loading and low-memory handling improve reliability.

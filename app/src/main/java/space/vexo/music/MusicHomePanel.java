@@ -48,7 +48,7 @@ final class MusicHomePanel extends MusicSurface {
     LinearLayout tile = mixCards.get(mix.id);
     if (tile == null || songs.isEmpty()) return;
     tile.removeViewAt(0);
-    tile.addView(cover(mix.name, songs, 144, mix.color), 0);
+    tile.addView(cover(mix.name, songs, shelfCardSize(), mix.color), 0);
   }
 
   interface Listener {
@@ -102,18 +102,41 @@ final class MusicHomePanel extends MusicSurface {
     TextView region = action(RegionPolicy.name(country) + " ▾", false, listener::region);
     region.setTextSize(11);
     region.setPadding(dp(10), dp(12), dp(10), dp(12));
-    region.setMaxWidth(dp(140));
+    region.setMaxWidth(dp(108));
     region.setMaxLines(2);
     region.setContentDescription("Change music region. Current: " + RegionPolicy.name(country));
     brand.addView(region);
+    Icon refresh = new Icon(c, "refresh", MUTED);
+    refresh.setGlyphSize(20);
+    refresh.setContentDescription("Refresh Home");
+    refresh.setTooltipText("Refresh music");
+    refresh.setOnClickListener(v -> listener.refresh());
+    brand.addView(refresh, new LinearLayout.LayoutParams(dp(48), dp(48)));
     body.addView(brand);
-    gap(body, 20);
-    greeting = text("", 27, TEXT, true);
+    gap(body, 22);
+    LinearLayout welcome = column();
+    android.graphics.drawable.GradientDrawable glow =
+        new android.graphics.drawable.GradientDrawable(
+            android.graphics.drawable.GradientDrawable.Orientation.TL_BR,
+            new int[] {0xff29362b, 0xff141e21});
+    glow.setCornerRadius(dp(20));
+    glow.setStroke(dp(1), 0xff344638);
+    welcome.setBackground(glow);
+    welcome.setPadding(dp(18), dp(20), dp(18), dp(20));
+    TextView eyebrow = text("YOUR DAILY SOUNDTRACK", 10, LIME, true);
+    eyebrow.setLetterSpacing(.12f);
+    welcome.addView(eyebrow);
+    gap(welcome, 10);
+    greeting = text("", 26, TEXT, true);
     greeting.setMaxLines(3);
     greeting.setEllipsize(android.text.TextUtils.TruncateAt.END);
-    body.addView(greeting);
+    welcome.addView(greeting);
+    gap(welcome, 10);
+    TextView subtitle = text("A little music. A better day.", 13, 0xffb8c6ba, false);
+    welcome.addView(subtitle);
+    body.addView(welcome, new LinearLayout.LayoutParams(-1, -2));
     personalize();
-    gap(body, 16);
+    gap(body, 18);
     HorizontalScrollView filters = new HorizontalScrollView(c);
     filters.setHorizontalScrollBarEnabled(false);
     LinearLayout chips = row();
@@ -183,7 +206,7 @@ final class MusicHomePanel extends MusicSurface {
         body.addView(text("Keep your favourite songs together.", 13, MUTED, false));
       } else {
         LinearLayout saved = shelf();
-        for (String name : names) {
+        for (String name : names.subList(0, Math.min(8, names.size()))) {
           List<Track> songs = store.tracks("playlist:" + name);
           card(
               saved,
@@ -250,11 +273,18 @@ final class MusicHomePanel extends MusicSurface {
     LinearLayout tile = row();
     tile.setBackground(round(PANEL, dp(12)));
     tile.setPadding(dp(8), dp(10), dp(8), dp(10));
-    tile.setMinimumHeight(dp(72));
-    FrameLayout art = cover(name, songs, 38, color);
+    tile.setMinimumHeight(dp(64));
+    FrameLayout art = cover(name, songs, 36, color);
+    if (songs.isEmpty()) {
+      art.removeAllViews();
+      Icon icon = new Icon(getContext(), glyph.equals("history") ? "timer" : glyph, TEXT);
+      icon.setGlyphSize(19);
+      art.addView(icon, new FrameLayout.LayoutParams(-1, -1));
+    }
     tile.addView(art);
     TextView label = text(name, 12, TEXT, true);
-    label.setMaxLines(3);
+    label.setMaxLines(2);
+    label.setEllipsize(android.text.TextUtils.TruncateAt.END);
     label.setPadding(dp(8), 0, 0, 0);
     tile.addView(label, new LinearLayout.LayoutParams(0, -2, 1));
     tile.setContentDescription("Open " + name);
@@ -266,7 +296,8 @@ final class MusicHomePanel extends MusicSurface {
 
   private void songCard(LinearLayout shelf, Track song, Runnable play) {
     LinearLayout card = column();
-    FrameLayout image = cover(song.title, Collections.singletonList(song), 144, 0xff465d77);
+    FrameLayout image =
+        cover(song.title, Collections.singletonList(song), shelfCardSize(), 0xff465d77);
     Icon start = new Icon(getContext(), "play", BG);
     start.setBackground(round(LIME, dp(24)));
     FrameLayout.LayoutParams button =
@@ -288,7 +319,7 @@ final class MusicHomePanel extends MusicSurface {
     card.addView(artist);
     card.setOnClickListener(v -> play.run());
     card.setContentDescription("Play " + song.title + " by " + song.artist);
-    LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(dp(144), -2);
+    LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(dp(shelfCardSize()), -2);
     p.setMargins(0, 0, dp(14), 0);
     shelf.addView(card, p);
   }

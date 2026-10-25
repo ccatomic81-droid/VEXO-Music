@@ -173,7 +173,7 @@ public final class OnlineMusic {
 
     Cached(String u) {
       uri = u;
-      at = System.currentTimeMillis();
+      at = android.os.SystemClock.elapsedRealtime();
     }
   }
 
@@ -181,12 +181,17 @@ public final class OnlineMusic {
     cache.clear();
   }
 
+  public static synchronized void resetTransientCaches() {
+    cache.clear();
+    relatedCache.clear();
+  }
+
   public static String resolve(String url, boolean dataSaver) throws IOException {
     initialize();
     String key = url + dataSaver;
     synchronized (OnlineMusic.class) {
       Cached c = cache.get(key);
-      if (c != null && System.currentTimeMillis() - c.at < 600_000) return c.uri;
+      if (c != null && android.os.SystemClock.elapsedRealtime() - c.at < 600_000) return c.uri;
     }
     try {
       StreamInfo i = StreamInfo.getInfo(ServiceList.YouTube, url);

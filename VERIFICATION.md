@@ -1,36 +1,36 @@
-# VEXO Music 0.8.0 — verification
+# VEXO Music 0.9.0 — verification
 
 Checked 25 October 2026.
 
 | Check | Result |
 | --- | --- |
-| Normal host suite | 84 passed, 5 opt-in live checks skipped (89 total) |
-| Clean build | testDebugUnitTest lintDebug assembleDebug passed |
-| Lint | 0 errors; warnings listed in verification/lint-results-debug.txt |
-| Update service contract | 2 Node tests passed |
-| Package/version | space.vexo.music.radio / 0.8.0 / code 10; actual APK manifest checked |
-| Signing | Same v2 signing certificate as v0.4.x–v0.7.x |
-| Profile | Required name, Unicode, persistence, draft recreation, photo copying/cropping and invalid-file preservation passed |
-| Android 8 compatibility | Photo import and existing Home layout checks passed |
-| Artwork | Small images keep resolution; large images bound to 1024; known-host URL upgrades with fallback |
-| UI | First-open profile and personalized Home rendered and inspected at 320×640; existing small/large-text suites passed |
-| Public delivery | Live 0.8.0 feed and complete APK/source downloads verified against local SHA-256 |
-| Physical phone listening | Not verified here |
+| Normal host suite | 90 passed, 5 opt-in live checks skipped (95 total) |
+| Build | Clean test/lint/build passed; final checks passed after artwork queue capacity adjustment |
+| Lint | 0 errors, 30 non-fatal warnings |
+| Update service contracts | 2 Node tests passed |
+| Package/version | space.vexo.music.radio / 0.9.0 / code 11; actual APK manifest checked |
+| Signing | Original v2 certificate retained |
+| Greeting | 04:00 morning boundary, foreground clock/time-zone broadcasts and resume update passed |
+| Android 8 | Home compatibility and photo import checks passed |
+| Recovery | Crash marker consumed once; automatic-recovery opt-out respected; temporary caches cleared |
+| Data retention | Profile, playlists, favourites/history, recent searches, queue position and offline audio preserved in recovery checks |
+| Diagnostics | 12-record bound; exception messages and user data excluded; report addressed to requested mailbox |
+| Report UI | Preview and clipboard action passed; email intent validated |
+| Artwork queue | 100-request stress check stays within 48 queued tasks and repair drops pending work |
+| UI | Native renders inspected at 360×800 and 320×640 with 1.6× text, including mini-player |
+| Device playback | Physical Infinix/OEM behavior and audible streaming not verified here |
+| Email delivery | Opens a user-reviewed email draft; actual mail-client sending/delivery not verified here |
 
-The suite uses Robolectric and controlled metadata, not an Android emulator or physical phone. Rendered Home fixtures use placeholders; they do not represent a bundled music catalogue. These checks establish layout, persistence, image decoding and request logic, not physical-device audio or source-image availability. Existing search, playlist, radio, offline and crossfade tests passed.
+These are Robolectric host-side checks and synthetic native renders, not physical-device tests. Placeholders in fixture renders do not represent missing production artwork or a bundled music catalogue. Actual covers still depend on the music provider. Existing search, playlist, offline, radio and crossfade checks passed.
 
-The optional live discovery probe requests real music metadata and artwork URLs; it does not listen to audio. Earlier live-network reports are historical. Source availability can still prevent playback. The app requests larger covers where supported but cannot improve detail absent from the source.
+The final APK was verified with aapt and apksigner. The update feed is built in and public release files use the same signing identity as previous delivered versions. The CI APK uses the runner's different debug signer and remains a clean-install test artifact.
 
-Updates now use the compile-time public service with no configurable URL field. The delivered APK has the original signer; runner-signed CI artifacts remain clean-install test builds. The publication tool uploads files before the manifest and checks checksums. After publication, the temporary publishing deployment is replaced with the read-only service and public downloads are checked against the local hashes. See UPDATES.md and update-service/.
+Warnings include existing resource/localization, custom-view tooling and drawing-allocation suggestions, plus diagnostic storage-space guidance. The synchronous preference commit in fatal-error recording is intentional so the crash marker persists before Android terminates the process.
+
+Automatic repair refreshes only replaceable discovery, stream-address and artwork caches. It does not delete private collections/audio, restart silently, reset Android permissions, or guarantee repair of provider/network/OS problems. Reports remain local until a user chooses to share them. See ISSUES-FIXED.md for findings and limits and UPDATES.md for release publication.
 
 Certificate SHA-256: `0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3`
 
-APK SHA-256: `0e32923143a7ac7e02d1af3d445b0d0bb24a023afba85eefb240e342ca29b19f`
+APK SHA-256: `4b8a86d6b3dd68a1ea8294ebdef988c69e6a583e71d939248802a7b412eea026`
 
-Install over the existing app to retain data. Signing keys, publishing tokens, SDK files, build outputs and Gradle caches are excluded from source.
-
-## Public release verification
-
-The live feed returned the correct app ID, version code 10, version name 0.8.0, signed APK URL, source URL, byte count, checksum and certificate identity field. Complete public APK and source downloads matched the local originals exactly. HEAD, byte-range resume (206), ETag revalidation (304), and rejection of public writes (405) passed. The production deployment has only the RELEASES R2 binding; the temporary token/hash and publishing entrypoint were removed.
-
-GitHub Actions run 40142408723 completed successfully for the app code, Android checks, update-service checks and package verification.
+Install over the existing app to retain data. Private signing/publishing keys, SDK files, Gradle caches and build outputs are excluded from the source archive.

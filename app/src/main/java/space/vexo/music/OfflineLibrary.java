@@ -203,6 +203,9 @@ public final class OfflineLibrary {
                   success = true;
                 }
               } catch (Exception error) {
+                if (!Thread.currentThread().isInterrupted()
+                    && !(error instanceof CancellationException))
+                  AppDiagnostics.record(context, "offline_save", error);
                 synchronized (this) {
                   if (token == generation)
                     state =

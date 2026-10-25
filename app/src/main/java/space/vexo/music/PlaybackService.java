@@ -264,6 +264,12 @@ public final class PlaybackService extends MediaSessionService {
           }
 
           @Override
+          public void onPlayerError(androidx.media3.common.PlaybackException error) {
+            AppDiagnostics.record(PlaybackService.this, "playback", error);
+            OnlineMusic.clearCache();
+          }
+
+          @Override
           public void onPlaybackParametersChanged(
               androidx.media3.common.PlaybackParameters parameters) {
             getSharedPreferences("settings", 0).edit().putFloat("speed", parameters.speed).apply();

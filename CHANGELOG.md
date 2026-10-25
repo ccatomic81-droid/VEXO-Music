@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.9.0 — Refresh and repair (25 October 2026)
+
+- Morning begins at 04:00; local-minute, clock/time-zone and resume updates keep greetings current.
+- New greeting card, responsive shelves, improved quick links, rounded mini-player with progress and large-text height.
+- Visible Home Refresh, Settings Refresh & repair, and optional next-launch recovery after a recorded crash.
+- Local, bounded diagnostics with a reviewable email report to ccatomic81@gmail.com and clipboard fallback.
+- Bounded artwork workers/queue, weak view references, low-memory cache release and stale-result protection.
+- Fresh Home retries now work during a request; generation checks protect repaired caches from old results.
+- Stream-address expiry uses a monotonic clock; future-dated Home caches refresh after clock corrections.
+- Same package and private signing identity; built-in public release feed retained.
+
 ## 0.8.0 — Your Home (25 October 2026)
 
 - First-open name setup, optional private profile photo and profile editing.

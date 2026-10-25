@@ -88,6 +88,11 @@ final class SearchSuggestions implements AutoCloseable {
     main.postDelayed(pending, 300);
   }
 
+  void clearCache() {
+    cancel();
+    cache.clear();
+  }
+
   void cancel() {
     generation++;
     if (pending != null) main.removeCallbacks(pending);

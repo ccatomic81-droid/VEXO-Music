@@ -29,7 +29,7 @@ final class UserProfile {
 
   static String cleanName(String value) {
     if (value == null) return "";
-    return value.replaceAll("[\\p{Cc}]", "").trim().replaceAll("\\s+", " ");
+    return value.replaceAll("\\s+", " ").replaceAll("[\\p{Cc}]", "").trim();
   }
 
   boolean saveName(String value) {
@@ -40,7 +40,7 @@ final class UserProfile {
   }
 
   static String greeting(int hour) {
-    if (hour >= 5 && hour < 12) return "Good morning";
+    if (hour >= 4 && hour < 12) return "Good morning";
     if (hour >= 12 && hour < 17) return "Good afternoon";
     if (hour >= 17 && hour < 21) return "Good evening";
     return "Good night";
@@ -177,6 +177,9 @@ final class UserProfile {
         throw e;
       }
       prefs.edit().putLong("photo_version", System.currentTimeMillis()).apply();
+    } catch (OutOfMemoryError lowMemory) {
+      Visuals.clearArtwork();
+      throw new IOException("Not enough memory for this photo. Try a smaller image.", lowMemory);
     } finally {
       if (decoded != null) decoded.recycle();
       if (square != null) square.recycle();

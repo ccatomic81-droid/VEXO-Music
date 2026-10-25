@@ -124,10 +124,21 @@ class MusicSurface extends ScrollView {
     return cards;
   }
 
+  int shelfCardSize() {
+    int width = getResources().getConfiguration().screenWidthDp;
+    if (width <= 0)
+      width =
+          Math.round(
+              getResources().getDisplayMetrics().widthPixels
+                  / getResources().getDisplayMetrics().density);
+    return Math.max(124, Math.min(176, (width - 40 - 14) / 2));
+  }
+
   void card(
       LinearLayout shelf, String name, String detail, List<Track> songs, int color, Runnable open) {
     LinearLayout card = column();
-    card.addView(cover(name, songs, 144, color));
+    int size = shelfCardSize();
+    card.addView(cover(name, songs, size, color));
     gap(card, 10);
     TextView title = text(name, 15, TEXT, true);
     title.setMaxLines(2);
@@ -141,7 +152,7 @@ class MusicSurface extends ScrollView {
     card.setPadding(0, 0, 0, dp(6));
     card.setContentDescription("Open " + name);
     card.setOnClickListener(v -> open.run());
-    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dp(144), -2);
+    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dp(size), -2);
     params.setMargins(0, 0, dp(14), 0);
     shelf.addView(card, params);
   }

@@ -6,8 +6,9 @@ import android.graphics.drawable.GradientDrawable;
 import android.util.LruCache;
 import android.view.View;
 import android.widget.ImageView;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.lang.ref.WeakReference;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public final class Visuals {
   public static final int BG = Color.rgb(13, 16, 23),
@@ -35,7 +36,27 @@ public final class Visuals {
           return b.getByteCount();
         }
       };
-  private static final ExecutorService images = Executors.newFixedThreadPool(3);
+  private static final ThreadPoolExecutor images =
+      new ThreadPoolExecutor(
+          2,
+          2,
+          30,
+          TimeUnit.SECONDS,
+          new ArrayBlockingQueue<>(48),
+          new ThreadPoolExecutor.DiscardOldestPolicy());
+  private static final AtomicInteger imageGeneration = new AtomicInteger();
+
+  static void clearArtwork() {
+    synchronized (cache) {
+      imageGeneration.incrementAndGet();
+      images.getQueue().clear();
+      cache.evictAll();
+    }
+  }
+
+  static int pendingArtwork() {
+    return images.getQueue().size();
+  }
 
   public static void artwork(ImageView view, String url) {
     view.setTag(url);
@@ -50,9 +71,16 @@ public final class Visuals {
       return;
     }
     Context context = view.getContext().getApplicationContext();
+    WeakReference<ImageView> target = new WeakReference<>(view);
+    int generation = imageGeneration.get();
     images.execute(
         () -> {
           try {
+            ImageView current = target.get();
+            if (current == null
+                || !url.equals(current.getTag())
+                || generation != imageGeneration.get()) return;
+            current = null;
             Bitmap bitmap;
             if (url.startsWith("content://")) {
               try (java.io.InputStream in =
@@ -84,12 +112,25 @@ public final class Visuals {
               }
             }
             if (bitmap == null) return;
-            cache.put(url, bitmap);
+            synchronized (cache) {
+              if (generation != imageGeneration.get()) {
+                bitmap.recycle();
+                return;
+              }
+              cache.put(url, bitmap);
+            }
             final Bitmap loaded = bitmap;
-            view.post(
-                () -> {
-                  if (url.equals(view.getTag())) view.setImageBitmap(loaded);
-                });
+            new android.os.Handler(android.os.Looper.getMainLooper())
+                .post(
+                    () -> {
+                      ImageView destination = target.get();
+                      if (destination != null
+                          && generation == imageGeneration.get()
+                          && url.equals(destination.getTag())) destination.setImageBitmap(loaded);
+                    });
+          } catch (OutOfMemoryError lowMemory) {
+            clearArtwork();
+            AppDiagnostics.record(context, "artwork_memory", lowMemory);
           } catch (Exception ignored) {
           }
         });
@@ -216,6 +257,26 @@ public final class Visuals {
       p.setStrokeJoin(Paint.Join.ROUND);
       Path a = new Path();
       switch (name) {
+        case "download":
+          c.drawLine(12, 4, 12, 16, p);
+          a.moveTo(7, 11);
+          a.lineTo(12, 16);
+          a.lineTo(17, 11);
+          c.drawPath(a, p);
+          a.reset();
+          a.moveTo(5, 17);
+          a.lineTo(5, 20);
+          a.lineTo(19, 20);
+          a.lineTo(19, 17);
+          c.drawPath(a, p);
+          break;
+        case "refresh":
+          c.drawArc(5, 5, 19, 19, 45, 280, false, p);
+          a.moveTo(19, 4);
+          a.lineTo(19, 10);
+          a.lineTo(13, 10);
+          c.drawPath(a, p);
+          break;
         case "add":
           c.drawLine(5, 12, 19, 12, p);
           c.drawLine(12, 5, 12, 19, p);

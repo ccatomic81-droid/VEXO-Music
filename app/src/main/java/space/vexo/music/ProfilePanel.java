@@ -72,6 +72,16 @@ final class ProfilePanel extends MusicSurface {
     name.setHint("Enter your name");
     name.setText(draft);
     name.setContentDescription("Your name");
+    name.addTextChangedListener(
+        new android.text.TextWatcher() {
+          public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+          public void onTextChanged(CharSequence s, int start, int before, int count) {
+            name.setError(null);
+          }
+
+          public void afterTextChanged(android.text.Editable text) {}
+        });
     name.setPadding(dp(16), dp(15), dp(16), dp(15));
     name.setBackground(round(PANEL, dp(14)));
     name.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);

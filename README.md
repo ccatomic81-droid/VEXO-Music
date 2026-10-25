@@ -1,4 +1,4 @@
-# VEXO Music 0.8.0
+# VEXO Music 0.9.0
 
 Developer: **Kavindu Kavishka**.
 
@@ -6,11 +6,23 @@ Search now shows real song names, artwork and artists while typing, with direct 
 
 The source is on `ccatomic81-droid/dayspace-android`, branch `vexo-music-build`, directory `vexo/`. Build instructions and the existing package/signing identity are unchanged. Install over the previous version to keep favourites, downloads and playlists.
 
+## Refresh, repair and a calmer Home (0.9.0)
+
+The Home header now has a subtle gradient greeting, visible Refresh control, balanced collection links and two responsive cover cards across a typical phone screen. The mini-player has a rounded cover, compact spacing, a progress line and content-based height for large text. Its Play/Pause control acts directly; tap the row to open Now Playing.
+
+Tap Home’s Refresh or Settings → Refresh & repair to discard replaceable discovery/stream/artwork caches, cancel stale requests and reload music. The app preserves your name/photo, playlists, favourites, history, recent searches, queue and completed offline audio. It does not reset Android permissions or delete app data. Discovery lists need a connection to refill.
+
+Automatic recovery is on by default and can be disabled in Settings. After a recorded app crash, the next process launch refreshes the same temporary caches once. Playback errors invalidate cached stream addresses for the next retry. Recovery cannot repair missing permissions, unavailable source songs, an internet outage or a provider change requiring a new app version.
+
+Settings → Report a problem previews a local diagnostic report and opens an email addressed to **ccatomic81@gmail.com**. The user reviews and sends it using their email app; Copy report works when no email app is available. Reports include app/Android/device versions, time zone, connectivity, storage/heap and up to 12 recent issue records. Error messages, track names/URLs, recent searches, profile names and photos are excluded. A user’s optional description is included as typed. There is no background report upload, embedded mail credential or added broad permission.
+
+Home shows up to eight personal playlist cards; the Your playlists shortcut opens the full library. Artwork loading is bounded to two workers and 48 queued requests, uses weak references to screen views, discards stale results after repair, and releases replaceable cache entries on low-memory callbacks. Clock-related UI work pauses when the activity is not visible. See [ISSUES-FIXED.md](ISSUES-FIXED.md).
+
 ## Personal Home and built-in updates (0.8.0)
 
 On first launch, enter a name (1–40 characters) and optionally choose a photo using Android’s system picker. Tap the Home avatar or Settings → Your profile to edit it. VEXO copies a cropped photo into private app storage; no account, gallery-wide permission or photo upload is required. Existing playlists, favourites and downloads remain.
 
-Home uses the phone’s local time: morning 05:00–11:59, afternoon 12:00–16:59, evening 17:00–20:59 and night 21:00–04:59. The greeting refreshes while Home is open and when returning to the app.
+Home uses the phone’s local time: morning 04:00–11:59, afternoon 12:00–16:59, evening 17:00–20:59 and night 21:00–03:59. The greeting refreshes each local minute, immediately on time/time-zone changes while open, and on resume. It uses the phone’s time zone; the selected music region does not override the clock.
 
 Update checks now use the public release service built into this APK. Users do not enter an address. Settings → Check for updates checks immediately; automatic checks are optional and run at most once a day when opening VEXO. Get update opens the signed APK in the browser; Android handles installation. See [UPDATES.md](UPDATES.md).
 
@@ -76,7 +88,7 @@ Auto-save is enabled by default and attempts to save the full audio of a played 
 
 ## Install or update VEXO Music
 
-Install `VEXO-Music-0.8.0.apk`. It appears as **VEXO Music**, package `space.vexo.music.radio`, version code 10.
+Install `VEXO-Music-0.9.0.apk`. It appears as **VEXO Music**, package `space.vexo.music.radio`, version code 11.
 
 The earlier delivery workspace and its signing key were reset. The v0.4.x line uses its backed-up development signing certificate and a separate app ID so it can coexist with v0.3.0. **Keep the old app installed to preserve its favourites, playlists and offline audio. That private app data does not automatically transfer to this build.** This APK is not an in-place update to v0.3.0.
 

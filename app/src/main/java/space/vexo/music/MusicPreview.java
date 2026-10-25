@@ -94,6 +94,11 @@ final class MusicPreview implements AutoCloseable {
     return new ArrayList<>(out.subList(0, Math.min(max, out.size())));
   }
 
+  void clearCache() {
+    cancel();
+    cache.clear();
+  }
+
   void cancel() {
     generation++;
     if (pending != null) main.removeCallbacks(pending);
