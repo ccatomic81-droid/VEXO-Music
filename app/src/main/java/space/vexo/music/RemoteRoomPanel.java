@@ -213,6 +213,19 @@ final class RemoteRoomPanel extends MusicSurface {
             last = "";
             main.postDelayed(this::refresh, 250);
           });
+      if (host && session.has("invite"))
+        button(
+            "Share invite",
+            () -> {
+              String code = "VEXO-" + session.optString("room") + "." + session.optString("invite");
+              Intent share =
+                  new Intent(Intent.ACTION_SEND)
+                      .setType("text/plain")
+                      .putExtra(
+                          Intent.EXTRA_TEXT,
+                          "Join my VEXO Music listening room. Invite code: " + code);
+              getContext().startActivity(Intent.createChooser(share, "Share room invite"));
+            });
     } catch (Exception e) {
       status.setText("Private room data unavailable. Try reopening this screen.");
     }

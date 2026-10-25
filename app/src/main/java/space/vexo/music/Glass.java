@@ -1,5 +1,6 @@
 package space.vexo.music;
 
+import android.content.Context;
 import android.graphics.*;
 import android.graphics.drawable.Drawable;
 import android.view.View;

@@ -34,7 +34,7 @@ export class MusicRoom extends DurableObject {
   else if(v.type==='leave'){s.queue=s.queue.filter(x=>x.member!==member.id);s.members=s.members.filter(x=>x.id!==member.id);if(s.host===member.id){s.closed=true;s.playback=null;}}
   else if(v.type==='ping'){changed=false;ws.send(JSON.stringify({type:'pong',serverTime:Date.now()}));}
   else throw Error('Unknown room action');
-  if(changed){s.revision++;this.save(s);this.broadcast(s);if(s.closed)for(const other of this.ctx.getWebSockets())try{other.close(1000,'Room ended');}catch{}}
+  if(changed){if((s.updates||0)>=2000)throw Error('This free room has reached its update limit. End it and try another session later.');s.updates=(s.updates||0)+1;s.revision++;this.save(s);this.broadcast(s);if(s.closed)for(const other of this.ctx.getWebSockets())try{other.close(1000,'Room ended');}catch{}}
  }catch(error){try{ws.send(JSON.stringify({type:'error',error:clean(error.message,160)}));}catch{}}}
  webSocketClose(ws,code){try{ws.close(code===1006?1000:code,'Disconnected');}catch{}const s=this.load();if(s)this.broadcast(s);}
  webSocketError(ws){try{ws.close(1011,'Reconnect');}catch{}}
@@ -46,7 +46,7 @@ export default {async fetch(request,env){try{const url=new URL(request.url),path
  const socket=/^\/v1\/rooms\/([a-f0-9]{32})\/socket$/.exec(path);if(socket)return env.ROOMS.getByName(socket[1]).fetch(request);
  if(request.method!=='POST')return json({error:'Not found'},404);
  const day=new Date().toISOString().slice(0,10),gate=env.GATE.getByName(day);
- if(path==='/v1/device'){const ip=await hash(request.headers.get('CF-Connecting-IP')||'unknown');if(!await gate.consume([['register-all',200],['register-'+ip,10]]))return json({error:'Free service registration limit reached. Try tomorrow.'},429);return json({token:await issue(env)});}
+ if(path==='/v1/device'){const ip=await hash(request.headers.get('CF-Connecting-IP')||'unknown');if(!await gate.consume([['register-all',200],['register-'+ip,30]]))return json({error:'Free service registration limit reached. Try tomorrow.'},429);return json({token:await issue(env)});}
  const who=await identity(request,env);if(!who)return json({error:'Device session expired'},401);
  const v=await body(request);
  if(path==='/v1/mindradio'){if(!await gate.consume([['ai-all',100],['ai-'+who,5]]))return json({error:'Today’s free AI allowance is used. Local radio still works.'},429);const command=clean(v.command,300);if(!command)throw Error('Describe what you want to hear');const preferences=Object.fromEntries(['genres','language','mood','energy','artists'].map(k=>[k,clean(v.preferences?.[k],80)]));const answer=await env.AI.run(MODEL,{messages:[{role:'system',content:'You plan music radio searches. Return ONLY a JSON object with queries (1 to 3 short music search strings), reply (one concise friendly sentence), mood, energy, language, excludeArtists (array). Understand English, Sinhala, Tamil and Romanized requests. Follow exclusions and changes in the last user request. Use priorContext only to continue the music request. Do not invent playable URLs, licenses, lyrics, history or audio measurements. Do not answer unrelated requests.'},{role:'user',content:JSON.stringify({command,preferences,priorContext:clean(v.context,300)})}],max_tokens:320,temperature:0.2});return json({...plan(answer.response),provider:'Cloudflare Workers AI',model:MODEL});}

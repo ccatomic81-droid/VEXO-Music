@@ -112,6 +112,7 @@ public final class MainActivity extends ComponentActivity {
   private MusicPreview musicPreview;
   private MixCatalogue mixCatalogue;
   private MusicHomePanel homePanel;
+  private org.json.JSONObject pendingAiPlan;
   private final ThreadPoolExecutor mixIo = (ThreadPoolExecutor) Executors.newFixedThreadPool(2);
   private final Set<String> prefetchingMixes = new HashSet<>();
   private final Set<String> attemptedMixes = new HashSet<>();
@@ -1711,6 +1712,8 @@ public final class MainActivity extends ComponentActivity {
     for (Track t : tracks.subList(first, end)) queue.add(t.mediaItem());
     Bundle queueArgs = new Bundle();
     queueArgs.putString("track", tracks.get(index).json().toString());
+    queueArgs.putString("ai_plan", pendingAiPlan == null ? "" : pendingAiPlan.toString());
+    pendingAiPlan = null;
     controller.sendCustomCommand(
         new SessionCommand(PlaybackService.NEW_QUEUE, Bundle.EMPTY), queueArgs);
     controller.setMediaItems(queue, index - first, 0);
@@ -1729,6 +1732,8 @@ public final class MainActivity extends ComponentActivity {
                 "Play next",
                 "Add to queue"));
     options.add("Smart feedback & song memory");
+    if (getSharedPreferences("playback_state", 0).getBoolean("room_active", false))
+      options.add("Request in listening room");
     if (track.online()) {
       options.add("Start song radio");
       options.add("Don’t recommend in radio");
@@ -1742,6 +1747,24 @@ public final class MainActivity extends ComponentActivity {
             options.toArray(new String[0]),
             (d, which) -> {
               String action = options.get(which);
+              if (action.equals("Request in listening room")) {
+                if (!RadioPolicy.music(track)) {
+                  message("Live rooms support online catalogue songs");
+                  return;
+                }
+                try {
+                  controller.sendCustomCommand(
+                      new SessionCommand(PlaybackService.ROOM_ACTION, Bundle.EMPTY),
+                      roomArgs(
+                          new org.json.JSONObject()
+                              .put("type", "add")
+                              .put("track", track.json())
+                              .toString()));
+                } catch (Exception error) {
+                  message("Couldn’t add the room request");
+                }
+                return;
+              }
               if (action.equals("Smart feedback & song memory")) {
                 showSmart(track);
                 return;
@@ -2245,6 +2268,8 @@ public final class MainActivity extends ComponentActivity {
             smart,
             store,
             new SmartExperiencePanel.Listener() {
+              private org.json.JSONObject selectedAiPlan;
+
               public void changed() {
                 radioChanged();
                 if (tab.equals("Home")) render();
@@ -2271,10 +2296,12 @@ public final class MainActivity extends ComponentActivity {
               }
 
               public void discover(String query, boolean newArtists) {
+                selectedAiPlan = null;
                 discoverPlan(Collections.singletonList(query), Collections.emptySet(), newArtists);
               }
 
               public void radioPlan(org.json.JSONObject plan) {
+                selectedAiPlan = plan;
                 List<String> queries = new ArrayList<>();
                 org.json.JSONArray a = plan.optJSONArray("queries");
                 if (a != null) for (int i = 0; i < a.length(); i++) queries.add(a.optString(i));
@@ -2289,6 +2316,7 @@ public final class MainActivity extends ComponentActivity {
               private void discoverPlan(
                   List<String> queries, Set<String> excluded, boolean newArtists) {
                 int token = ++generation[0];
+                org.json.JSONObject chosenAiPlan = selectedAiPlan;
                 message("Finding your music…");
                 io.execute(
                     () -> {
@@ -2336,6 +2364,7 @@ public final class MainActivity extends ComponentActivity {
                                           .toArray(String[]::new),
                                       (d, which) -> {
                                         dialog.dismiss();
+                                        pendingAiPlan = chosenAiPlan;
                                         MainActivity.this.play(picks, which);
                                       })
                                   .setNegativeButton("Close", null)

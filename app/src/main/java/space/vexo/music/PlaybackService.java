@@ -79,6 +79,16 @@ public final class PlaybackService extends MediaSessionService {
       SmartStore smart = new SmartStore(this);
       java.util.Set<String> excluded = new java.util.HashSet<>(hidden);
       excluded.addAll(SmartPolicy.blocked(smart, System.currentTimeMillis()));
+      candidates = new java.util.ArrayList<>(candidates);
+      org.json.JSONObject ai = smart.preferences().optJSONObject("active_ai_plan");
+      if (ai != null) {
+        org.json.JSONArray artists = ai.optJSONArray("excludeArtists");
+        if (artists != null)
+          for (int i = 0; i < artists.length(); i++) {
+            String artist = RadioPolicy.normalize(artists.optString(i));
+            if (!artist.isEmpty()) candidates.removeIf(t -> RadioPolicy.artist(t).contains(artist));
+          }
+      }
       java.util.List<Track> ranked =
           SmartPolicy.rank(candidates, smart, history, mode == RadioPolicy.Mode.DISCOVER);
       return RadioPolicy.select(
@@ -96,11 +106,17 @@ public final class PlaybackService extends MediaSessionService {
       for (String key :
           new String[] {"radio_command", "genres", "language", "mood", "energy", "artists"})
         if (!prefs.optString(key).trim().isEmpty()) tuned = true;
+      org.json.JSONObject ai = prefs.optJSONObject("active_ai_plan");
+      org.json.JSONArray aiQueries = ai == null ? null : ai.optJSONArray("queries");
+      if (aiQueries != null && aiQueries.length() > 0) tuned = true;
       if (!tuned) return existing;
       java.util.LinkedHashMap<String, Track> merged = new java.util.LinkedHashMap<>();
       for (Track t :
-          OnlineMusic.search(SmartPolicy.query(prefs, prefs.optString("radio_command"))).tracks)
-        merged.putIfAbsent(t.url, t);
+          OnlineMusic.search(
+                  aiQueries != null && aiQueries.length() > 0
+                      ? aiQueries.optString(0)
+                      : SmartPolicy.query(prefs, prefs.optString("radio_command")))
+              .tracks) merged.putIfAbsent(t.url, t);
       for (Track t : existing) merged.putIfAbsent(t.url, t);
       return new java.util.ArrayList<>(merged.values());
     } catch (Exception unavailable) {
@@ -498,6 +514,16 @@ public final class PlaybackService extends MediaSessionService {
                           new SessionResult(SessionResult.RESULT_SUCCESS));
                     }
                     if (command.customAction.equals(NEW_QUEUE)) {
+                      try {
+                        String ai = args.getString("ai_plan", "");
+                        new SmartStore(PlaybackService.this)
+                            .preference(
+                                "active_ai_plan",
+                                ai.isEmpty()
+                                    ? org.json.JSONObject.NULL
+                                    : new org.json.JSONObject(ai));
+                      } catch (Exception ignored) {
+                      }
                       getSharedPreferences("playback_state", 0)
                           .edit()
                           .putBoolean("fair_queue", false)

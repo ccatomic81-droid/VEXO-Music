@@ -7,9 +7,11 @@ export async function hash(s){return [...new Uint8Array(await crypto.subtle.dige
 export function track(value){
  if(!value||typeof value!=='object')throw Error('Choose an online song');
  const u=new URL(value.url);if(u.protocol!=='https:'||!['www.youtube.com','youtube.com','music.youtube.com','youtu.be'].includes(u.hostname))throw Error('Only online catalogue songs can be shared');
+ const id=u.hostname==='youtu.be'?u.pathname.slice(1):u.searchParams.get('v');if(!/^[A-Za-z0-9_-]{11}$/.test(id||''))throw Error('Choose a valid catalogue song');
+ const canonical='https://www.youtube.com/watch?v='+id;
  const duration=Number(value.duration);if(!Number.isFinite(duration)||duration<30||duration>900)throw Error('Choose a song between 30 seconds and 15 minutes');
- let artwork='';try{const a=new URL(value.artwork);if(a.protocol==='https:'&&(a.hostname==='i.ytimg.com'||a.hostname.endsWith('.ytimg.com')))artwork=a.toString();}catch{}
- return {url:u.toString(),title:clean(value.title),artist:clean(value.artist,100),artwork,duration};
+ let artwork='';try{const a=new URL(value.artwork);if(a.protocol==='https:'&&(a.hostname==='i.ytimg.com'||a.hostname.endsWith('.ytimg.com')))if(a.href.length<=300)artwork=a.toString();}catch{}
+ return {url:canonical,title:clean(value.title),artist:clean(value.artist,100),artwork,duration};
 }
 export function plan(value){
  const v=typeof value==='string'?JSON.parse(value.replace(/^```(?:json)?\s*|\s*```$/g,'')):value;
