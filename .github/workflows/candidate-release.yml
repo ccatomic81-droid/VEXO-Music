@@ -55,18 +55,18 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p dist
-          cp app/build/outputs/apk/release/app-release.apk dist/VEXO-Music-0.10.0-dev.apk
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs dist/VEXO-Music-0.10.0-dev.apk > dist/signature.txt
+          cp app/build/outputs/apk/release/app-release.apk dist/VEXO-Music-0.11.0-dev.apk
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs dist/VEXO-Music-0.11.0-dev.apk > dist/signature.txt
           grep -qi 'Signer #1 certificate SHA-256 digest: 0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3' dist/signature.txt
-          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging dist/VEXO-Music-0.10.0-dev.apk | grep "package: name='space.vexo.music.radio' versionCode='12' versionName='0.10.0-dev'"
-          git archive --format=zip --output=dist/VEXO-Music-0.10.0-dev-Source.zip HEAD
-          (cd dist && sha256sum VEXO-Music-0.10.0-dev.apk VEXO-Music-0.10.0-dev-Source.zip > SHA256SUMS.txt)
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging dist/VEXO-Music-0.11.0-dev.apk | grep "package: name='space.vexo.music.radio' versionCode='13' versionName='0.11.0-dev'"
+          git archive --format=zip --output=dist/VEXO-Music-0.11.0-dev-Source.zip HEAD
+          (cd dist && sha256sum VEXO-Music-0.11.0-dev.apk VEXO-Music-0.11.0-dev-Source.zip > SHA256SUMS.txt)
       - name: Prepare draft prerelease for review
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
-          gh release create vexo-v0.10.0-dev dist/VEXO-Music-0.10.0-dev.apk dist/VEXO-Music-0.10.0-dev-Source.zip dist/SHA256SUMS.txt --target "$GITHUB_SHA" --title 'VEXO Music 0.10.0 development candidate' --notes-file release/notes-0.10.0-dev.md --draft --prerelease
+          gh release create vexo-v0.11.0-dev dist/VEXO-Music-0.11.0-dev.apk dist/VEXO-Music-0.11.0-dev-Source.zip dist/SHA256SUMS.txt --target "$GITHUB_SHA" --title 'VEXO Music 0.11.0 development candidate' --notes-file release/notes-0.11.0-dev.md --draft --prerelease
       - uses: actions/upload-artifact@v4
         with:
           name: VEXO-Music-signed-candidate

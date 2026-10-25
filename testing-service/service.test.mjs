@@ -49,4 +49,4 @@ test('range parser rejects malformed, multiple and unsafe integer ranges',()=>{
  assert.deepEqual(rangeFor('bytes=-5',20),{offset:15,length:5});
 });
 
-test("production publishing allowlist contains only APK and release information",()=>{assert.deepEqual(Object.keys(ARTIFACTS).sort(),["SHA256SUMS.txt","VEXO-Music-0.10.0-dev.apk","manifest.json"].sort());});
+test("production publishing allowlist contains only APK and release information",()=>{assert.deepEqual(Object.keys(ARTIFACTS).sort(),["SHA256SUMS.txt","VEXO-Music-0.11.0-dev.apk","manifest.json"].sort());});

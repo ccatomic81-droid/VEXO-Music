@@ -1,0 +1,15 @@
+{
+  "file": "VEXO-Music-0.11.0-dev-signed.apk",
+  "version": "0.11.0-dev",
+  "versionCode": 13,
+  "package": "space.vexo.music.radio",
+  "source_commit": "b095c291da27f150b65657bec69c78d3da76b6c1",
+  "ci_run": "https://github.com/ccatomic81-droid/VEXO-Music/actions/runs/40170936665",
+  "sha256": "23c48dfb8155e5477171a1add43596177a1ccf642eb497e6bd9a39404459e55c",
+  "bytes": 8414039,
+  "signature_verified": true,
+  "original_certificate_matches": true,
+  "apk_contents_unchanged": true,
+  "debug_development_build": true,
+  "stable_feed_published": false
+}
