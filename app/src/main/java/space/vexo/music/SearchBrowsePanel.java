@@ -38,37 +38,44 @@ final class SearchBrowsePanel extends LinearLayout {
       clear.setOnClickListener(v -> listener.clear());
       heading.addView(clear);
       addView(heading);
+      HorizontalScrollView strip = new HorizontalScrollView(context);
+      strip.setHorizontalScrollBarEnabled(false);
+      LinearLayout entries = row();
       for (String term : recent.subList(0, Math.min(3, recent.size()))) {
         LinearLayout entry = row();
-        entry.setMinimumHeight(dp(52));
-        Icon history = new Icon(context, "history", MUTED);
-        history.setGlyphSize(18);
-        history.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
-        entry.addView(history, new LayoutParams(dp(28), dp(32)));
+        entry.setBackground(round(PANEL, dp(12)));
+        entry.setMinimumHeight(dp(48));
         TextView query = text(term, 14, TEXT, false);
-        query.setMaxLines(2);
+        query.setSingleLine();
         query.setEllipsize(TextUtils.TruncateAt.END);
-        query.setPadding(dp(10), dp(8), dp(8), dp(8));
+        query.setMaxWidth(dp(160));
         query.setMinHeight(dp(48));
         query.setGravity(Gravity.CENTER_VERTICAL);
+        query.setPadding(dp(14), dp(8), 0, dp(8));
         query.setContentDescription("Search for " + term);
         query.setOnClickListener(v -> listener.recent(term));
-        entry.addView(query, new LayoutParams(0, -2, 1));
+        entry.addView(query);
         Icon remove = new Icon(context, "close", MUTED);
         remove.setGlyphSize(18);
         remove.setContentDescription("Remove recent search " + term);
         remove.setOnClickListener(v -> listener.remove(term));
         entry.addView(remove, new LayoutParams(dp(48), dp(48)));
-        addView(entry);
+        LayoutParams params = new LayoutParams(-2, -2);
+        params.rightMargin = dp(8);
+        entries.addView(entry, params);
       }
       if (recent.size() > 3) {
-        TextView all = text("See all recent searches", 12, LIME, true);
-        all.setGravity(Gravity.CENTER_VERTICAL);
+        TextView all = text("See all", 12, LIME, true);
         all.setMinHeight(dp(48));
+        all.setMinWidth(dp(72));
+        all.setGravity(Gravity.CENTER);
+        all.setContentDescription("See all recent searches");
         all.setOnClickListener(v -> listener.allRecent());
-        addView(all);
+        entries.addView(all);
       }
-      gap(24);
+      strip.addView(entries);
+      addView(strip, new LayoutParams(-1, -2));
+      gap(20);
     }
     addView(text("Browse categories", 20, TEXT, true));
     gap(16);

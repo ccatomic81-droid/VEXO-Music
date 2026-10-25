@@ -1020,7 +1020,7 @@ public final class MainActivity extends ComponentActivity {
       titleRow.addView(language);
       searchLanguages = language;
     }
-    searchTitleView = titleRow;
+    searchTitleView = title;
     h.addView(titleRow);
     gap(h, 8);
     content.addView(h);
