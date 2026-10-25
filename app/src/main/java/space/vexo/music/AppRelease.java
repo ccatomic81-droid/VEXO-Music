@@ -7,13 +7,14 @@ import org.json.*;
 /** A release feed contains metadata only. Downloads always need a user tap. */
 final class AppRelease {
   static final String NOTES =
-      "• Early-morning greetings now begin at 4 AM.\n"
-          + "• Greetings follow phone time and time-zone changes immediately.\n"
-          + "• Refined Home cards, spacing, artwork shelves and mini-player.\n"
-          + "• Refresh & repair reloads temporary data while keeping saved music.\n"
-          + "• Optional automatic cache recovery after an app crash.\n"
-          + "• Review and email device diagnostics from Report a problem.\n"
-          + "• Bounded artwork loading helps devices with less memory.";
+      "• Smart experience: private song memories and dated listening-history search.\n"
+          + "• Playlist Time Machine with deleted-track recovery and undo snapshots.\n"
+          + "• Anti-repeat controls, detailed feedback and discovery trails.\n"
+          + "• Reorder Home, pin playlists, hide modules and focus on music.\n"
+          + "• MindRadio uses local search clues; cloud AI is not connected.\n"
+          + "• FairPlay rotation works on this phone; multi-device sessions are pending.\n"
+          + "• Connection recovery and provider-authorization gate for new offline saves.\n"
+          + "• Development candidate: external services and device verification remain.";
   final int code;
   final String version, summary, url;
 

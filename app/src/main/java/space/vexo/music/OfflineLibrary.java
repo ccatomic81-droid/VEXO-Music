@@ -26,7 +26,7 @@ public final class OfflineLibrary {
               c.getApplicationContext(),
               network(c.getApplicationContext()),
               new File(c.getFilesDir(), "offline-audio"),
-              500L * 1024 * 1024);
+              500L * 1024 * 1024, false);
     return instance;
   }
 
@@ -80,6 +80,7 @@ public final class OfflineLibrary {
   private final StandaloneDatabaseProvider database;
   private final DataSource.Factory upstream;
   private final long budget;
+  private final boolean downloadAuthorized;
   private final ExecutorService worker = Executors.newSingleThreadExecutor();
   private final Set<Runnable> listeners = new CopyOnWriteArraySet<>();
   private final Handler main = new Handler(Looper.getMainLooper());
@@ -90,10 +91,15 @@ public final class OfflineLibrary {
   private volatile String state = "Songs save automatically while playing";
 
   OfflineLibrary(Context c, DataSource.Factory upstream, File directory, long budget) {
+    this(c, upstream, directory, budget, false);
+  }
+
+  OfflineLibrary(Context c, DataSource.Factory upstream, File directory, long budget, boolean downloadAuthorized) {
     context = c;
     store = new LibraryStore(c);
     this.upstream = upstream;
     this.budget = budget;
+    this.downloadAuthorized = downloadAuthorized;
     database = new StandaloneDatabaseProvider(c);
     cache = new SimpleCache(directory, new NoOpCacheEvictor(), database);
   }
@@ -153,6 +159,8 @@ public final class OfflineLibrary {
 
   public synchronized void request(Track track) {
     if (!enabled() || !track.online() || active.equals(track.url)) return;
+    // Default production source has no provider-authorized download entitlement.
+    if (!downloadAuthorized) { state = "Offline saves require a provider-authorized source. Imported audio stays available."; changed(); return; }
     if (complete(track.url)) {
       if (!store.contains("offline", track)) {
         List<Track> songs = store.tracks("offline");

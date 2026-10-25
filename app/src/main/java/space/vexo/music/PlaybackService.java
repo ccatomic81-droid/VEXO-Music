@@ -51,6 +51,20 @@ public final class PlaybackService extends MediaSessionService {
     autoplay.settingsChanged();
   }
 
+  private java.util.List<Track> smartSelect(Track anchor, Track seed, java.util.List<Track> candidates,
+      java.util.List<Track> queue, java.util.List<Track> history, java.util.List<Track> favourites,
+      java.util.Set<String> hidden, RadioPolicy.Mode mode, int limit) {
+    try {
+      SmartStore smart = new SmartStore(this);
+      java.util.Set<String> excluded = new java.util.HashSet<>(hidden);
+      excluded.addAll(SmartPolicy.blocked(smart, System.currentTimeMillis()));
+      java.util.List<Track> ranked = SmartPolicy.rank(candidates, smart, history, mode == RadioPolicy.Mode.DISCOVER);
+      return RadioPolicy.select(anchor,seed,ranked,queue,history,favourites,excluded,mode,limit,0);
+    } catch (IllegalStateException unavailable) {
+      return RadioPolicy.select(anchor,seed,candidates,queue,history,favourites,hidden,mode,limit);
+    }
+  }
+
   private String lastSaveRequest = "";
 
   private java.util.List<Track> queueTracks() {
@@ -101,6 +115,7 @@ public final class PlaybackService extends MediaSessionService {
 
   private MediaSession session;
   private CrossfadePlayer player;
+  private ConnectionRecovery recovery;
   private final Handler handler = new Handler(Looper.getMainLooper());
   private final Runnable sleep =
       () -> {
@@ -113,6 +128,7 @@ public final class PlaybackService extends MediaSessionService {
     radioStore = new RadioStore(this);
     OfflineLibrary offline = OfflineLibrary.get(this);
     player = new CrossfadePlayer(this, offline.playbackFactory());
+    recovery = new ConnectionRecovery(this, player);
     player.setRepeatMode(
         getSharedPreferences("settings", 0).getInt("repeat", Player.REPEAT_MODE_OFF));
     player.setShuffleModeEnabled(getSharedPreferences("settings", 0).getBoolean("shuffle", false));
@@ -214,7 +230,7 @@ public final class PlaybackService extends MediaSessionService {
                     .putString("autoplay_status", radioStore.describe() + "\n" + value)
                     .apply(),
             (seed, candidates, now, history) ->
-                RadioPolicy.select(
+                smartSelect(
                     radioStore.anchor() == null ? seed : radioStore.anchor(),
                     seed,
                     candidates,
@@ -229,6 +245,9 @@ public final class PlaybackService extends MediaSessionService {
     player.addListener(
         new Player.Listener() {
           private String recorded = "";
+          @Override public void onMediaItemTransition(MediaItem item, int reason) { recorded = ""; recovery.reset(); }
+          @Override public void onPlayWhenReadyChanged(boolean ready, int reason) { if (!ready) recovery.cancel(); }
+
 
           @Override
           public void onEvents(Player p, Player.Events events) {
@@ -258,7 +277,16 @@ public final class PlaybackService extends MediaSessionService {
             handler.postDelayed(saveQueueTask, 500);
             MediaItem item = p.getCurrentMediaItem();
             if (p.isPlaying() && item != null && !item.mediaId.equals(recorded)) {
-              new LibraryStore(PlaybackService.this).recent(Track.from(item));
+              try {
+                SmartStore smart = new SmartStore(PlaybackService.this);
+                if (!smart.preferences().optBoolean("pause_history")) {
+                  new LibraryStore(PlaybackService.this).recent(Track.from(item));
+                  Track played = Track.from(item);
+                  long at = System.currentTimeMillis();
+                  radioWorker.execute(() -> { try { new SmartStore(PlaybackService.this).played(played, at); }
+                    catch (IllegalStateException unavailable) { /* Keep playback working; do not store plaintext. */ } });
+                }
+              } catch (IllegalStateException unavailable) { /* Fail closed for private history. */ }
               recorded = item.mediaId;
             }
           }
@@ -267,6 +295,7 @@ public final class PlaybackService extends MediaSessionService {
           public void onPlayerError(androidx.media3.common.PlaybackException error) {
             AppDiagnostics.record(PlaybackService.this, "playback", error);
             OnlineMusic.clearCache();
+            recovery.failed(error);
           }
 
           @Override
@@ -409,6 +438,7 @@ public final class PlaybackService extends MediaSessionService {
 
   @Override
   public void onDestroy() {
+    if (recovery != null) recovery.close();
     if (autoplay != null) autoplay.close();
     radioWorker.shutdownNow();
     saveQueue();
