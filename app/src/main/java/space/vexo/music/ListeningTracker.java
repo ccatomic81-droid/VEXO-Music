@@ -18,7 +18,7 @@ final class ListeningTracker implements Player.Listener {
   private final Handler main = new Handler(Looper.getMainLooper());
   private Track current;
   private long at = SystemClock.elapsedRealtime(), listened;
-  private boolean playing, failed, manual, repeat, closed;
+  private boolean playing, failed, manual, repeat, closed, discard;
   private final Runnable pulse =
       new Runnable() {
         public void run() {
@@ -67,10 +67,11 @@ final class ListeningTracker implements Player.Listener {
     MediaItem item = player.getCurrentMediaItem();
     String next = item == null ? "" : item.mediaId;
     if (current != null && (!current.url.equals(next) || repeat)) {
-      recorder.record(current, listened, manual, failed);
+      if (!discard) recorder.record(current, listened, manual, failed);
       current = null;
       listened = 0;
       failed = false;
+      discard = false;
     }
     if (current == null && item != null) current = Track.from(item);
     playing = player.isPlaying();
@@ -79,6 +80,7 @@ final class ListeningTracker implements Player.Listener {
   }
 
   void settingsChanged() {
+    discard = current != null;
     listened = 0;
     at = SystemClock.elapsedRealtime();
   }
@@ -86,7 +88,7 @@ final class ListeningTracker implements Player.Listener {
   void close() {
     if (closed) return;
     sample();
-    if (current != null) recorder.record(current, listened, false, failed);
+    if (current != null && !discard) recorder.record(current, listened, false, failed);
     closed = true;
     main.removeCallbacks(pulse);
     player.removeListener(this);

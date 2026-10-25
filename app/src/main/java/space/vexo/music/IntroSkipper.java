@@ -38,7 +38,7 @@ final class IntroSkipper implements Player.Listener {
           || player.getCurrentPosition() > 1500
           || player.getCurrentMediaItem() == null) return;
       long start = pure.start(Track.from(player.getCurrentMediaItem()), player.getDuration());
-      if (start > 0) player.seekTo(start);
+      if (start > player.getCurrentPosition()) player.seekTo(start);
     } catch (IllegalStateException unavailable) {
       /* Existing music continues without a guessed seek. */
     }

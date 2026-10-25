@@ -51,7 +51,7 @@ public class ExperienceControlsUiTest {
       assertNotNull(find.description(root, "Skip intros, on"));
       find.capture(root, "experience-home-intros-on-320", 640);
       find.description(root, "Skip intros, on").performLongClick();
-      AlertDialog dialog = (AlertDialog) ShadowDialog.getLatestDialog();
+      Dialog dialog = ShadowDialog.getLatestDialog();
       View controls = dialog.getWindow().getDecorView();
       assertNotNull(find.text(controls, "Skip intros: ON"));
       find.text(controls, "Skip intros: ON").performClick();
@@ -95,6 +95,9 @@ public class ExperienceControlsUiTest {
       assertEquals(
           "Amaradeva Sinhala chill relaxing music",
           call(a, "categoryQuery", new Class<?>[] {String.class}, "Amaradeva"));
+      assertEquals(
+          "https://youtu.be/explicit",
+          call(a, "categoryQuery", new Class<?>[] {String.class}, "https://youtu.be/explicit"));
       find.capture(root, "experience-category-results-320", 640);
       field(a, "keyboardOpen", true);
       call(a, "updateSearchChrome", new Class<?>[] {});

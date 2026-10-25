@@ -20,6 +20,8 @@ final class PureSongPanel extends MusicSurface {
     void changed();
 
     void transport(String action);
+
+    default void close() {}
   }
 
   private final SmartStore smart;
@@ -63,7 +65,14 @@ final class PureSongPanel extends MusicSurface {
 
   private void show() {
     body.removeAllViews();
-    body.addView(text("PURESONG", 11, LIME, true));
+    android.widget.LinearLayout heading = row();
+    heading.addView(
+        text("PURESONG", 11, LIME, true), new android.widget.LinearLayout.LayoutParams(0, -2, 1));
+    Icon close = new Icon(getContext(), "close", MUTED);
+    close.setContentDescription("Close PureSong");
+    close.setOnClickListener(v -> listener.close());
+    heading.addView(close, new android.widget.LinearLayout.LayoutParams(dp(48), dp(48)));
+    body.addView(heading);
     gap(body, 14);
     body.addView(text("More music. Your choice.", 25, TEXT, true));
     gap(body, 12);
@@ -139,12 +148,14 @@ final class PureSongPanel extends MusicSurface {
           if (!current())
             throw new IllegalStateException("Play this file before choosing its start.");
           pure.mark(track, listener.position(), listener.duration());
+          listener.changed();
           show();
         });
     action(
         "Remove intro marker",
         () -> {
           pure.reset(track);
+          listener.changed();
           show();
         });
     action(

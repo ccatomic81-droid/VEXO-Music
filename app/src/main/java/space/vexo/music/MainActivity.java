@@ -2414,6 +2414,8 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private void showPureSong(Track selected) {
+    Dialog dialog = new Dialog(this);
+    dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
     Track track =
         selected != null
             ? selected
@@ -2453,12 +2455,20 @@ public final class MainActivity extends ComponentActivity {
               public void transport(String action) {
                 pureCommand(action);
               }
+
+              public void close() {
+                dialog.dismiss();
+              }
             });
-    new AlertDialog.Builder(this)
-        .setTitle("PureSong")
-        .setView(panel)
-        .setPositiveButton("Done", null)
-        .show();
+    panel.setBackground(Glass.dialogBackdrop(this));
+    panel.setClipToOutline(true);
+    dialog.setContentView(panel);
+    dialog.show();
+    blurDialog(dialog);
+    if (dialog.getWindow() != null)
+      dialog
+          .getWindow()
+          .setLayout(-1, (int) (getResources().getDisplayMetrics().heightPixels * .88f));
   }
 
   private void showSmart(Track track) {
@@ -3059,7 +3069,7 @@ public final class MainActivity extends ComponentActivity {
                                                         .ACTION_MANAGE_UNKNOWN_APP_SOURCES,
                                                     Uri.parse("package:" + getPackageName()))))
                                     .show();
-                              } else UpdateInstaller.install(this, file, release);
+                              } else installVerifiedUpdate(file, release);
                             } catch (Exception e) {
                               message("Couldn’t open the verified update. Please try again.");
                             }
@@ -3075,6 +3085,31 @@ public final class MainActivity extends ComponentActivity {
                     message(
                         "Update verification failed. Existing app and data were kept. Try again"
                             + " later.");
+                });
+          }
+        });
+  }
+
+  private void installVerifiedUpdate(java.io.File file, AppRelease release) {
+    message("Rechecking the verified update…");
+    io.execute(
+        () -> {
+          try {
+            Intent intent = UpdateInstaller.installIntent(this, file, release);
+            main.post(
+                () -> {
+                  if (destroyed || isFinishing()) return;
+                  try {
+                    startActivity(intent);
+                  } catch (ActivityNotFoundException unavailable) {
+                    message("Android’s package installer is unavailable.");
+                  }
+                });
+          } catch (Exception error) {
+            main.post(
+                () -> {
+                  if (!destroyed)
+                    message("Update verification failed. Check for updates and try again.");
                 });
           }
         });

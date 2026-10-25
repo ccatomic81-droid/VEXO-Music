@@ -30,6 +30,10 @@ final class PureSong {
     return value >= 1000 && value < duration - 5000 ? value : 0;
   }
 
+  long crossfadeStart(Track track, long duration, boolean sharedRoom) {
+    return !sharedRoom && enabled() ? start(track, duration) : 0;
+  }
+
   void mark(Track t, long start, long duration) {
     if (!permitted(t) || start < 1000 || start >= duration - 5000)
       throw new IllegalArgumentException(

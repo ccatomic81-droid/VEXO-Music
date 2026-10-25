@@ -159,6 +159,27 @@ public class ListeningExperienceTest {
   }
 
   @Test
+  public void privacyChangeDropsTheInFlightSampleUntilTheNextTrack() {
+    Fake f = new Fake();
+    f.item = song("old", "A").mediaItem();
+    List<String> songs = new ArrayList<>();
+    ListeningTracker tracker =
+        new ListeningTracker(f.player, (t, ms, skip, error) -> songs.add(t.title));
+    ShadowSystemClock.advanceBy(Duration.ofSeconds(4));
+    tracker.onEvents(f.player, null);
+    tracker.settingsChanged();
+    ShadowSystemClock.advanceBy(Duration.ofSeconds(4));
+    tracker.onEvents(f.player, null);
+    f.item = song("new", "B").mediaItem();
+    tracker.onEvents(f.player, null);
+    assertTrue(songs.isEmpty());
+    ShadowSystemClock.advanceBy(Duration.ofSeconds(4));
+    tracker.onEvents(f.player, null);
+    tracker.close();
+    assertEquals(Collections.singletonList("new"), songs);
+  }
+
+  @Test
   public void confirmedMarkersNeverGuessOnlineCutsAndFullVersionWins() {
     SmartStore smart = new SmartStore(RuntimeEnvironment.getApplication());
     PureSong pure = new PureSong(smart);
@@ -181,6 +202,9 @@ public class ListeningExperienceTest {
     skip.onEvents(f.player, null);
     assertEquals(0, f.seeks);
     pure.enabled(true);
+    assertEquals(18000, pure.crossfadeStart(local, 180000, false));
+    assertEquals(0, pure.crossfadeStart(local, 180000, true));
+    assertEquals(0, pure.crossfadeStart(local, 200000, false));
     skip.onMediaItemTransition(f.item, Player.MEDIA_ITEM_TRANSITION_REASON_AUTO);
     skip.onEvents(f.player, null);
     assertEquals(18000, f.position);
@@ -200,6 +224,16 @@ public class ListeningExperienceTest {
     skip.settingsChanged();
     skip.onEvents(f.player, null);
     assertEquals(2, f.seeks);
+    pure.mark(local, 1000, 180000);
+    pure.enabled(true);
+    f.position = 1000;
+    int previous = f.seeks;
+    skip.onMediaItemTransition(f.item, Player.MEDIA_ITEM_TRANSITION_REASON_AUTO);
+    skip.onEvents(f.player, null);
+    assertEquals(
+        "A pre-positioned crossfade deck must not be interrupted by a duplicate seek",
+        previous,
+        f.seeks);
     pure.reset(local);
     assertEquals(0, pure.start(local, 180000));
     skip.close();

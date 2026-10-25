@@ -122,7 +122,7 @@ final class UpdateInstaller {
       throw new IOException("Update signing identity does not match VEXO");
   }
 
-  static void install(Context context, File file, AppRelease release) throws Exception {
+  static Intent installIntent(Context context, File file, AppRelease release) throws Exception {
     verifyArchive(context, file, release);
     android.net.Uri uri =
         FileProvider.getUriForFile(context, BuildConfig.APPLICATION_ID + ".updates", file);
@@ -130,6 +130,6 @@ final class UpdateInstaller {
         new Intent(Intent.ACTION_VIEW)
             .setDataAndType(uri, "application/vnd.android.package-archive")
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
-    context.startActivity(intent);
+    return intent;
   }
 }

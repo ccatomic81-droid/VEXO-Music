@@ -497,7 +497,10 @@ public final class PlaybackService extends MediaSessionService {
                         String action = args.getString("action", "changed");
                         if (action.equals("skip")) intros.skipNow();
                         else if (action.equals("full")) intros.fullVersion();
-                        else intros.settingsChanged();
+                        else {
+                          intros.settingsChanged();
+                          player.crossfadeChanged();
+                        }
                         return Futures.immediateFuture(
                             new SessionResult(SessionResult.RESULT_SUCCESS));
                       } catch (IllegalStateException unavailable) {
