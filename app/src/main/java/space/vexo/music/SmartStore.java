@@ -158,6 +158,7 @@ final class SmartStore {
       JSONObject d = read("events");
       d.remove("events");
       write("events", d);
+      resetTaste();
     }
   }
 
@@ -267,6 +268,81 @@ final class SmartStore {
     synchronized (LOCK) {
       JSONArray a = read("revisions").optJSONArray("revisions");
       return a == null ? new JSONArray() : a;
+    }
+  }
+
+  JSONObject intros() {
+    synchronized (LOCK) {
+      JSONObject v = read("intros").optJSONObject("markers");
+      return v == null ? new JSONObject() : v;
+    }
+  }
+
+  void intro(Track track, long start, long duration) {
+    synchronized (LOCK) {
+      JSONObject markers = intros();
+      String key = QueuePolicy.identity(track.url);
+      try {
+        if (start <= 0) markers.remove(key);
+        else
+          markers.put(
+              key,
+              new JSONObject()
+                  .put("start", start)
+                  .put("duration", duration)
+                  .put("at", System.currentTimeMillis()));
+        while (markers.length() > 200) {
+          String oldest = null;
+          long at = Long.MAX_VALUE;
+          java.util.Iterator<String> it = markers.keys();
+          while (it.hasNext()) {
+            String k = it.next();
+            long time = markers.optJSONObject(k).optLong("at");
+            if (time < at) {
+              at = time;
+              oldest = k;
+            }
+          }
+          if (oldest == null) break;
+          markers.remove(oldest);
+        }
+        write("intros", new JSONObject().put("markers", markers));
+      } catch (JSONException e) {
+        throw new IllegalArgumentException(e);
+      }
+    }
+  }
+
+  JSONObject taste() {
+    synchronized (LOCK) {
+      JSONObject v = read("taste").optJSONObject("songs");
+      return v == null ? new JSONObject() : v;
+    }
+  }
+
+  void listened(Track track, long milliseconds, boolean manualSkip, boolean failed, long now) {
+    synchronized (LOCK) {
+      JSONObject prefs = preferences();
+      if (prefs.optBoolean("pause_history") || !prefs.optBoolean("learn_listening", true)) return;
+      if (milliseconds < 2000
+          || failed
+          || now - milliseconds <= prefs.optLong("learning_cleared_at", -1)) return;
+      JSONObject songs = taste();
+      String previous = songs.toString();
+      TastePolicy.record(songs, track, milliseconds, manualSkip, failed, now);
+      if (previous.equals(songs.toString())) return;
+      try {
+        write("taste", new JSONObject().put("songs", songs));
+      } catch (JSONException e) {
+        throw new IllegalArgumentException(e);
+      }
+    }
+  }
+
+  void resetTaste() {
+    synchronized (LOCK) {
+      preference("learning_cleared_at", System.currentTimeMillis());
+      write("taste", new JSONObject());
     }
   }
 

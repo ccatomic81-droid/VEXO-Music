@@ -260,6 +260,15 @@ public final class Visuals {
       p.setStrokeJoin(Paint.Join.ROUND);
       Path a = new Path();
       switch (name) {
+        case "intro":
+          c.drawLine(3, 9, 3, 15, p);
+          c.drawLine(7, 5, 7, 19, p);
+          c.drawLine(11, 8, 11, 16, p);
+          a.moveTo(16, 7);
+          a.lineTo(21, 12);
+          a.lineTo(16, 17);
+          c.drawPath(a, p);
+          break;
         case "smart":
           a.moveTo(12, 2);
           a.lineTo(15, 9);

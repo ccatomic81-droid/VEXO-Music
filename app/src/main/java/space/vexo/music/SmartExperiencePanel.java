@@ -25,6 +25,8 @@ final class SmartExperiencePanel extends MusicSurface {
 
     default void remote() {}
 
+    default void pure() {}
+
     default void radioPlan(JSONObject plan) {
       JSONArray q = plan.optJSONArray("queries");
       if (q != null && q.length() > 0) discover(q.optString(0), false);
@@ -94,12 +96,16 @@ final class SmartExperiencePanel extends MusicSurface {
 
   void menu() {
     screen("Your music. Your way.");
-    note("Private tools on this phone. Choose how your music feels.");
+    note("Private listening tools, optional cloud radio and live rooms.");
     tool("VEXO MindRadio", "Set the mood. Shape what plays next.", this::mind);
     tool(
         "Recommendation controls & anti-repeat",
         "A better balance of familiar and fresh.",
         this::preferences);
+    tool(
+        "PureSong & skip intros",
+        "Confirm your music start. Keep full-version control.",
+        listener::pure);
     tool("Find a forgotten song", "Follow a clue back to a past listen.", this::find);
     tool("Song memories", "Keep a note. Return to a favourite moment.", this::memories);
     tool("Playlist Time Machine", "Recover songs and revisit earlier versions.", this::revisions);
@@ -279,6 +285,33 @@ final class SmartExperiencePanel extends MusicSurface {
         "Mood, energy, genre and language guide searches. Ranking uses listening history and"
             + " explicit feedback. Audio analysis and popularity filtering need a catalogue that"
             + " supplies those fields.");
+    button(
+        p.optBoolean("learn_listening", true)
+            ? "Listening learning: ON"
+            : "Listening learning: OFF",
+        () -> {
+          smart.preference("learn_listening", !p.optBoolean("learn_listening", true));
+          listener.changed();
+          preferences();
+        });
+    button(
+        "Reset learned listening interests",
+        () ->
+            new AlertDialog.Builder(getContext())
+                .setMessage(
+                    "Reset learned listening interests? Favourites, explicit feedback, memories and"
+                        + " playlists stay.")
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton(
+                    "Reset",
+                    (d, w) ->
+                        safe(
+                            () -> {
+                              smart.resetTaste();
+                              listener.changed();
+                              preferences();
+                            }))
+                .show());
     EditText genres = input("Genres · e.g. pop, acoustic", p.optString("genres"));
     EditText artists = input("Preferred artists", p.optString("artists"));
     choice(
@@ -742,6 +775,7 @@ final class SmartExperiencePanel extends MusicSurface {
         p.optBoolean("pause_history") ? "Resume listening history" : "Pause listening history",
         () -> {
           smart.preference("pause_history", !p.optBoolean("pause_history"));
+          listener.changed();
           privacy();
         });
     button(
@@ -769,8 +803,7 @@ final class SmartExperiencePanel extends MusicSurface {
     screen("FairPlay on this phone");
     note(
         "Pass this phone around to collect requests. Each participant gets one song per round."
-            + " Multi-device sessions need an authenticated realtime service and are not"
-            + " connected.");
+            + " For separate phones, choose FairPlay · listen together from Smart.");
     EditText person = input("Participant name", "");
     List<Track> available = library.tracks("favourites");
     available.addAll(library.tracks("history"));

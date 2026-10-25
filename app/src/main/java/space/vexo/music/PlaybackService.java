@@ -36,9 +36,17 @@ public final class PlaybackService extends MediaSessionService {
       ROOM_FOLLOW = "space.vexo.music.ROOM_FOLLOW",
       ROOM_LEAVE = "space.vexo.music.ROOM_LEAVE";
   private RemoteListening remote;
+  private ListeningTracker listening;
+  private IntroSkipper intros;
+  public static final String PURE_ACTION = "space.vexo.music.PURE_ACTION";
 
   private void startRadio(Track seed) {
     if (!RadioPolicy.music(seed)) return;
+    try {
+      new SmartStore(this).preference("session_query", "");
+    } catch (IllegalStateException unavailable) {
+      /* Existing song radio remains usable. */
+    }
     getSharedPreferences("playback_state", 0).edit().putBoolean("fair_queue", false).apply();
     autoplay.suspend();
     radioStore.anchor(seed);
@@ -102,6 +110,8 @@ public final class PlaybackService extends MediaSessionService {
   private java.util.List<Track> tuneCandidates(java.util.List<Track> existing) {
     try {
       org.json.JSONObject prefs = new SmartStore(this).preferences();
+      String session = prefs.optString("session_query");
+      if (!session.isEmpty()) return new java.util.ArrayList<>(OnlineMusic.search(session).tracks);
       boolean tuned = false;
       for (String key :
           new String[] {"radio_command", "genres", "language", "mood", "energy", "artists"})
@@ -316,6 +326,20 @@ public final class PlaybackService extends MediaSessionService {
               player.setRepeatMode(Player.REPEAT_MODE_OFF);
             });
     remote.connect();
+    intros =
+        new IntroSkipper(
+            player, new PureSong(new SmartStore(this)), () -> remote != null && remote.active());
+    listening =
+        new ListeningTracker(
+            player,
+            (track, ms, skipped, failed) -> {
+              try {
+                new SmartStore(this)
+                    .listened(track, ms, skipped, failed, System.currentTimeMillis());
+              } catch (IllegalStateException unavailable) {
+                /* No plaintext preference fallback. */
+              }
+            });
     player.addListener(
         new Player.Listener() {
           private String recorded = "";
@@ -439,6 +463,7 @@ public final class PlaybackService extends MediaSessionService {
                         .setAvailableSessionCommands(
                             MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS
                                 .buildUpon()
+                                .add(new SessionCommand(PURE_ACTION, Bundle.EMPTY))
                                 .add(new SessionCommand(SLEEP, Bundle.EMPTY))
                                 .add(new SessionCommand(OFFLINE_SETTINGS, Bundle.EMPTY))
                                 .add(new SessionCommand(CROSSFADE_CHANGED, Bundle.EMPTY))
@@ -467,6 +492,23 @@ public final class PlaybackService extends MediaSessionService {
                       return Futures.immediateFuture(
                           new SessionResult(
                               androidx.media3.session.SessionError.ERROR_PERMISSION_DENIED));
+                    if (command.customAction.equals(PURE_ACTION)) {
+                      try {
+                        String action = args.getString("action", "changed");
+                        if (action.equals("skip")) intros.skipNow();
+                        else if (action.equals("full")) intros.fullVersion();
+                        else {
+                          intros.settingsChanged();
+                          player.crossfadeChanged();
+                        }
+                        return Futures.immediateFuture(
+                            new SessionResult(SessionResult.RESULT_SUCCESS));
+                      } catch (IllegalStateException unavailable) {
+                        return Futures.immediateFuture(
+                            new SessionResult(
+                                androidx.media3.session.SessionError.ERROR_BAD_VALUE));
+                      }
+                    }
                     if (command.customAction.equals(START_RADIO)
                         || command.customAction.equals(HIDE_RADIO)) {
                       try {
@@ -525,6 +567,8 @@ public final class PlaybackService extends MediaSessionService {
                     }
                     if (command.customAction.equals(NEW_QUEUE)) {
                       try {
+                        new SmartStore(PlaybackService.this)
+                            .preference("session_query", args.getString("session_query", ""));
                         String ai = args.getString("ai_plan", "");
                         new SmartStore(PlaybackService.this)
                             .preference(
@@ -551,6 +595,7 @@ public final class PlaybackService extends MediaSessionService {
                           new SessionResult(SessionResult.RESULT_SUCCESS));
                     }
                     if (command.customAction.equals(AUTOPLAY_CHANGED)) {
+                      if (listening != null) listening.settingsChanged();
                       retuneAutoplay();
                       return Futures.immediateFuture(
                           new SessionResult(SessionResult.RESULT_SUCCESS));
@@ -603,6 +648,8 @@ public final class PlaybackService extends MediaSessionService {
 
   @Override
   public void onDestroy() {
+    if (intros != null) intros.close();
+    if (listening != null) listening.close();
     if (remote != null) remote.close();
     if (recovery != null) recovery.close();
     if (autoplay != null) autoplay.close();
