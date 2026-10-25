@@ -12,7 +12,8 @@ public final class LibraryStore {
   private final SmartStore smart;
 
   LibraryStore(Context c, SmartStore smart) {
-    context = c.getApplicationContext(); this.smart = smart;
+    context = c.getApplicationContext();
+    this.smart = smart;
     prefs = c.getSharedPreferences("library", Context.MODE_PRIVATE);
   }
 
@@ -37,7 +38,8 @@ public final class LibraryStore {
   }
 
   public synchronized void save(String key, List<Track> tracks) {
-    if (key.startsWith("playlist:") && prefs.contains(key)) checkpoint(key.substring(9), "Before edit / undo");
+    if (key.startsWith("playlist:") && prefs.contains(key))
+      checkpoint(key.substring(9), "Before edit / undo");
     JSONArray a = new JSONArray();
     for (Track t : tracks) a.put(t.json());
     prefs.edit().putString(key, a.toString()).apply();

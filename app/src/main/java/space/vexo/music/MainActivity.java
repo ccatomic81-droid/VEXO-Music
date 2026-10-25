@@ -713,7 +713,9 @@ public final class MainActivity extends ComponentActivity {
             homeError,
             homeFilter,
             new MusicHomePanel.Listener() {
-              public void smart() { showSmart(null); }
+              public void smart() {
+                showSmart(null);
+              }
 
               public void region() {
                 chooseRegion();
@@ -765,6 +767,13 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private void prefetchHomeMixes() {
+    try {
+      org.json.JSONObject smart = new SmartStore(this).preferences();
+      if (smart.optBoolean("focus") || smart.optBoolean("hide:Mood mixes")) return;
+    } catch (IllegalStateException unavailable) {
+      /* Existing Home remains available. */
+    }
+
     if (destroyed || !tab.equals("Home") || !activeMix.isEmpty() || !activeCollection.isEmpty())
       return;
     String country = RegionPolicy.current(this);
@@ -1277,7 +1286,10 @@ public final class MainActivity extends ComponentActivity {
                 for (String variant : SmartPolicy.variants(request)) {
                   if (variant.equals(request)) continue;
                   OnlineMusic.Results alternative = OnlineMusic.search(variant);
-                  if (!alternative.tracks.isEmpty()) { found = alternative; break; }
+                  if (!alternative.tracks.isEmpty()) {
+                    found = alternative;
+                    break;
+                  }
                 }
               }
               final OnlineMusic.Results delivered = found;
@@ -1411,7 +1423,12 @@ public final class MainActivity extends ComponentActivity {
                                     .setPositiveButton(
                                         "Delete",
                                         (x, y) -> {
-                                          try { store.deletePlaylist(name); } catch (IllegalStateException error) { message(error.getMessage()); return; }
+                                          try {
+                                            store.deletePlaylist(name);
+                                          } catch (IllegalStateException error) {
+                                            message(error.getMessage());
+                                            return;
+                                          }
                                           render();
                                         })
                                     .show();
@@ -1622,7 +1639,12 @@ public final class MainActivity extends ComponentActivity {
         h.more.setContentDescription("Add " + t.title + " to " + addingToPlaylist);
         h.more.setOnClickListener(
             v -> {
-              try { store.addToPlaylist(addingToPlaylist, t); } catch (IllegalStateException error) { message(error.getMessage()); return; }
+              try {
+                store.addToPlaylist(addingToPlaylist, t);
+              } catch (IllegalStateException error) {
+                message(error.getMessage());
+                return;
+              }
               message("Added to " + addingToPlaylist);
             });
       }
@@ -1702,7 +1724,8 @@ public final class MainActivity extends ComponentActivity {
             (d, which) -> {
               String action = options.get(which);
               if (action.equals("Smart feedback & song memory")) {
-                showSmart(track); return;
+                showSmart(track);
+                return;
               }
               if (action.equals("Remove offline audio")) {
                 OfflineLibrary.get(this).remove(track.url);
@@ -1746,7 +1769,12 @@ public final class MainActivity extends ComponentActivity {
                   else if (collection != null) {
                     List<Track> saved = store.tracks(collection);
                     saved.removeIf(x -> x.url.equals(track.url));
-                    try { store.save(collection, saved); } catch (IllegalStateException error) { message(error.getMessage()); return; }
+                    try {
+                      store.save(collection, saved);
+                    } catch (IllegalStateException error) {
+                      message(error.getMessage());
+                      return;
+                    }
                     if (tab.equals("Library") || tab.equals("Home") || !activeCollection.isEmpty())
                       render();
                   }
@@ -1766,7 +1794,12 @@ public final class MainActivity extends ComponentActivity {
             (d, w) -> {
               if (w == names.size()) createPlaylist(track);
               else {
-                try { store.addToPlaylist(names.get(w), track); } catch (IllegalStateException error) { message(error.getMessage()); return; }
+                try {
+                  store.addToPlaylist(names.get(w), track);
+                } catch (IllegalStateException error) {
+                  message(error.getMessage());
+                  return;
+                }
                 message("Added to " + names.get(w));
               }
             })
@@ -1928,9 +1961,18 @@ public final class MainActivity extends ComponentActivity {
               public void shuffle() {
                 if (collection.isEmpty()) return;
                 List<Track> shuffled = new ArrayList<>(collection);
-                try { shuffled = SmartPolicy.shuffle(shuffled,new SmartStore(MainActivity.this)); }
-                catch (IllegalStateException unavailable) { message(unavailable.getMessage()); return; }
-                if (shuffled.isEmpty()) { message("All songs are restricted by anti-repeat or feedback. Adjust Smart experience controls."); return; }
+                try {
+                  shuffled = SmartPolicy.shuffle(shuffled, new SmartStore(MainActivity.this));
+                } catch (IllegalStateException unavailable) {
+                  message(unavailable.getMessage());
+                  return;
+                }
+                if (shuffled.isEmpty()) {
+                  message(
+                      "All songs are restricted by anti-repeat or feedback. Adjust Smart experience"
+                          + " controls.");
+                  return;
+                }
                 if (controller != null) controller.setShuffleModeEnabled(false);
                 MainActivity.this.play(shuffled, 0);
               }
@@ -1974,9 +2016,14 @@ public final class MainActivity extends ComponentActivity {
     new AlertDialog.Builder(this)
         .setTitle(name)
         .setItems(
-            new String[] {"Rename playlist", "Remove songs", "Delete playlist", "Time Machine / undo"},
+            new String[] {
+              "Rename playlist", "Remove songs", "Delete playlist", "Time Machine / undo"
+            },
             (d, which) -> {
-              if (which == 3) { showSmart(null); return; }
+              if (which == 3) {
+                showSmart(null);
+                return;
+              }
               if (which == 0) renamePlaylist(name);
               else if (which == 1) {
                 List<Track> songs = store.tracks("playlist:" + name);
@@ -1988,7 +2035,12 @@ public final class MainActivity extends ComponentActivity {
                         (x, index) -> {
                           List<Track> current = store.tracks("playlist:" + name);
                           current.removeIf(t -> t.url.equals(songs.get(index).url));
-                          try { store.save("playlist:" + name, current); } catch (IllegalStateException error) { message(error.getMessage()); return; }
+                          try {
+                            store.save("playlist:" + name, current);
+                          } catch (IllegalStateException error) {
+                            message(error.getMessage());
+                            return;
+                          }
                           render();
                         })
                     .setNegativeButton("Close", null)
@@ -2001,7 +2053,12 @@ public final class MainActivity extends ComponentActivity {
                     .setPositiveButton(
                         "Delete",
                         (x, y) -> {
-                          try { store.deletePlaylist(name); } catch (IllegalStateException error) { message(error.getMessage()); return; }
+                          try {
+                            store.deletePlaylist(name);
+                          } catch (IllegalStateException error) {
+                            message(error.getMessage());
+                            return;
+                          }
                           closeCollection();
                         })
                     .show();
@@ -2028,7 +2085,12 @@ public final class MainActivity extends ComponentActivity {
                     v -> {
                       String name = input.getText().toString().trim();
                       boolean renamed;
-                      try { renamed = store.renamePlaylist(oldName, name); } catch (IllegalStateException error) { message(error.getMessage()); return; }
+                      try {
+                        renamed = store.renamePlaylist(oldName, name);
+                      } catch (IllegalStateException error) {
+                        message(error.getMessage());
+                        return;
+                      }
                       if (!renamed) {
                         input.setError("Use a unique name between 1 and 60 characters");
                         return;
@@ -2051,7 +2113,7 @@ public final class MainActivity extends ComponentActivity {
             offline.bytes() / 1048576.0,
             count,
             count == 1 ? "saved song" : "saved songs");
-    return usage + "\nOffline saves require provider authorization. Imported audio works offline.";
+    return tab.equals("Settings") ? usage : usage + "\n" + offline.status();
   }
 
   private void refreshApp() {
@@ -2154,49 +2216,100 @@ public final class MainActivity extends ComponentActivity {
     SmartStore smart = new SmartStore(this);
     final boolean[] closed = {false};
     final int[] generation = {0};
-    SmartExperiencePanel panel = new SmartExperiencePanel(this, smart, store,
-        new SmartExperiencePanel.Listener() {
-          public void changed() { radioChanged(); if (tab.equals("Home")) render(); }
-          public void play(List<Track> songs, int index, long moment) {
-            dialog.dismiss(); MainActivity.this.play(songs,index);
-            if (controller != null && moment > 0) controller.seekTo(moment);
-          }
-          public void discover(String query, boolean newArtists) {
-            int token = ++generation[0];
-            message("Finding your music…");
-            io.execute(() -> {
-              try {
-                LinkedHashMap<String,Track> pool = new LinkedHashMap<>();
-                for (String variant : SmartPolicy.variants(query)) {
-                  if (closed[0] || destroyed || token != generation[0]) return;
-                  for (Track t : OnlineMusic.search(variant).tracks) pool.putIfAbsent(t.url,t);
-                }
-                List<Track> picks = SmartPolicy.rank(new ArrayList<>(pool.values()), smart, store.tracks("history"), newArtists);
-                if (newArtists) {
-                  Set<String> known = new HashSet<>();
-                  for (Track t : store.tracks("history")) known.add(RadioPolicy.artist(t));
-                  picks.removeIf(t -> known.contains(RadioPolicy.artist(t)));
-                }
-                main.post(() -> {
-                  if (closed[0] || destroyed || token != generation[0]) return;
-                  if (picks.isEmpty()) { message("No eligible songs found. Try another clue or reduce anti-repeat restrictions."); return; }
-                  new AlertDialog.Builder(MainActivity.this).setTitle(newArtists ? "Your discovery trail" : "Your MindRadio picks")
-                    .setItems(picks.stream().map(t -> t.title + " · " + t.artist).toArray(String[]::new), (d,which) -> {
-                      dialog.dismiss(); MainActivity.this.play(picks,which);
-                    }).setNegativeButton("Close", null).show();
-                });
-              } catch (Exception error) {
-                main.post(() -> { if (!closed[0] && !destroyed) message("Couldn’t load music. Check your connection and try again."); });
+    SmartExperiencePanel panel =
+        new SmartExperiencePanel(
+            this,
+            smart,
+            store,
+            new SmartExperiencePanel.Listener() {
+              public void changed() {
+                radioChanged();
+                if (tab.equals("Home")) render();
+              }
+
+              public void play(List<Track> songs, int index, long moment) {
+                dialog.dismiss();
+                MainActivity.this.play(songs, index);
+                if (controller != null && moment > 0) controller.seekTo(moment);
+              }
+
+              public void discover(String query, boolean newArtists) {
+                int token = ++generation[0];
+                message("Finding your music…");
+                io.execute(
+                    () -> {
+                      try {
+                        LinkedHashMap<String, Track> pool = new LinkedHashMap<>();
+                        for (String variant : SmartPolicy.variants(query)) {
+                          if (closed[0] || destroyed || token != generation[0]) return;
+                          for (Track t : OnlineMusic.search(variant).tracks)
+                            pool.putIfAbsent(t.url, t);
+                        }
+                        List<Track> picks =
+                            SmartPolicy.rank(
+                                new ArrayList<>(pool.values()),
+                                smart,
+                                store.tracks("history"),
+                                newArtists);
+                        if (newArtists) {
+                          Set<String> known = new HashSet<>();
+                          for (Track t : store.tracks("history")) known.add(RadioPolicy.artist(t));
+                          picks.removeIf(t -> known.contains(RadioPolicy.artist(t)));
+                        }
+                        main.post(
+                            () -> {
+                              if (closed[0] || destroyed || token != generation[0]) return;
+                              if (picks.isEmpty()) {
+                                message(
+                                    "No eligible songs found. Try another clue or reduce"
+                                        + " anti-repeat restrictions.");
+                                return;
+                              }
+                              new AlertDialog.Builder(MainActivity.this)
+                                  .setTitle(
+                                      newArtists ? "Your discovery trail" : "Your MindRadio picks")
+                                  .setItems(
+                                      picks.stream()
+                                          .map(t -> t.title + " · " + t.artist)
+                                          .toArray(String[]::new),
+                                      (d, which) -> {
+                                        dialog.dismiss();
+                                        MainActivity.this.play(picks, which);
+                                      })
+                                  .setNegativeButton("Close", null)
+                                  .show();
+                            });
+                      } catch (Exception error) {
+                        main.post(
+                            () -> {
+                              if (!closed[0] && !destroyed)
+                                message(
+                                    "Couldn’t load music. Check your connection and try again.");
+                            });
+                      }
+                    });
               }
             });
-          }
+    if (track != null)
+      panel.track(
+          track,
+          controller != null
+                  && controller.getCurrentMediaItem() != null
+                  && controller.getCurrentMediaItem().mediaId.equals(track.url)
+              ? controller.getCurrentPosition()
+              : 0);
+    panel.setBackgroundColor(BG);
+    dialog.setContentView(panel);
+    dialog.setOnDismissListener(
+        d -> {
+          closed[0] = true;
+          generation[0]++;
         });
-    if (track != null) panel.track(track, controller != null && controller.getCurrentMediaItem() != null
-        && controller.getCurrentMediaItem().mediaId.equals(track.url) ? controller.getCurrentPosition() : 0);
-    panel.setBackgroundColor(BG); dialog.setContentView(panel);
-    dialog.setOnDismissListener(d -> { closed[0] = true; generation[0]++; });
     dialog.show();
-    if (dialog.getWindow() != null) dialog.getWindow().setLayout(-1, (int)(getResources().getDisplayMetrics().heightPixels * .88f));
+    if (dialog.getWindow() != null)
+      dialog
+          .getWindow()
+          .setLayout(-1, (int) (getResources().getDisplayMetrics().heightPixels * .88f));
   }
 
   private void renderSettings() {
@@ -2206,7 +2319,12 @@ public final class MainActivity extends ComponentActivity {
     body.setPadding(dp(22), dp(8), dp(22), dp(24));
     scroll.addView(body);
     content.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
-    setting(body, "Smart experience", "MindRadio, memories, discovery, Time Machine & Home", false, () -> showSmart(null));
+    setting(
+        body,
+        "Smart experience",
+        "MindRadio, memories, discovery, Time Machine & Home",
+        false,
+        () -> showSmart(null));
     setting(body, "Your profile", profile.name() + " · name and photo", false, this::openProfile);
     setting(
         body,
@@ -2244,9 +2362,14 @@ public final class MainActivity extends ComponentActivity {
         "Imported audio works offline. New online saves need provider authorization.",
         false,
         () -> {
-          new AlertDialog.Builder(this).setTitle("Authorized offline music")
-              .setMessage("Your imported audio and existing saved music stay available. This source has no verified download entitlement, so new online saves are disabled. A licensed provider must authorize downloads before this can be enabled.")
-              .setPositiveButton("Close", null).show();
+          new AlertDialog.Builder(this)
+              .setTitle("Authorized offline music")
+              .setMessage(
+                  "Your imported audio and existing saved music stay available. This source has no"
+                      + " verified download entitlement, so new online saves are disabled. A"
+                      + " licensed provider must authorize downloads before this can be enabled.")
+              .setPositiveButton("Close", null)
+              .show();
         });
     offlineSummary = text(offlineDescription(), 12, MUTED, false);
     offlineSummary.setPadding(dp(12), dp(4), dp(12), dp(16));
@@ -2593,11 +2716,7 @@ public final class MainActivity extends ComponentActivity {
                   ? "Loading audio…"
                   : OfflineLibrary.get(this).complete(item.mediaId)
                       ? "SAVED OFFLINE"
-                      : Track.from(item).online()
-                          ? OfflineLibrary.get(this).enabled()
-                              ? "YOUTUBE AUDIO · AUTO-SAVE ON"
-                              : "YOUTUBE AUDIO"
-                          : "ON THIS PHONE");
+                      : Track.from(item).online() ? "YOUTUBE AUDIO" : "ON THIS PHONE");
     }
   }
 

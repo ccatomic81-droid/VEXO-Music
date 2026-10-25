@@ -51,17 +51,27 @@ public final class PlaybackService extends MediaSessionService {
     autoplay.settingsChanged();
   }
 
-  private java.util.List<Track> smartSelect(Track anchor, Track seed, java.util.List<Track> candidates,
-      java.util.List<Track> queue, java.util.List<Track> history, java.util.List<Track> favourites,
-      java.util.Set<String> hidden, RadioPolicy.Mode mode, int limit) {
+  private java.util.List<Track> smartSelect(
+      Track anchor,
+      Track seed,
+      java.util.List<Track> candidates,
+      java.util.List<Track> queue,
+      java.util.List<Track> history,
+      java.util.List<Track> favourites,
+      java.util.Set<String> hidden,
+      RadioPolicy.Mode mode,
+      int limit) {
     try {
       SmartStore smart = new SmartStore(this);
       java.util.Set<String> excluded = new java.util.HashSet<>(hidden);
       excluded.addAll(SmartPolicy.blocked(smart, System.currentTimeMillis()));
-      java.util.List<Track> ranked = SmartPolicy.rank(candidates, smart, history, mode == RadioPolicy.Mode.DISCOVER);
-      return RadioPolicy.select(anchor,seed,ranked,queue,history,favourites,excluded,mode,limit,0);
+      java.util.List<Track> ranked =
+          SmartPolicy.rank(candidates, smart, history, mode == RadioPolicy.Mode.DISCOVER);
+      return RadioPolicy.select(
+          anchor, seed, ranked, queue, history, favourites, excluded, mode, limit, 0);
     } catch (IllegalStateException unavailable) {
-      return RadioPolicy.select(anchor,seed,candidates,queue,history,favourites,hidden,mode,limit);
+      return RadioPolicy.select(
+          anchor, seed, candidates, queue, history, favourites, hidden, mode, limit);
     }
   }
 
@@ -245,15 +255,24 @@ public final class PlaybackService extends MediaSessionService {
     player.addListener(
         new Player.Listener() {
           private String recorded = "";
-          @Override public void onMediaItemTransition(MediaItem item, int reason) { recorded = ""; recovery.reset(); }
-          @Override public void onPlayWhenReadyChanged(boolean ready, int reason) { if (!ready) recovery.cancel(); }
 
+          @Override
+          public void onMediaItemTransition(MediaItem item, int reason) {
+            recorded = "";
+            recovery.reset();
+          }
+
+          @Override
+          public void onPlayWhenReadyChanged(boolean ready, int reason) {
+            if (!ready) recovery.cancel();
+          }
 
           @Override
           public void onEvents(Player p, Player.Events events) {
             if (events.contains(Player.EVENT_MEDIA_ITEM_TRANSITION)
                 || events.contains(Player.EVENT_IS_PLAYING_CHANGED) && p.isPlaying())
               lastSaveRequest = "";
+            if (p.isPlaying()) recovery.recovered();
             maybeSave();
             if (player.getMediaItemCount() >= 90) {
               androidx.media3.common.Timeline timeline = player.getCurrentTimeline();
@@ -283,10 +302,18 @@ public final class PlaybackService extends MediaSessionService {
                   new LibraryStore(PlaybackService.this).recent(Track.from(item));
                   Track played = Track.from(item);
                   long at = System.currentTimeMillis();
-                  radioWorker.execute(() -> { try { new SmartStore(PlaybackService.this).played(played, at); }
-                    catch (IllegalStateException unavailable) { /* Keep playback working; do not store plaintext. */ } });
+                  radioWorker.execute(
+                      () -> {
+                        try {
+                          new SmartStore(PlaybackService.this).played(played, at);
+                        } catch (IllegalStateException unavailable) {
+                          /* Keep playback working; do not store plaintext. */
+                        }
+                      });
                 }
-              } catch (IllegalStateException unavailable) { /* Fail closed for private history. */ }
+              } catch (IllegalStateException unavailable) {
+                /* Fail closed for private history. */
+              }
               recorded = item.mediaId;
             }
           }

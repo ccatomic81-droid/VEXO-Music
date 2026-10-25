@@ -10,6 +10,22 @@ android {
         versionName '0.10.0-dev'
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
+    // Signing material is injected only at build time, never stored in the repository.
+    signingConfigs {
+        authorizedRelease {
+            if (System.getenv('VEXO_KEYSTORE_PATH')) {
+                storeFile file(System.getenv('VEXO_KEYSTORE_PATH'))
+                storePassword System.getenv('VEXO_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('VEXO_KEY_ALIAS')
+                keyPassword System.getenv('VEXO_KEY_PASSWORD')
+            }
+        }
+    }
+    buildTypes {
+        release {
+            if (System.getenv('VEXO_KEYSTORE_PATH')) signingConfig signingConfigs.authorizedRelease
+        }
+    }
     buildFeatures { buildConfig true }
     defaultConfig {
         def updateFeed = 'https://vexo-music-updates.kavindukavishka785.workers.dev/stable.json'

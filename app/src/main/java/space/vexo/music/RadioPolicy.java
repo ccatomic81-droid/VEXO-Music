@@ -73,11 +73,19 @@ public final class RadioPolicy {
       Set<String> hidden,
       Mode mode,
       int limit) {
-    return select(anchor,current,candidates,queue,history,favourites,hidden,mode,limit,-1);
+    return select(anchor, current, candidates, queue, history, favourites, hidden, mode, limit, -1);
   }
 
-  static List<Track> select(Track anchor, Track current, List<Track> candidates, List<Track> queue,
-      List<Track> history, List<Track> favourites, Set<String> hidden, Mode mode, int limit,
+  static List<Track> select(
+      Track anchor,
+      Track current,
+      List<Track> candidates,
+      List<Track> queue,
+      List<Track> history,
+      List<Track> favourites,
+      Set<String> hidden,
+      Mode mode,
+      int limit,
       int recencyOverride) {
     Set<String> ids = new HashSet<>(hidden),
         keys = new HashSet<>(),
@@ -89,7 +97,10 @@ public final class RadioPolicy {
       ids.add(QueuePolicy.identity(t.url));
       keys.add(songKey(t));
     }
-    int recency = recencyOverride >= 0 ? recencyOverride : mode == Mode.DISCOVER ? history.size() : Math.min(20, history.size());
+    int recency =
+        recencyOverride >= 0
+            ? recencyOverride
+            : mode == Mode.DISCOVER ? history.size() : Math.min(20, history.size());
     for (int i = 0; i < history.size(); i++) {
       Track t = history.get(i);
       known.add(artist(t));

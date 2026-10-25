@@ -153,7 +153,7 @@ final class MusicHomePanel extends MusicSurface {
     gap(body, 16);
     body.addView(action("Your smart experience", true, listener::smart));
     gap(body, 16);
-    Map<String,List<View>> modules = new LinkedHashMap<>();
+    Map<String, List<View>> modules = new LinkedHashMap<>();
     int moduleStart = body.getChildCount();
     List<Track> likes = store.tracks("favourites"), history = store.tracks("history");
     LinearLayout first = row();
@@ -190,7 +190,8 @@ final class MusicHomePanel extends MusicSurface {
         () -> listener.library("Offline"));
     body.addView(second);
     gap(body, 26);
-    capture(modules, "Shortcuts", moduleStart); moduleStart = body.getChildCount();
+    capture(modules, "Shortcuts", moduleStart);
+    moduleStart = body.getChildCount();
     section("Mixes for your mood", null, null);
     LinearLayout mixes = shelf();
     for (MixCatalogue.Mix mix : MixCatalogue.mixes(country)) {
@@ -203,7 +204,8 @@ final class MusicHomePanel extends MusicSurface {
       mixCards.put(mix.id, (LinearLayout) mixes.getChildAt(mixes.getChildCount() - 1));
     }
     gap(body, 26);
-    capture(modules, "Mood mixes", moduleStart); moduleStart = body.getChildCount();
+    capture(modules, "Mood mixes", moduleStart);
+    moduleStart = body.getChildCount();
     if (!filter.equals("Music")) {
       section("Your playlists", "Create", listener::create);
       List<String> names = store.playlists();
@@ -227,7 +229,8 @@ final class MusicHomePanel extends MusicSurface {
       }
       gap(body, 26);
     }
-    capture(modules, "Playlists", moduleStart); moduleStart = body.getChildCount();
+    capture(modules, "Playlists", moduleStart);
+    moduleStart = body.getChildCount();
     if (!filter.equals("Playlists")) {
       if (!history.isEmpty()) {
         section("Recently played", "View all", () -> listener.library("History"));
@@ -239,7 +242,8 @@ final class MusicHomePanel extends MusicSurface {
         }
         gap(body, 26);
       }
-      capture(modules, "Recently played", moduleStart); moduleStart = body.getChildCount();
+      capture(modules, "Recently played", moduleStart);
+      moduleStart = body.getChildCount();
       boolean available = feed != null && feed.country.equals(country) && !feed.tracks.isEmpty();
       section(
           available && feed.ranked ? "Trending near you" : "Regional viral picks",
@@ -272,31 +276,41 @@ final class MusicHomePanel extends MusicSurface {
     }
     capture(modules, "Regional music", moduleStart);
     org.json.JSONObject preferences;
-    try { preferences = new SmartStore(c).preferences(); }
-    catch (IllegalStateException unavailable) { preferences = new org.json.JSONObject(); }
+    try {
+      preferences = new SmartStore(c).preferences();
+    } catch (IllegalStateException unavailable) {
+      preferences = new org.json.JSONObject();
+    }
     for (List<View> module : modules.values()) for (View child : module) body.removeView(child);
     org.json.JSONArray pins = preferences.optJSONArray("pins");
     if (pins != null && pins.length() > 0) {
       section("Pinned playlists", null, null);
       LinearLayout pinnedShelf = shelf();
-      for (int i=0; i<pins.length(); i++) {
-        String pinned=pins.optString(i);
-        if (store.playlists().contains(pinned)) card(pinnedShelf, pinned, "Your favourite place to start", store.tracks("playlist:" + pinned), 0xff665e91,
-            () -> listener.collection(pinned,"playlist:" + pinned));
+      for (int i = 0; i < pins.length(); i++) {
+        String pinned = pins.optString(i);
+        if (store.playlists().contains(pinned))
+          card(
+              pinnedShelf,
+              pinned,
+              "Your favourite place to start",
+              store.tracks("playlist:" + pinned),
+              0xff665e91,
+              () -> listener.collection(pinned, "playlist:" + pinned));
       }
       gap(body, 18);
     }
     for (String name : SmartExperiencePanel.order(preferences)) {
-      if (preferences.optBoolean("hide:" + name) || preferences.optBoolean("focus") && !name.equals("Shortcuts")) continue;
+      if (preferences.optBoolean("hide:" + name)
+          || preferences.optBoolean("focus") && !name.equals("Shortcuts")) continue;
       List<View> views = modules.get(name);
       if (views != null) for (View view : views) body.addView(view);
     }
     gap(body, 24);
   }
 
-  private void capture(Map<String,List<View>> modules, String name, int from) {
+  private void capture(Map<String, List<View>> modules, String name, int from) {
     List<View> views = new ArrayList<>();
-    for (int i=from; i<body.getChildCount(); i++) views.add(body.getChildAt(i));
+    for (int i = from; i < body.getChildCount(); i++) views.add(body.getChildAt(i));
     modules.put(name, views);
   }
 
