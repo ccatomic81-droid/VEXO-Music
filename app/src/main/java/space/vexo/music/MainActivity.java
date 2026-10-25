@@ -2761,7 +2761,8 @@ public final class MainActivity extends ComponentActivity {
                           .setMessage(
                               release.summary + "\n\nInstalled: " + BuildConfig.VERSION_NAME)
                           .setNegativeButton("Later", (d, w) -> updates.snooze(release))
-                          .setPositiveButton("Get update", (d, w) -> openUrl(release.url))
+                          .setPositiveButton(
+                              "Get update", (d, w) -> downloadVerifiedUpdate(release))
                           .create();
                   updateDialog.setOnDismissListener(
                       d -> {
@@ -2778,6 +2779,78 @@ public final class MainActivity extends ComponentActivity {
                   if (!destroyed && manual)
                     message(
                         "Couldn’t check for updates. Check your connection, then" + " try again.");
+                });
+          }
+        });
+  }
+
+  private boolean updateDownloading;
+
+  private void downloadVerifiedUpdate(AppRelease release) {
+    if (updateDownloading) {
+      message("An update download is already running");
+      return;
+    }
+    if (!release.authenticated) {
+      message("This update could not be authenticated");
+      return;
+    }
+    updateDownloading = true;
+    message("Downloading and verifying the VEXO update…");
+    io.execute(
+        () -> {
+          try {
+            java.io.File file = UpdateInstaller.prepare(this, release);
+            main.post(
+                () -> {
+                  updateDownloading = false;
+                  if (destroyed || isFinishing()) return;
+                  new AlertDialog.Builder(this)
+                      .setTitle("Verified update ready")
+                      .setMessage(
+                          "VEXO Music "
+                              + release.version
+                              + " passed download and signing checks. Android will ask you to"
+                              + " approve installation.")
+                      .setNegativeButton("Later", null)
+                      .setPositiveButton(
+                          "Install update",
+                          (d, w) -> {
+                            try {
+                              if (Build.VERSION.SDK_INT >= 26
+                                  && !getPackageManager().canRequestPackageInstalls()) {
+                                new AlertDialog.Builder(this)
+                                    .setTitle("Allow VEXO updates")
+                                    .setMessage(
+                                        "Enable Allow from this source for VEXO, then return to"
+                                            + " Settings → Check for updates. The verified download"
+                                            + " will be reused.")
+                                    .setNegativeButton("Later", null)
+                                    .setPositiveButton(
+                                        "Open Android settings",
+                                        (p, q) ->
+                                            startActivity(
+                                                new Intent(
+                                                    android.provider.Settings
+                                                        .ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                                                    Uri.parse("package:" + getPackageName()))))
+                                    .show();
+                              } else UpdateInstaller.install(this, file, release);
+                            } catch (Exception e) {
+                              message("Couldn’t open the verified update. Please try again.");
+                            }
+                          })
+                      .show();
+                });
+          } catch (Exception error) {
+            AppDiagnostics.record(this, "verified_update", error);
+            main.post(
+                () -> {
+                  updateDownloading = false;
+                  if (!destroyed)
+                    message(
+                        "Update verification failed. Existing app and data were kept. Try again"
+                            + " later.");
                 });
           }
         });

@@ -24,3 +24,15 @@ export function nextRequest(state){
  const people=[...new Set(queue.map(x=>x.member))];let idx=people.indexOf(state.lastTurn);idx=(idx+1)%people.length;
  const at=queue.findIndex(x=>x.member===people[idx]);const chosen=queue.splice(at,1)[0];state.lastTurn=chosen.member;return chosen;
 }
+
+// Hashes identify only the daily request budget, never an account or a permanent IP history.
+export function requestLimits(route, ip, who, now = Date.now()) {
+ const minute=Math.floor(now/60000);
+ const burst=(name,global,perIp)=>[[`${name}-burst-all-${minute}`,global],[`${name}-burst-ip-${ip}-${minute}`,perIp]];
+ if(route==='device')return [...burst('register',20,5),['register-all',200],['register-'+ip,30]];
+ if(route==='ai')return [...burst('ai',20,3),['ai-all',100],['ai-'+who,5],['ai-ip-'+ip,20]];
+ if(route==='create')return [...burst('rooms',10,2),['rooms-all',20],['rooms-'+who,3],['rooms-ip-'+ip,5]];
+ if(route==='join')return [...burst('join',60,10),['join-'+who,20],['join-ip-'+ip,40]];
+ if(route==='socket')return burst('socket',120,30);
+ return [];
+}

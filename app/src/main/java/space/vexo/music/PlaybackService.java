@@ -427,8 +427,14 @@ public final class PlaybackService extends MediaSessionService {
                   @Override
                   public MediaSession.ConnectionResult onConnect(
                       MediaSession s, MediaSession.ControllerInfo c) {
-                    if (c.getUid() != android.os.Process.myUid() && !c.isTrusted())
-                      return MediaSession.ConnectionResult.reject();
+                    if (!ControllerAccess.app(c.getUid(), android.os.Process.myUid())
+                        && !c.isTrusted()) return MediaSession.ConnectionResult.reject();
+                    if (!ControllerAccess.app(c.getUid(), android.os.Process.myUid()))
+                      return new MediaSession.ConnectionResult.AcceptedResultBuilder(s)
+                          .setAvailableSessionCommands(
+                              MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS)
+                          .setAvailablePlayerCommands(ControllerAccess.playbackCommands())
+                          .build();
                     return new MediaSession.ConnectionResult.AcceptedResultBuilder(s)
                         .setAvailableSessionCommands(
                             MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS
@@ -457,6 +463,10 @@ public final class PlaybackService extends MediaSessionService {
                       MediaSession.ControllerInfo c,
                       SessionCommand command,
                       Bundle args) {
+                    if (!ControllerAccess.app(c.getUid(), android.os.Process.myUid()))
+                      return Futures.immediateFuture(
+                          new SessionResult(
+                              androidx.media3.session.SessionError.ERROR_PERMISSION_DENIED));
                     if (command.customAction.equals(START_RADIO)
                         || command.customAction.equals(HIDE_RADIO)) {
                       try {

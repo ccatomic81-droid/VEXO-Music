@@ -2,3 +2,13 @@ import {test} from 'node:test';import assert from 'node:assert/strict';import {p
 test('AI plan validates JSON and bounds output without inventing track URLs',()=>{const p=plan('```json\n{"queries":["calm Sinhala acoustic"],"reply":"Try this","excludeArtists":["X"]}\n```');assert.equal(p.queries[0],'calm Sinhala acoustic');assert.equal(p.excludeArtists[0],'X');assert.throws(()=>plan('{"reply":"No searches"}'));});
 test('room tracks reject local files, arbitrary hosts, excessive duration and unsafe artwork',()=>{assert.throws(()=>track({url:'content://music/1',duration:180}));assert.throws(()=>track({url:'https://evil.test/audio.mp3',duration:180}));assert.throws(()=>track({url:'https://youtube.com/watch?v=x',duration:9999}));assert.equal(track({url:'https://www.youtube.com/watch?v=abc12345678',duration:180,title:'Song',artist:'A',artwork:'https://evil.test/track'}).artwork,'');});
 test('round-robin request rotation respects each participant and FIFO order',()=>{const s={lastTurn:'',queue:[{member:'a',id:'a1'},{member:'a',id:'a2'},{member:'b',id:'b1'},{member:'b',id:'b2'}]};assert.deepEqual([nextRequest(s).id,nextRequest(s).id,nextRequest(s).id,nextRequest(s).id],['a1','b1','a2','b2']);assert.equal(nextRequest(s),null);});
+
+test('abuse budgets bind IP and time as well as replaceable device identity',async()=>{
+ const {requestLimits}=await import('./policy.mjs');
+ const now=120000,a=requestLimits('ai','hashed-ip','device-a',now),b=requestLimits('ai','hashed-ip','device-b',now);
+ assert.deepEqual(a.find(x=>x[0]==='ai-ip-hashed-ip'),['ai-ip-hashed-ip',20]);
+ assert.deepEqual(a.filter(x=>x[0].includes('ip')),b.filter(x=>x[0].includes('ip')));
+ assert.ok(requestLimits('socket','hashed-ip','',now).some(x=>x[1]===30));
+ assert.notDeepEqual(requestLimits('device','hashed-ip','',now).slice(0,2),requestLimits('device','hashed-ip','',now+60000).slice(0,2));
+ assert.deepEqual(requestLimits('unknown','hashed-ip','',now),[]);
+});

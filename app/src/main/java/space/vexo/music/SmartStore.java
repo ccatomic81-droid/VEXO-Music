@@ -34,7 +34,7 @@ final class SmartStore {
     this.codec = codec;
   }
 
-  private static final class DeviceCodec implements Codec {
+  static final class DeviceCodec implements Codec {
     private SecretKey key() throws Exception {
       KeyStore ks = KeyStore.getInstance("AndroidKeyStore");
       ks.load(null);

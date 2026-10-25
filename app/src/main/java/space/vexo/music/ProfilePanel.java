@@ -58,7 +58,7 @@ final class ProfilePanel extends MusicSurface {
     body.addView(choose);
     gap(body, 8);
     TextView remove = action("Remove photo", false, listener::removePhoto);
-    remove.setVisibility(profile.photo().isFile() ? View.VISIBLE : View.GONE);
+    remove.setVisibility(profile.hasPhoto() ? View.VISIBLE : View.GONE);
     remove.setTag("remove_photo");
     body.addView(remove);
     gap(body, 20);
@@ -130,6 +130,6 @@ final class ProfilePanel extends MusicSurface {
       avatar.addView(initial, new FrameLayout.LayoutParams(-1, -1));
     }
     View remove = body.findViewWithTag("remove_photo");
-    if (remove != null) remove.setVisibility(profile.photo().isFile() ? View.VISIBLE : View.GONE);
+    if (remove != null) remove.setVisibility(profile.hasPhoto() ? View.VISIBLE : View.GONE);
   }
 }

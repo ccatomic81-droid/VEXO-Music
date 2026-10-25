@@ -15,6 +15,9 @@ final class AppRelease {
           + "• Shared playback timing depends on each device and connection.";
   final int code;
   final String version, summary, url;
+  String sha256 = "";
+  long size;
+  boolean authenticated;
 
   AppRelease(int code, String version, String summary, String url) {
     this.code = code;
@@ -45,7 +48,11 @@ final class AppRelease {
           || summary.isEmpty()
           || summary.length() > 12000)
         throw new IOException("The update information is incomplete.");
-      return new AppRelease(code, version, summary, url);
+      AppRelease release = new AppRelease(code, version, summary, url);
+      release.authenticated = ReleaseSecurity.verify(o, BuildConfig.VERSION_CODE);
+      release.sha256 = o.optString("sha256");
+      release.size = o.optLong("size");
+      return release;
     } catch (JSONException e) {
       throw new IOException("The update information could not be read.", e);
     }

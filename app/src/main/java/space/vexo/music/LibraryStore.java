@@ -1,20 +1,19 @@
 package space.vexo.music;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import java.util.ArrayList;
 import java.util.List;
 import org.json.JSONArray;
 
 public final class LibraryStore {
-  private final SharedPreferences prefs;
+  private final PrivateStore prefs;
   private final Context context;
   private final SmartStore smart;
 
   LibraryStore(Context c, SmartStore smart) {
     context = c.getApplicationContext();
     this.smart = smart;
-    prefs = c.getSharedPreferences("library", Context.MODE_PRIVATE);
+    prefs = new PrivateStore(c, "library");
   }
 
   private void checkpoint(String name, String reason) {
@@ -24,7 +23,7 @@ public final class LibraryStore {
   public LibraryStore(Context c) {
     context = c.getApplicationContext();
     smart = new SmartStore(c);
-    prefs = c.getSharedPreferences("library", Context.MODE_PRIVATE);
+    prefs = new PrivateStore(c, "library");
   }
 
   public synchronized List<Track> tracks(String key) {
@@ -32,6 +31,8 @@ public final class LibraryStore {
     try {
       JSONArray a = new JSONArray(prefs.getString(key, "[]"));
       for (int i = 0; i < a.length(); i++) out.add(Track.from(a.getJSONObject(i)));
+    } catch (IllegalStateException unavailable) {
+      throw unavailable;
     } catch (Exception ignored) {
     }
     return out;
@@ -70,6 +71,8 @@ public final class LibraryStore {
     try {
       JSONArray a = new JSONArray(prefs.getString("playlists", "[]"));
       for (int i = 0; i < a.length(); i++) names.add(a.getString(i));
+    } catch (IllegalStateException unavailable) {
+      throw unavailable;
     } catch (Exception ignored) {
     }
     return names;
