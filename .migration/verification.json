@@ -1,0 +1,38 @@
+{
+  "date": "2026-10-25",
+  "source_repository": "ccatomic81-droid/dayspace-android",
+  "destination_repository": "ccatomic81-droid/VEXO-Music",
+  "source_branch": "vexo-music-build",
+  "destination_branch": "main",
+  "imported_snapshots": 11,
+  "verified_source_blobs": 161,
+  "unchanged_original_files": 100,
+  "validated_source_commit": "661defc41760cbc9e8b29f49a370f27c67fcebd5",
+  "build_run": "https://github.com/ccatomic81-droid/VEXO-Music/actions/runs/40146601421",
+  "build_conclusion": "success",
+  "release_run": "https://github.com/ccatomic81-droid/VEXO-Music/actions/runs/40146601523",
+  "release_url": "https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.9.0",
+  "release_assets": [
+    {
+      "name": "SHA256SUMS.txt",
+      "size": 181,
+      "digest": "sha256:b730e0ec1292466b333f697d106629a3b5c661f7cd620a2af32fd101047c8c8c"
+    },
+    {
+      "name": "VEXO-Music-0.9.0-Source.zip",
+      "size": 1595835,
+      "digest": "sha256:1bad2b94f3c7d1b1738936e85c7e63054a32472d6a689ff9f046679802427b7b"
+    },
+    {
+      "name": "VEXO-Music-0.9.0.apk",
+      "size": 8488040,
+      "digest": "sha256:4b8a86d6b3dd68a1ea8294ebdef988c69e6a583e71d939248802a7b412eea026"
+    }
+  ],
+  "original_release_assets_preserved": true,
+  "legacy_forwarding_commit": "cd702338313868841e91d8976e20fa45756c1d2c",
+  "unrelated_legacy_files_unchanged": 9,
+  "app_package_unchanged": "space.vexo.music.radio",
+  "signing_certificate_sha256": "0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3",
+  "update_feed_unchanged": "https://vexo-music-updates.kavindukavishka785.workers.dev/stable.json"
+}

@@ -11,4 +11,14 @@ Migrated on 25 October 2026 to https://github.com/ccatomic81-droid/VEXO-Music, b
 - The built-in Cloudflare update endpoint, package ID and original signing certificate do not change. Installed apps do not need to reinstall because of this repository migration.
 - Signing keys and temporary publishing credentials were not copied into GitHub. The existing private signing backup remains required for future upgrade APKs.
 
-The old VEXO location will become a forwarding README after the new build and release are verified. Its Git history, tag and release will remain as a backup; the Dayspace project remains untouched.
+The old VEXO working folder is now a forwarding README. Its Git history, tag and release remain as a backup; the Dayspace project remains untouched.
+
+## Verification completed
+
+- All 161 distinct source blobs were copied with their original Git SHA values verified. App code and 100 original files remain unchanged; canonical documentation and workflow paths were adapted for the repository root.
+- The standalone build, tests, lint, update-service tests, package checks and live music-metadata probe passed: https://github.com/ccatomic81-droid/VEXO-Music/actions/runs/40146601421.
+- The signed 0.9.0 release was recreated successfully: https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.9.0. All three asset sizes and SHA-256 digests match the original release.
+- Only the old VEXO working files and its two dedicated root workflows were retired. The nine other files in the legacy branch remain byte-for-byte unchanged. The old repository’s default branch was not modified.
+- Installed apps and the public update service continue using the same package, certificate and endpoint. No app version bump or reinstall is required.
+
+See .migration/verification.json for exact run URLs, artifact hashes and migration commit references.
