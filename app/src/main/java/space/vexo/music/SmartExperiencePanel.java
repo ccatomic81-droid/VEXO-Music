@@ -19,6 +19,10 @@ final class SmartExperiencePanel extends MusicSurface {
 
     void discover(String query, boolean newArtists);
 
+    default void fair(List<Track> tracks) {
+      play(tracks, 0, 0);
+    }
+
     void changed();
   }
 
@@ -31,6 +35,7 @@ final class SmartExperiencePanel extends MusicSurface {
     this.smart = smart;
     this.library = library;
     this.listener = listener;
+    setBackgroundColor(BG);
     menu();
   }
 
@@ -47,7 +52,14 @@ final class SmartExperiencePanel extends MusicSurface {
 
   private void screen(String title) {
     body.removeAllViews();
-    body.addView(action("‹ Smart experience", false, this::menu));
+    scrollTo(0, 0);
+    if (!title.equals("Your music. Your way."))
+      body.addView(action("‹ Smart experience", false, this::menu));
+    else {
+      TextView brand = text("VEXO MUSIC  /  SMART EXPERIENCE", 11, LIME, true);
+      brand.setLetterSpacing(.08f);
+      body.addView(brand);
+    }
     gap(body, 18);
     body.addView(text(title, 26, TEXT, true));
     gap(body, 12);
@@ -59,22 +71,50 @@ final class SmartExperiencePanel extends MusicSurface {
   }
 
   private void button(String label, Runnable action) {
-    body.addView(action(label, false, () -> safe(action)));
+    TextView control = action(label, false, () -> safe(action));
+    control.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+    control.setBackground(round(PANEL, dp(16)));
+    body.addView(control);
     gap(body, 8);
   }
 
   void menu() {
     screen("Your music. Your way.");
     note("Private tools on this phone. Choose how your music feels.");
-    button("VEXO MindRadio", this::mind);
-    button("Recommendation controls & anti-repeat", this::preferences);
-    button("Find a forgotten song", this::find);
-    button("Song memories", this::memories);
-    button("Playlist Time Machine", this::revisions);
-    button("FairPlay · on this phone", this::group);
-    button("Discovery adventure", this::adventure);
-    button("Customize Home", this::home);
-    button("Privacy & listening history", this::privacy);
+    tool("VEXO MindRadio", "Set the mood. Shape what plays next.", this::mind);
+    tool(
+        "Recommendation controls & anti-repeat",
+        "A better balance of familiar and fresh.",
+        this::preferences);
+    tool("Find a forgotten song", "Follow a clue back to a past listen.", this::find);
+    tool("Song memories", "Keep a note. Return to a favourite moment.", this::memories);
+    tool("Playlist Time Machine", "Recover songs and revisit earlier versions.", this::revisions);
+    tool("FairPlay · on this phone", "Everyone gets a turn in the queue.", this::group);
+    tool("Discovery adventure", "Take a new artist or regional trail.", this::adventure);
+    tool("Customize Home", "Keep the sections that matter to you.", this::home);
+    tool("Privacy & listening history", "Pause recording or clear your history.", this::privacy);
+  }
+
+  private void tool(String title, String detail, Runnable open) {
+    LinearLayout card = column();
+    card.setPadding(dp(16), dp(16), dp(16), dp(16));
+    card.setBackground(round(PANEL, dp(18)));
+    card.setMinimumHeight(dp(80));
+    LinearLayout heading = row();
+    TextView label = text(title, 16, TEXT, true);
+    heading.addView(label, new LinearLayout.LayoutParams(0, -2, 1));
+    TextView arrow = text("›", 24, LIME, false);
+    arrow.setPadding(dp(12), 0, 0, 0);
+    heading.addView(arrow);
+    card.addView(heading);
+    gap(card, 7);
+    card.addView(text(detail, 12, MUTED, false));
+    card.setContentDescription(title + ". " + detail);
+    card.setOnClickListener(v -> safe(open));
+    // Keep the label independently accessible to keyboard and touch navigation.
+    label.setOnClickListener(v -> safe(open));
+    body.addView(card, new LinearLayout.LayoutParams(-1, -2));
+    gap(body, 10);
   }
 
   private EditText input(String hint, String value) {
@@ -82,6 +122,7 @@ final class SmartExperiencePanel extends MusicSurface {
     e.setTextColor(TEXT);
     e.setHintTextColor(MUTED);
     e.setTextSize(16);
+    e.setFilters(new android.text.InputFilter[] {new android.text.InputFilter.LengthFilter(1000)});
     e.setHint(hint);
     e.setText(value);
     e.setSingleLine(false);
@@ -96,8 +137,10 @@ final class SmartExperiencePanel extends MusicSurface {
     TextView caption = text(label, 14, TEXT, true);
     body.addView(caption);
     Spinner spinner = new Spinner(getContext());
+    String[] display =
+        Arrays.stream(values).map(value -> value.isEmpty() ? "Any" : value).toArray(String[]::new);
     ArrayAdapter<String> adapter =
-        new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_dropdown_item, values);
+        new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_dropdown_item, display);
     spinner.setAdapter(adapter);
     int selected = Arrays.asList(values).indexOf(current);
     spinner.setSelection(Math.max(0, selected));
@@ -122,6 +165,7 @@ final class SmartExperiencePanel extends MusicSurface {
     button(
         "Build my radio",
         () -> {
+          smart.preference("radio_command", command.getText().toString().trim());
           listener.discover(
               SmartPolicy.query(smart.preferences(), command.getText().toString()), false);
         });
@@ -153,7 +197,7 @@ final class SmartExperiencePanel extends MusicSurface {
         p.optString("energy"),
         v -> smart.preference("energy", v));
     choice(
-        "Discovery",
+        "Discovery · 0 familiar / 100 new artists",
         new String[] {"0", "25", "50", "75", "100"},
         "" + p.optInt("discovery", 50),
         v -> smart.preference("discovery", Integer.parseInt(v)));
@@ -335,7 +379,7 @@ final class SmartExperiencePanel extends MusicSurface {
         () -> {
           long at;
           try {
-            at = Long.parseLong(seconds.getText().toString()) * 1000L;
+            at = Math.multiplyExact(Long.parseLong(seconds.getText().toString()), 1000L);
           } catch (Exception e) {
             Toast.makeText(getContext(), "Enter a valid moment in seconds", Toast.LENGTH_SHORT)
                 .show();
@@ -647,7 +691,7 @@ final class SmartExperiencePanel extends MusicSurface {
     button(
         "Play fair rotation (" + queue.size() + " songs)",
         () -> {
-          if (!queue.isEmpty()) listener.play(queue, 0, 0);
+          if (!queue.isEmpty()) listener.fair(queue);
         });
     for (FairPlayPolicy.Request r : requests)
       button(

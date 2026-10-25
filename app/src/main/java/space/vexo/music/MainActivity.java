@@ -144,6 +144,7 @@ public final class MainActivity extends ComponentActivity {
   private final android.content.SharedPreferences.OnSharedPreferenceChangeListener
       playbackStateChanged =
           (prefs, key) -> {
+            if (!destroyed && "connection_status".equals(key)) updatePlayback();
             if (!destroyed && radioStatus != null)
               radioStatus.setText(prefs.getString("autoplay_status", ""));
             if (!destroyed && queuePanel != null && queueDialog != null && queueDialog.isShowing())
@@ -268,7 +269,11 @@ public final class MainActivity extends ComponentActivity {
 
                   @Override
                   public void onPlayerError(PlaybackException e) {
-                    showPlaybackError();
+                    if (e.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED
+                        || e.errorCode
+                            == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT)
+                      message("Connection interrupted · VEXO will try to resume");
+                    else showPlaybackError();
                   }
                 });
             updatePlayback();
@@ -2233,6 +2238,16 @@ public final class MainActivity extends ComponentActivity {
                 if (controller != null && moment > 0) controller.seekTo(moment);
               }
 
+              public void fair(List<Track> tracks) {
+                if (controller == null) {
+                  message("Player is connecting. Try again in a moment.");
+                  return;
+                }
+                play(tracks, 0, 0);
+                controller.sendCustomCommand(
+                    new SessionCommand(PlaybackService.FAIR_QUEUE, Bundle.EMPTY), Bundle.EMPTY);
+              }
+
               public void discover(String query, boolean newArtists) {
                 int token = ++generation[0];
                 message("Finding your music…");
@@ -2709,9 +2724,13 @@ public final class MainActivity extends ComponentActivity {
       playerRepeat.set(
           controller.getRepeatMode() == Player.REPEAT_MODE_ONE ? "repeat_one" : "repeat",
           controller.getRepeatMode() == Player.REPEAT_MODE_OFF ? MUTED : LIME);
+      String connection =
+          getSharedPreferences("playback_state", 0).getString("connection_status", "");
       playerState.setText(
           controller.getPlayerError() != null
-              ? "Audio couldn’t load · Tap Retry or try another song"
+              ? connection.isEmpty()
+                  ? "Audio couldn’t load · Tap Retry or try another song"
+                  : connection
               : controller.getPlaybackState() == Player.STATE_BUFFERING
                   ? "Loading audio…"
                   : OfflineLibrary.get(this).complete(item.mediaId)

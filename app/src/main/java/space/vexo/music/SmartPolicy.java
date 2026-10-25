@@ -153,6 +153,15 @@ final class SmartPolicy {
     JSONObject f = feedback.optJSONObject(RadioPolicy.songKey(t));
     String v = f == null ? "" : f.optString("value");
     int score = v.equals("more") ? 30 : v.equals("less") ? -30 : 0;
+    Iterator<String> feedbackKeys = feedback.keys();
+    while (feedbackKeys.hasNext()) {
+      JSONObject other = feedback.optJSONObject(feedbackKeys.next());
+      if (other != null
+          && other.optString("value").equals("more")
+          && other.optJSONObject("track") != null
+          && RadioPolicy.artist(Track.from(other.optJSONObject("track")))
+              .equals(RadioPolicy.artist(t))) score += 10;
+    }
     boolean fresh = !known.contains(RadioPolicy.artist(t));
     if (fresh) score += discovery ? 100 : p.optInt("discovery", 50) / 2;
     String text = normalize(t.title + " " + t.artist);

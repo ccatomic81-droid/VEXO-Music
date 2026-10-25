@@ -26,6 +26,7 @@ public final class PlaybackService extends MediaSessionService {
   public static final String CLEAR_QUEUE = "space.vexo.music.CLEAR_QUEUE";
   private final java.util.concurrent.ExecutorService radioWorker =
       java.util.concurrent.Executors.newFixedThreadPool(2);
+  public static final String FAIR_QUEUE = "space.vexo.music.FAIR_QUEUE";
   public static final String START_RADIO = "space.vexo.music.START_RADIO";
   public static final String HIDE_RADIO = "space.vexo.music.HIDE_RADIO";
   private AutoplayManager autoplay;
@@ -33,6 +34,7 @@ public final class PlaybackService extends MediaSessionService {
 
   private void startRadio(Track seed) {
     if (!RadioPolicy.music(seed)) return;
+    getSharedPreferences("playback_state", 0).edit().putBoolean("fair_queue", false).apply();
     autoplay.suspend();
     radioStore.anchor(seed);
     getSharedPreferences("settings", 0).edit().putBoolean("autoplay", true).apply();
@@ -72,6 +74,25 @@ public final class PlaybackService extends MediaSessionService {
     } catch (IllegalStateException unavailable) {
       return RadioPolicy.select(
           anchor, seed, candidates, queue, history, favourites, hidden, mode, limit);
+    }
+  }
+
+  private java.util.List<Track> tuneCandidates(java.util.List<Track> existing) {
+    try {
+      org.json.JSONObject prefs = new SmartStore(this).preferences();
+      boolean tuned = false;
+      for (String key :
+          new String[] {"radio_command", "genres", "language", "mood", "energy", "artists"})
+        if (!prefs.optString(key).trim().isEmpty()) tuned = true;
+      if (!tuned) return existing;
+      java.util.LinkedHashMap<String, Track> merged = new java.util.LinkedHashMap<>();
+      for (Track t :
+          OnlineMusic.search(SmartPolicy.query(prefs, prefs.optString("radio_command"))).tracks)
+        merged.putIfAbsent(t.url, t);
+      for (Track t : existing) merged.putIfAbsent(t.url, t);
+      return new java.util.ArrayList<>(merged.values());
+    } catch (Exception unavailable) {
+      return existing;
     }
   }
 
@@ -218,17 +239,19 @@ public final class PlaybackService extends MediaSessionService {
             seed -> {
               Track anchor = radioStore.anchor();
               if (anchor == null) anchor = seed;
-              return new RadioCatalogue(
-                      new RadioCatalogue.Source() {
-                        public java.util.List<Track> related(Track t) throws Exception {
-                          return OnlineMusic.related(t);
-                        }
+              java.util.List<Track> candidates =
+                  new RadioCatalogue(
+                          new RadioCatalogue.Source() {
+                            public java.util.List<Track> related(Track t) throws Exception {
+                              return OnlineMusic.related(t);
+                            }
 
-                        public java.util.List<Track> search(String query) throws Exception {
-                          return OnlineMusic.search(query).tracks;
-                        }
-                      })
-                  .load(anchor, seed);
+                            public java.util.List<Track> search(String query) throws Exception {
+                              return OnlineMusic.search(query).tracks;
+                            }
+                          })
+                      .load(anchor, seed);
+              return tuneCandidates(candidates);
             },
             radioWorker,
             handler::post,
@@ -251,6 +274,8 @@ public final class PlaybackService extends MediaSessionService {
                     radioStore.mode(),
                     10));
     autoplay.newQueue();
+    if (getSharedPreferences("playback_state", 0).getBoolean("fair_queue", false))
+      autoplay.suspend();
     handler.postDelayed(positionCheckpoint, 5000);
     player.addListener(
         new Player.Listener() {
@@ -368,6 +393,7 @@ public final class PlaybackService extends MediaSessionService {
                                 .add(new SessionCommand(AUTOPLAY_CHANGED, Bundle.EMPTY))
                                 .add(new SessionCommand(CLEAR_UPCOMING, Bundle.EMPTY))
                                 .add(new SessionCommand(CLEAR_QUEUE, Bundle.EMPTY))
+                                .add(new SessionCommand(FAIR_QUEUE, Bundle.EMPTY))
                                 .add(new SessionCommand(START_RADIO, Bundle.EMPTY))
                                 .add(new SessionCommand(HIDE_RADIO, Bundle.EMPTY))
                                 .build())
@@ -399,7 +425,22 @@ public final class PlaybackService extends MediaSessionService {
                                 androidx.media3.session.SessionError.ERROR_BAD_VALUE));
                       }
                     }
+                    if (command.customAction.equals(FAIR_QUEUE)) {
+                      getSharedPreferences("playback_state", 0)
+                          .edit()
+                          .putBoolean("fair_queue", true)
+                          .apply();
+                      autoplay.suspend();
+                      player.setShuffleModeEnabled(false);
+                      player.setRepeatMode(Player.REPEAT_MODE_OFF);
+                      return Futures.immediateFuture(
+                          new SessionResult(SessionResult.RESULT_SUCCESS));
+                    }
                     if (command.customAction.equals(NEW_QUEUE)) {
+                      getSharedPreferences("playback_state", 0)
+                          .edit()
+                          .putBoolean("fair_queue", false)
+                          .apply();
                       Track anchor = null;
                       try {
                         Track selected =

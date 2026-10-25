@@ -35,9 +35,9 @@ public class SmartExperienceTest {
     smart.memory(a, "private-secret-note", 12000, 100);
     smart.played(a, 100);
     smart.preference("genres", "private-genre");
-    String raw =
-        context.getSharedPreferences("smart_private_v1", 0).getString("vault:preferences", "");
-    assertFalse(raw.contains("private"));
+    String raw = context.getSharedPreferences("smart_private_v1", 0).getAll().toString();
+    assertFalse(raw.contains("private-secret-note"));
+    assertFalse(raw.contains("private-genre"));
     assertFalse(raw.contains(a.title));
     assertEquals(1, new SmartStore(context).events().length());
     assertEquals(
@@ -88,6 +88,31 @@ public class SmartExperienceTest {
     assertEquals(1, SmartPolicy.find(smart.events(), "பாடல்", 150, 250).size());
     assertEquals(c.url, SmartPolicy.find(smart.events(), "forgoten", 0, 400).get(0).url);
     assertTrue(SmartPolicy.find(smart.events(), "dream", 0, 250).isEmpty());
+  }
+
+  @Test
+  public void clearingHistoryRejectsAlreadyQueuedWrites() {
+    long queued = System.currentTimeMillis() - 10;
+    smart.clearHistory();
+    smart.played(a, queued);
+    assertEquals(0, smart.events().length());
+  }
+
+  @Test
+  public void ciphertextCannotBeSwappedBetweenCollections() {
+    smart.preference("mood", "calm");
+    String sealed =
+        context.getSharedPreferences("smart_private_v1", 0).getString("vault:preferences", "");
+    context
+        .getSharedPreferences("smart_private_v1", 0)
+        .edit()
+        .putString("vault:memories", sealed)
+        .commit();
+    try {
+      smart.memories();
+      fail();
+    } catch (IllegalStateException expected) {
+    }
   }
 
   @Test
