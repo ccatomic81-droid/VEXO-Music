@@ -14,6 +14,7 @@ if len(results)!=len(queries):raise SystemExit('Incomplete dependency advisory r
 findings=[]
 for query,result in zip(queries,results):
  if 'error' in result:raise SystemExit('Dependency advisory query failed')
+ if result.get('next_page_token'):raise SystemExit('Dependency advisory results are incomplete; further pagination is required')
  for vulnerability in result.get('vulns',[]):findings.append({'package':query['package']['name'],'version':query['version'],'advisory':vulnerability['id']})
 report={'source':'https://api.osv.dev/v1/querybatch','resolved_packages':len(queries),'findings':findings,'scope':'Known OSV advisories for resolved Maven versions; not a complete security audit'}
 (p.parent/'advisory-report.json').write_text(json.dumps(report,indent=2)+'\n')

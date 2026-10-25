@@ -49,6 +49,11 @@ android {
     }
 }
 dependencies {
+    constraints {
+        implementation('org.jsoup:jsoup:1.23.2') {
+            because 'Patched release for GHSA-65r4-943x-97jj and GHSA-pmhh-3w7g-xqp8'
+        }
+    }
     implementation 'androidx.activity:activity:1.10.1'
     implementation 'androidx.recyclerview:recyclerview:1.4.0'
     implementation 'androidx.media3:media3-exoplayer:1.8.0'
