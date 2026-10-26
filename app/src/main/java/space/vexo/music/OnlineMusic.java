@@ -58,6 +58,15 @@ public final class OnlineMusic {
     return songs;
   }
 
+  static List<Track> relatedPreview(Track seed) throws Exception {
+    PREVIEW.set(true);
+    try {
+      return related(seed);
+    } finally {
+      PREVIEW.remove();
+    }
+  }
+
   private static synchronized void rememberRelated(String url, List<Track> songs) {
     if (relatedCache.size() >= 30) relatedCache.remove(relatedCache.keySet().iterator().next());
     relatedCache.put(url, new ArrayList<>(songs));

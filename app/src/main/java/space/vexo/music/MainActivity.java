@@ -140,6 +140,7 @@ public final class MainActivity extends ComponentActivity {
   private Dialog playerDialog, queueDialog;
   private NotificationPermissionPrompt notificationPrompt;
   private AccountAuth account;
+  private YouTubeConnection youtube;
   private boolean accountBusy;
   private android.os.CancellationSignal googleCancellation;
   private final ActivityResultLauncher<String> notificationPermission =
@@ -216,6 +217,7 @@ public final class MainActivity extends ComponentActivity {
     super.onCreate(state);
     profile = new UserProfile(this);
     account = new AccountAuth(this);
+    youtube = new YouTubeConnection(this, state, this::render, this::play);
     store = new LibraryStore(this);
     searchHistory = new SearchHistory(this);
     suggestions =
@@ -256,6 +258,12 @@ public final class MainActivity extends ComponentActivity {
     }
     if ("space.vexo.music.OPEN_UPDATES".equals(getIntent().getAction())) tab = "Settings";
     root = column();
+    androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+    getWindow().setNavigationBarColor(Color.TRANSPARENT);
+    getWindow().setStatusBarColor(Color.TRANSPARENT);
+    if (Build.VERSION.SDK_INT >= 29) getWindow().setNavigationBarContrastEnforced(false);
+    androidx.core.view.WindowCompat.getInsetsController(getWindow(), root)
+        .setAppearanceLightNavigationBars(false);
     root.setBackground(Glass.backdrop());
     setContentView(root);
     androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(
@@ -402,6 +410,7 @@ public final class MainActivity extends ComponentActivity {
 
   @Override
   protected void onSaveInstanceState(Bundle b) {
+    if (youtube != null) youtube.saveState(b);
     if (searchField != null) query = searchField.getText().toString();
     b.putString("tab", tab);
     b.putString("shelf", shelf);
@@ -421,6 +430,7 @@ public final class MainActivity extends ComponentActivity {
 
   @Override
   protected void onDestroy() {
+    if (youtube != null) youtube.close();
     if (googleCancellation != null) googleCancellation.cancel();
     if (notificationPrompt != null) notificationPrompt.close();
     destroyed = true;
@@ -502,7 +512,9 @@ public final class MainActivity extends ComponentActivity {
     nav = row();
     nav.setPadding(dp(10), dp(2), dp(10), dp(4));
     nav.setMinimumHeight(dp(64));
-    Glass.apply(nav, 20, false);
+    // Let the page backdrop continue between and around the navigation items.
+    nav.setBackgroundColor(Color.TRANSPARENT);
+    nav.setElevation(0);
     LinearLayout.LayoutParams navLayout = new LinearLayout.LayoutParams(-1, -2);
     navLayout.setMargins(dp(16), 0, dp(16), dp(8));
     root.addView(nav, navLayout);
@@ -831,6 +843,12 @@ public final class MainActivity extends ComponentActivity {
               }
             });
     homePanel = panel;
+    try {
+      if (!homeFilter.equals("Playlists") && !new SmartStore(this).preferences().optBoolean("focus"))
+        panel.youtube(new YouTubeTaste(this).read(), () -> youtube.show(), this::play);
+    } catch (IllegalStateException unavailable) {
+      // A disconnected or unavailable optional source must never block Home.
+    }
     content.addView(panel, new LinearLayout.LayoutParams(-1, 0, 1));
     main.postDelayed(this::prefetchHomeMixes, 600);
   }
@@ -2835,7 +2853,10 @@ public final class MainActivity extends ComponentActivity {
               () -> {
                 accountBusy = false;
                 if (destroyed) return;
-                if (ok && mode.equals("signout")) GoogleAccount.clear(this);
+                if (ok && mode.equals("signout")) {
+                  GoogleAccount.clear(this);
+                  youtube.disconnect();
+                }
                 if (!dialog.isShowing()) return;
                 if (ok
                     && (mode.equals("signout")
@@ -3094,6 +3115,12 @@ public final class MainActivity extends ComponentActivity {
         "Permissions and optional update alerts",
         false,
         this::showNotifications);
+    setting(
+        body,
+        "YouTube taste",
+        "Optional · liked music and VEXO picks · manage connection",
+        false,
+        () -> youtube.show());
     setting(
         body,
         "Refresh & repair",
