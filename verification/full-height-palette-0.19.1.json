@@ -1,0 +1,45 @@
+{
+  "version": "0.19.1",
+  "versionCode": 26,
+  "applicationId": "space.vexo.music.radio",
+  "sourceCommit": "2defb894c3b3f35d7915e83e95c08dd4f582a3a6",
+  "ciRun": "https://github.com/ccatomic81-droid/VEXO-Music/actions/runs/40309454086",
+  "ciConclusion": "success",
+  "sha256": "abfa91b1d47f5c0ee0d27cfe088236b009c3b8ef5e88d53851e87b0b65887c05",
+  "size": 9066297,
+  "certificateSha256": "0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3",
+  "debuggable": false,
+  "zipalign16KiB": "passed",
+  "signedEntriesMatchUnsigned": true,
+  "liveTests": {
+    "tests": 5,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "androidTests": {
+    "tests": 191,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 8
+  },
+  "lintDebugAndRelease": "passed",
+  "serviceTests": "CI passed",
+  "resolvedDependencyAdvisories": {
+    "source": "https://api.osv.dev/v1/querybatch",
+    "resolved_packages": 126,
+    "findings": [],
+    "scope": "Known OSV advisories for resolved Maven versions; not a complete security audit"
+  },
+  "layoutChecks": "Native long connected YouTube panel and list-bottom renders at 320dp inspected. Full window attributes, fixed close access, reachable footer, Android 8 navigation insets and keyboard dismissal passed.",
+  "palette": {
+    "green": "#1ED760",
+    "background": "#121212",
+    "text": "#FFFFFF",
+    "secondaryText": "#B3B3B3",
+    "panel": "#181818",
+    "primarySource": "https://developer-assets.spotifycdn.com/images/guidelines/design/colors.svg"
+  },
+  "physicalDeviceAcceptancePerformed": false,
+  "distribution": "Signed APK delivered directly; stable public update feed unchanged."
+}
