@@ -139,10 +139,15 @@ public final class MainActivity extends ComponentActivity {
 
   private Dialog playerDialog, queueDialog;
   private NotificationPermissionPrompt notificationPrompt;
+  private AccountAuth account;
+  private boolean accountBusy;
+  private android.os.CancellationSignal googleCancellation;
   private final ActivityResultLauncher<String> notificationPermission =
-      registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> {
-        if (granted) message("Notifications enabled");
-      });
+      registerForActivityResult(
+          new ActivityResultContracts.RequestPermission(),
+          granted -> {
+            if (granted) message("Notifications enabled");
+          });
   private QueuePanel queuePanel;
   private NowPlayingPanel playerPanel;
   private List<Integer> queueViewIndices = new ArrayList<>();
@@ -210,6 +215,7 @@ public final class MainActivity extends ComponentActivity {
   public void onCreate(Bundle state) {
     super.onCreate(state);
     profile = new UserProfile(this);
+    account = new AccountAuth(this);
     store = new LibraryStore(this);
     searchHistory = new SearchHistory(this);
     suggestions =
@@ -221,10 +227,14 @@ public final class MainActivity extends ComponentActivity {
             (term, country) -> OnlineMusic.preview(categoryQuery(term), country));
     mixCatalogue = new MixCatalogue(this);
     updates = new UpdateChecker(this);
-    notificationPrompt = new NotificationPermissionPrompt(this,
-        () -> profile.complete() && !profileEditing
-            && (updateDialog == null || !updateDialog.isShowing()),
-        () -> notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS));
+    notificationPrompt =
+        new NotificationPermissionPrompt(
+            this,
+            () ->
+                profile.complete()
+                    && !profileEditing
+                    && (updateDialog == null || !updateDialog.isShowing()),
+            () -> notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS));
     getSharedPreferences("playback_state", 0)
         .registerOnSharedPreferenceChangeListener(playbackStateChanged);
     homeFeed = RegionalFeed.cached(this, RegionPolicy.current(this));
@@ -244,6 +254,7 @@ public final class MainActivity extends ComponentActivity {
       profileEditing = state.getBoolean("profile_editing", false);
       profileDraft = state.getString("profile_draft", profile.name());
     }
+    if ("space.vexo.music.OPEN_UPDATES".equals(getIntent().getAction())) tab = "Settings";
     root = column();
     root.setBackground(Glass.backdrop());
     setContentView(root);
@@ -410,6 +421,7 @@ public final class MainActivity extends ComponentActivity {
 
   @Override
   protected void onDestroy() {
+    if (googleCancellation != null) googleCancellation.cancel();
     if (notificationPrompt != null) notificationPrompt.close();
     destroyed = true;
     stopClock();
@@ -491,7 +503,9 @@ public final class MainActivity extends ComponentActivity {
     nav.setPadding(dp(10), dp(2), dp(10), dp(4));
     nav.setMinimumHeight(dp(64));
     Glass.apply(nav, 20, false);
-    root.addView(nav, new LinearLayout.LayoutParams(-1, -2));
+    LinearLayout.LayoutParams navLayout = new LinearLayout.LayoutParams(-1, -2);
+    navLayout.setMargins(dp(16), 0, dp(16), dp(8));
+    root.addView(nav, navLayout);
   }
 
   private void refreshNav() {
@@ -503,10 +517,10 @@ public final class MainActivity extends ComponentActivity {
       boolean selected = label.equals(tab);
       LinearLayout item = column();
       item.setGravity(Gravity.CENTER);
-      Icon i = new Icon(this, names[j], selected ? LIME : MUTED);
+      Icon i = new Icon(this, names[j], selected ? BG : MUTED);
       i.setGlyphSize(24);
       item.addView(i, new LinearLayout.LayoutParams(dp(48), dp(40)));
-      if (selected) i.setBackground(round(0xff253526, dp(12)));
+      if (selected) i.setBackground(round(LIME, dp(22)));
       i.setContentDescription(label);
       i.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
       TextView caption = text(label, 10, selected ? LIME : MUTED, selected);
@@ -543,7 +557,7 @@ public final class MainActivity extends ComponentActivity {
     background.setColor(PANEL);
     background.setCornerRadius(dp(18));
     background.setStroke(dp(1), 0xff303e39);
-    mini.setBackground(background);
+    Glass.apply(mini, 20, false);
     mini.setPadding(dp(8), dp(8), dp(4), dp(5));
     mini.setMinimumHeight(dp(66));
     LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-1, -2);
@@ -552,8 +566,8 @@ public final class MainActivity extends ComponentActivity {
     mini.setVisibility(View.GONE);
     LinearLayout line = row();
     mini.addView(line, new LinearLayout.LayoutParams(-1, -2));
-    miniArt = new ImageView(this);
-    miniArt.setBackground(round(PANEL, dp(9)));
+    miniArt = new RoundedArtwork(this);
+    miniArt.setBackground(round(PANEL, dp(11)));
     miniArt.setClipToOutline(true);
     line.addView(miniArt, new LinearLayout.LayoutParams(dp(44), dp(44)));
     LinearLayout copy = column();
@@ -2781,6 +2795,285 @@ public final class MainActivity extends ComponentActivity {
           .setLayout(-1, (int) (getResources().getDisplayMetrics().heightPixels * .88f));
   }
 
+  @Override
+  protected void onNewIntent(Intent intent) {
+    super.onNewIntent(intent);
+    setIntent(intent);
+    if ("space.vexo.music.OPEN_UPDATES".equals(intent.getAction())) {
+      tab = "Settings";
+      activeCollection = "";
+      activeMix = "";
+      render();
+    }
+  }
+
+  interface AccountWork {
+    String run() throws Exception;
+  }
+
+  private void accountAction(AccountPanel panel, Dialog dialog, String mode, AccountWork work) {
+    if (accountBusy || destroyed) return;
+    accountBusy = true;
+    panel.busy(true);
+    io.execute(
+        () -> {
+          String result;
+          boolean success;
+          try {
+            result = work.run();
+            success = true;
+          } catch (Exception e) {
+            result =
+                e instanceof java.io.IOException && e.getMessage() != null
+                    ? e.getMessage()
+                    : "Couldn’t securely complete this request. Your library is safe.";
+            success = false;
+          }
+          final String message = result;
+          final boolean ok = success;
+          main.post(
+              () -> {
+                accountBusy = false;
+                if (destroyed) return;
+                if (ok && mode.equals("signout")) GoogleAccount.clear(this);
+                if (!dialog.isShowing()) return;
+                if (ok
+                    && (mode.equals("signout")
+                        || (!mode.equals("validate") && account.signedIn()))) {
+                  dialog.dismiss();
+                  if (tab.equals("Settings")) render();
+                  if (!message.isEmpty()) message(message);
+                  showAccount();
+                } else panel.result(message, ok);
+              });
+        });
+  }
+
+  private void showAccount() {
+    Dialog dialog = new Dialog(this);
+    AccountPanel[] panels = new AccountPanel[1];
+    panels[0] =
+        new AccountPanel(
+            this,
+            account,
+            new AccountPanel.Listener() {
+              public void close() {
+                dialog.dismiss();
+              }
+
+              public void submit(String mode, String email, String password) {
+                accountAction(panels[0], dialog, mode, () -> account.submit(mode, email, password));
+              }
+
+              public void google() {
+                if (accountBusy || destroyed) return;
+                accountBusy = true;
+                panels[0].busy(true);
+                googleCancellation =
+                    GoogleAccount.start(
+                        MainActivity.this,
+                        new GoogleAccount.Listener() {
+                          public void failed(String error) {
+                            accountBusy = false;
+                            googleCancellation = null;
+                            if (!destroyed && dialog.isShowing()) panels[0].result(error, false);
+                          }
+
+                          public void token(String token) {
+                            accountBusy = false;
+                            googleCancellation = null;
+                            if (!destroyed && dialog.isShowing())
+                              accountAction(
+                                  panels[0], dialog, "google", () -> account.google(token));
+                          }
+                        });
+              }
+
+              public void signOut() {
+                accountAction(
+                    panels[0],
+                    dialog,
+                    "signout",
+                    () -> {
+                      account.signOut();
+                      return "Signed out on this phone. Your music is still here.";
+                    });
+              }
+
+              public void sync() {
+                if (accountBusy) return;
+                new AlertDialog.Builder(MainActivity.this)
+                    .setTitle("Sync your library?")
+                    .setMessage(
+                        "Merge online favourites and playlists with this account. Phone audio,"
+                            + " photos, history and Smart memories stay on this phone. Deletions"
+                            + " are not synced.")
+                    .setNegativeButton("Cancel", null)
+                    .setPositiveButton("Sync now", (d, w) -> syncAccountLibrary(panels[0], dialog))
+                    .show();
+              }
+            });
+    panels[0].busy(accountBusy);
+    panels[0].setBackground(Glass.dialogBackdrop(this));
+    dialog.setContentView(panels[0]);
+    dialog.show();
+    blurDialog(dialog);
+    if (dialog.getWindow() != null)
+      dialog
+          .getWindow()
+          .setLayout(-1, (int) (getResources().getDisplayMetrics().heightPixels * .9f));
+    if (account.signedIn() && !accountBusy)
+      accountAction(
+          panels[0],
+          dialog,
+          "validate",
+          () -> {
+            account.validate();
+            return "";
+          });
+  }
+
+  private void syncAccountLibrary(AccountPanel panel, Dialog dialog) {
+    if (accountBusy || destroyed) return;
+    accountBusy = true;
+    panel.busy(true);
+    io.execute(
+        () -> {
+          try {
+            AccountAuth.Credentials identity = account.credentials();
+            org.json.JSONObject merged =
+                new LibrarySync().sync(identity, LibrarySync.snapshot(store));
+            main.post(
+                () -> {
+                  accountBusy = false;
+                  if (destroyed) return;
+                  try {
+                    if (!account.stillCurrent(identity))
+                      throw new java.io.IOException("Account changed. Sign in and sync again.");
+                    LibrarySync.apply(store, merged);
+                    if (dialog.isShowing())
+                      panel.result("Library synced. Your existing local songs were kept.", true);
+                  } catch (java.io.IOException e) {
+                    if (dialog.isShowing()) panel.result(e.getMessage(), false);
+                  }
+                });
+          } catch (Exception e) {
+            String error =
+                e instanceof java.io.IOException && e.getMessage() != null
+                    ? e.getMessage()
+                    : "Couldn’t sync safely. Your local library stays unchanged.";
+            main.post(
+                () -> {
+                  accountBusy = false;
+                  if (!destroyed && dialog.isShowing()) panel.result(error, false);
+                });
+          }
+        });
+  }
+
+  private void showNotifications() {
+    Dialog dialog = new Dialog(this);
+    MusicSurface panel = new MusicSurface(this);
+    panel.body.addView(panel.text("NOTIFICATIONS", 11, LIME, true));
+    panel.gap(panel.body, 12);
+    panel.body.addView(panel.text("Your alerts, your choice.", 26, TEXT, true));
+    panel.gap(panel.body, 16);
+    panel.body.addView(
+        panel.text(
+            AppNotifications.enabled(this)
+                ? "Android notifications are enabled."
+                : "Android notifications are off.",
+            14,
+            MUTED,
+            false));
+    panel.gap(panel.body, 16);
+    panel.body.addView(
+        panel.action(
+            "Android notification settings",
+            false,
+            () -> {
+              if (Build.VERSION.SDK_INT >= 33
+                  && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
+                      != PackageManager.PERMISSION_GRANTED
+                  && !getSharedPreferences("settings", 0)
+                      .getBoolean("notifications_asked", false)) {
+                getSharedPreferences("settings", 0)
+                    .edit()
+                    .putBoolean("notifications_asked", true)
+                    .apply();
+                notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS);
+              } else {
+                try {
+                  startActivity(AppNotifications.settings(this));
+                } catch (ActivityNotFoundException e) {
+                  message("Open Android Settings → Apps → VEXO Music → Notifications.");
+                }
+              }
+            }));
+    boolean alerts = getSharedPreferences("settings", 0).getBoolean("update_alerts", false);
+    panel.gap(panel.body, 10);
+    panel.body.addView(
+        panel.action(
+            alerts ? "Update alerts: ON" : "Update alerts: OFF",
+            false,
+            () -> {
+              getSharedPreferences("settings", 0)
+                  .edit()
+                  .putBoolean("update_alerts", !alerts)
+                  .apply();
+              dialog.dismiss();
+              showNotifications();
+            }));
+    boolean push = PushNotifications.optedIn(this);
+    panel.gap(panel.body, 10);
+    panel.body.addView(
+        panel.action(
+            push ? "Push release alerts: ON" : "Push release alerts: OFF",
+            false,
+            () -> {
+              if (!push && !AppNotifications.enabled(this)) {
+                message("Enable notifications in Android first, then turn on push alerts.");
+                return;
+              }
+              PushNotifications.enabled(this, !push);
+              dialog.dismiss();
+              showNotifications();
+            }));
+    panel.gap(panel.body, 8);
+    TextView status = panel.text(PushNotifications.status(this), 12, MUTED, false);
+    status.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
+    panel.body.addView(status);
+    android.content.SharedPreferences prefs = getSharedPreferences("settings", 0);
+    android.content.SharedPreferences.OnSharedPreferenceChangeListener changes =
+        (p, key) -> {
+          if ("push_status".equals(key)) status.setText(PushNotifications.status(this));
+        };
+    prefs.registerOnSharedPreferenceChangeListener(changes);
+    dialog.setOnDismissListener(d -> prefs.unregisterOnSharedPreferenceChangeListener(changes));
+    panel.gap(panel.body, 12);
+    panel.body.addView(
+        panel.action(
+            "Send a test notification",
+            false,
+            () ->
+                message(
+                    AppNotifications.post(
+                            this, 43, "VEXO is ready", "Your notification alerts are working.")
+                        ? "Test notification sent"
+                        : "Enable notifications in Android settings, including the App updates"
+                            + " channel.")));
+    panel.gap(panel.body, 12);
+    panel.body.addView(panel.action("Close", false, dialog::dismiss));
+    panel.setBackground(Glass.dialogBackdrop(this));
+    dialog.setContentView(panel);
+    dialog.show();
+    blurDialog(dialog);
+    if (dialog.getWindow() != null)
+      dialog
+          .getWindow()
+          .setLayout(-1, (int) (getResources().getDisplayMetrics().heightPixels * .9f));
+  }
+
   private void renderSettings() {
     header("MAKE IT YOURS", "Settings");
     ScrollView scroll = new ScrollView(this);
@@ -2789,6 +3082,18 @@ public final class MainActivity extends ComponentActivity {
     scroll.addView(body);
     content.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
     setting(body, "Your profile", profile.name() + " · name and photo", false, this::openProfile);
+    setting(
+        body,
+        "VEXO account",
+        account.signedIn() ? account.email() : "Sign in or continue as a guest",
+        false,
+        this::showAccount);
+    setting(
+        body,
+        "Notifications",
+        "Permissions and optional update alerts",
+        false,
+        this::showNotifications);
     setting(
         body,
         "Refresh & repair",
@@ -3069,6 +3374,7 @@ public final class MainActivity extends ComponentActivity {
                     if (manual) message("You’re using the latest version");
                     return;
                   }
+                  AppNotifications.update(this, release);
                   if (!manual && updates.snoozed(release)) return;
                   if (updateDialog != null && updateDialog.isShowing()) return;
                   updateDialog =

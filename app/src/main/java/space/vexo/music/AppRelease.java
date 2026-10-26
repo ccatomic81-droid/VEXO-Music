@@ -7,16 +7,13 @@ import org.json.*;
 /** A release feed contains metadata only. Downloads always need a user tap. */
 final class AppRelease {
   static final String NOTES =
-      "• Cleaner Search with compact language/source controls and recent searches.\n"
-          + "• Consistent category cards, spacing, mini-player margins and smaller navigation"
-          + " icons.\n"
-          + "• Private next-song learning, category/language search and Home Skip intros"
-          + " controls.\n"
-          + "• Intro markers apply to confirmed imported audio; full-version control stays"
-          + " available.\n"
-          + "• Encrypted private collections and authenticated future updates.\n"
-          + "• This is an opt-in test build. Existing accounts/push integrations are still"
-          + " pending.";
+      "• Aurora Home with purple/lime styling, aligned cards and rounded mini-player artwork.\n"
+          + "• A one-time invitation to enable notifications. Choose Enable or Not now.\n"
+          + "• Optional Google/email sign-in and manual online favourites/playlist sync.\n"
+          + "• Notification and release-alert controls in Settings.\n"
+          + "• Smart Experience, MindRadio, FairPlay, playback, crossfade and saved music are"
+          + " retained.\n"
+          + "• Install as an update to keep your music library and preferences.";
   final int code;
   final String version, summary, url;
   String sha256 = "";

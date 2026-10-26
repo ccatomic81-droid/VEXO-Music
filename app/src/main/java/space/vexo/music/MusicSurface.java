@@ -1,16 +1,20 @@
 package space.vexo.music;
 
-import static space.vexo.music.Visuals.*;
-
 import android.content.Context;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.text.TextUtils;
-import android.view.*;
-import android.widget.*;
-import java.util.*;
+import android.view.View;
+import android.widget.FrameLayout;
+import android.widget.HorizontalScrollView;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
+import android.widget.TextView;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
 
-/** Shared native surfaces, sized by content so narrow screens and large text can scroll. */
 class MusicSurface extends ScrollView {
   final LinearLayout body;
 
@@ -19,142 +23,180 @@ class MusicSurface extends ScrollView {
     setFillViewport(true);
     setVerticalScrollBarEnabled(false);
     setClipToPadding(false);
-    body = column();
-    body.setPadding(dp(20), dp(14), dp(20), dp(28));
-    addView(body);
+    LinearLayout linearLayoutColumn = column();
+    this.body = linearLayoutColumn;
+    linearLayoutColumn.setPadding(dp(20.0f), dp(14.0f), dp(20.0f), dp(28.0f));
+    addView(linearLayoutColumn);
   }
 
-  int dp(float n) {
-    return Math.round(n * getResources().getDisplayMetrics().density);
+  int dp(float f) {
+    return Math.round(f * getResources().getDisplayMetrics().density);
   }
 
   LinearLayout column() {
-    LinearLayout v = new LinearLayout(getContext());
-    v.setOrientation(LinearLayout.VERTICAL);
-    return v;
+    LinearLayout linearLayout = new LinearLayout(getContext());
+    linearLayout.setOrientation(LinearLayout.VERTICAL);
+    return linearLayout;
   }
 
   LinearLayout row() {
-    LinearLayout v = new LinearLayout(getContext());
-    v.setGravity(Gravity.CENTER_VERTICAL);
-    return v;
+    LinearLayout linearLayout = new LinearLayout(getContext());
+    linearLayout.setGravity(16);
+    return linearLayout;
   }
 
-  TextView text(String value, int size, int color, boolean bold) {
-    TextView t = new TextView(getContext());
-    t.setText(value);
-    t.setTextSize(size);
-    t.setTextColor(color);
-    t.setIncludeFontPadding(false);
-    if (bold) t.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-    return t;
-  }
-
-  void gap(LinearLayout parent, int size) {
-    View v = new View(getContext());
-    parent.addView(v, new LinearLayout.LayoutParams(1, dp(size)));
-  }
-
-  TextView action(String label, boolean primary, Runnable click) {
-    TextView t = text(label, 14, primary ? BG : TEXT, true);
-    t.setGravity(Gravity.CENTER);
-    t.setPadding(dp(16), dp(13), dp(16), dp(13));
-    t.setMinHeight(dp(48));
-    if (primary) t.setBackground(round(LIME, dp(24)));
-    else Glass.apply(t, 22, false);
-    t.setOnClickListener(v -> click.run());
-    return t;
-  }
-
-  void section(String title, String action, Runnable click) {
-    LinearLayout row = row();
-    TextView label = text(title, 21, TEXT, true);
-    row.addView(label, new LinearLayout.LayoutParams(0, -2, 1));
-    if (action != null) {
-      TextView more = text(action, 12, LIME, true);
-      more.setGravity(Gravity.CENTER);
-      more.setPadding(dp(8), dp(14), 0, dp(14));
-      more.setMinHeight(dp(48));
-      more.setOnClickListener(v -> click.run());
-      row.addView(more);
+  TextView text(String str, int i, int i2, boolean z) {
+    TextView textView = new TextView(getContext());
+    textView.setText(str);
+    textView.setTextSize(i);
+    textView.setTextColor(i2);
+    textView.setIncludeFontPadding(false);
+    if (z) {
+      textView.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
     }
-    body.addView(row);
-    gap(body, 12);
+    return textView;
   }
 
-  FrameLayout cover(String name, List<Track> songs, int size, int color) {
-    FrameLayout box = new FrameLayout(getContext());
-    GradientDrawable background =
-        new GradientDrawable(GradientDrawable.Orientation.TL_BR, new int[] {color, 0xff202633});
-    background.setCornerRadius(dp(12));
-    box.setBackground(background);
-    box.setClipToOutline(true);
-    String art = "";
-    for (Track t : songs)
-      if (!t.artwork.isEmpty()) {
-        art = t.artwork;
+  void gap(LinearLayout linearLayout, int i) {
+    linearLayout.addView(new View(getContext()), new LinearLayout.LayoutParams(1, dp(i)));
+  }
+
+  TextView action(String str, boolean z, final Runnable runnable) {
+    TextView textViewText = text(str, 14, z ? Visuals.BG : Visuals.TEXT, true);
+    textViewText.setGravity(17);
+    textViewText.setPadding(dp(16.0f), dp(13.0f), dp(16.0f), dp(13.0f));
+    textViewText.setMinHeight(dp(48.0f));
+    if (z) {
+      textViewText.setBackground(Visuals.round(Visuals.LIME, dp(24.0f)));
+    } else {
+      Glass.apply(textViewText, 22.0f, false);
+    }
+    textViewText.setOnClickListener(
+        new View.OnClickListener() {
+          @Override // android.view.View.OnClickListener
+          public final void onClick(View view) {
+            runnable.run();
+          }
+        });
+    return textViewText;
+  }
+
+  void section(String str, String str2, final Runnable runnable) {
+    LinearLayout linearLayoutRow = row();
+    linearLayoutRow.addView(
+        text(str, 21, Visuals.TEXT, true), new LinearLayout.LayoutParams(0, -2, 1.0f));
+    if (str2 != null) {
+      TextView textViewText = text(str2, 12, Visuals.LIME, true);
+      textViewText.setGravity(17);
+      textViewText.setPadding(dp(8.0f), dp(14.0f), 0, dp(14.0f));
+      textViewText.setMinHeight(dp(48.0f));
+      textViewText.setOnClickListener(
+          new View.OnClickListener() {
+            @Override // android.view.View.OnClickListener
+            public final void onClick(View view) {
+              runnable.run();
+            }
+          });
+      linearLayoutRow.addView(textViewText);
+    }
+    this.body.addView(linearLayoutRow);
+    gap(this.body, 12);
+  }
+
+  FrameLayout cover(String str, List<Track> list, int i, int i2) {
+    String str2;
+    FrameLayout frameLayout = new FrameLayout(getContext());
+    GradientDrawable gradientDrawable =
+        new GradientDrawable(GradientDrawable.Orientation.TL_BR, new int[] {i2, -14670285});
+    gradientDrawable.setCornerRadius(dp(12.0f));
+    frameLayout.setBackground(gradientDrawable);
+    frameLayout.setClipToOutline(true);
+    Iterator<Track> it = list.iterator();
+    while (true) {
+      if (!it.hasNext()) {
+        str2 = "";
         break;
       }
-    if (!art.isEmpty()) {
-      ImageView image = new ImageView(getContext());
-      box.addView(image, new FrameLayout.LayoutParams(-1, -1));
-      artwork(image, art);
-    } else {
-      TextView letter =
-          text(
-              name.isEmpty() ? "V" : name.substring(0, 1).toUpperCase(Locale.ROOT),
-              Math.max(20, size / 3),
-              0xfff5f5f5,
-              true);
-      letter.setGravity(Gravity.CENTER);
-      letter.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-      box.addView(letter, new FrameLayout.LayoutParams(-1, -1));
+      Track next = it.next();
+      if (!next.artwork.isEmpty()) {
+        str2 = next.artwork;
+        break;
+      }
     }
-    box.setLayoutParams(new LinearLayout.LayoutParams(dp(size), dp(size)));
-    return box;
+    if (!str2.isEmpty()) {
+      ImageView imageView = new ImageView(getContext());
+      frameLayout.addView(imageView, new FrameLayout.LayoutParams(-1, -1));
+      Visuals.artwork(imageView, str2);
+    } else {
+      TextView textViewText =
+          text(
+              str.isEmpty() ? "V" : str.substring(0, 1).toUpperCase(Locale.ROOT),
+              Math.max(20, i / 3),
+              -657931,
+              true);
+      textViewText.setGravity(17);
+      textViewText.setImportantForAccessibility(2);
+      frameLayout.addView(textViewText, new FrameLayout.LayoutParams(-1, -1));
+    }
+    float f = i;
+    frameLayout.setLayoutParams(new LinearLayout.LayoutParams(dp(f), dp(f)));
+    return frameLayout;
   }
 
   LinearLayout shelf() {
-    HorizontalScrollView scroll = new HorizontalScrollView(getContext());
-    scroll.setHorizontalScrollBarEnabled(false);
-    scroll.setClipToPadding(false);
-    LinearLayout cards = row();
-    cards.setGravity(Gravity.TOP);
-    scroll.addView(cards);
-    body.addView(scroll, new LinearLayout.LayoutParams(-1, -2));
-    return cards;
+    HorizontalScrollView horizontalScrollView = new HorizontalScrollView(getContext());
+    horizontalScrollView.setHorizontalScrollBarEnabled(false);
+    horizontalScrollView.setClipToPadding(false);
+    LinearLayout linearLayoutRow = row();
+    linearLayoutRow.setGravity(48);
+    horizontalScrollView.addView(linearLayoutRow);
+    this.body.addView(horizontalScrollView, new LinearLayout.LayoutParams(-1, -2));
+    return linearLayoutRow;
   }
 
   int shelfCardSize() {
-    int width = getResources().getConfiguration().screenWidthDp;
-    if (width <= 0)
-      width =
+    int iRound = getResources().getConfiguration().screenWidthDp;
+    if (iRound <= 0) {
+      iRound =
           Math.round(
               getResources().getDisplayMetrics().widthPixels
                   / getResources().getDisplayMetrics().density);
-    return Math.max(124, Math.min(176, (width - 40 - 14) / 2));
+    }
+    return Math.max(124, Math.min(176, (iRound - 54) / 2));
   }
 
   void card(
-      LinearLayout shelf, String name, String detail, List<Track> songs, int color, Runnable open) {
-    LinearLayout card = column();
-    int size = shelfCardSize();
-    card.addView(cover(name, songs, size, color));
-    gap(card, 10);
-    TextView title = text(name, 15, TEXT, true);
-    title.setMaxLines(2);
-    title.setEllipsize(TextUtils.TruncateAt.END);
-    card.addView(title);
-    gap(card, 5);
-    TextView subtitle = text(detail, 12, MUTED, false);
-    subtitle.setMaxLines(2);
-    subtitle.setEllipsize(TextUtils.TruncateAt.END);
-    card.addView(subtitle);
-    card.setPadding(0, 0, 0, dp(6));
-    card.setContentDescription("Open " + name);
-    card.setOnClickListener(v -> open.run());
-    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dp(size), -2);
-    params.setMargins(0, 0, dp(14), 0);
-    shelf.addView(card, params);
+      LinearLayout linearLayout,
+      String str,
+      String str2,
+      List<Track> list,
+      int i,
+      final Runnable runnable) {
+    LinearLayout linearLayoutColumn = column();
+    int iShelfCardSize = shelfCardSize();
+    linearLayoutColumn.addView(cover(str, list, iShelfCardSize, i));
+    gap(linearLayoutColumn, 10);
+    TextView textViewText = text(str, 15, Visuals.TEXT, true);
+    textViewText.setMaxLines(2);
+    textViewText.setEllipsize(TextUtils.TruncateAt.END);
+    linearLayoutColumn.addView(textViewText);
+    gap(linearLayoutColumn, 5);
+    TextView textViewText2 = text(str2, 12, Visuals.MUTED, false);
+    textViewText2.setMaxLines(2);
+    textViewText2.setEllipsize(TextUtils.TruncateAt.END);
+    linearLayoutColumn.addView(textViewText2);
+    linearLayoutColumn.setPadding(0, 0, 0, dp(6.0f));
+    linearLayoutColumn.setContentDescription("Open " + str);
+    linearLayoutColumn.setOnClickListener(
+        new View.OnClickListener() {
+          @Override // android.view.View.OnClickListener
+          public final void onClick(View view) {
+            runnable.run();
+          }
+        });
+    LinearLayout.LayoutParams layoutParams =
+        new LinearLayout.LayoutParams(dp((float) iShelfCardSize), -2);
+    layoutParams.setMargins(0, 0, dp(14.0f), 0);
+    linearLayout.addView(linearLayoutColumn, layoutParams);
   }
 }

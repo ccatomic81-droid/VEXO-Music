@@ -676,7 +676,7 @@ final class SmartExperiencePanel extends MusicSurface {
   }
 
   static final List<String> MODULES =
-      Arrays.asList("Shortcuts", "Mood mixes", "Playlists", "Recently played", "Regional music");
+      Arrays.asList("Mood mixes", "Shortcuts", "Playlists", "Recently played", "Regional music");
 
   static List<String> order(JSONObject p) {
     List<String> out = new ArrayList<>();

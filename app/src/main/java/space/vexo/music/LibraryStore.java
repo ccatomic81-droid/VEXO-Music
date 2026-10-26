@@ -121,6 +121,37 @@ public final class LibraryStore {
     return true;
   }
 
+  synchronized void mergeCollections(List<Track> list, java.util.Map<String, List<Track>> map)
+      throws java.io.IOException {
+    PrivateStore.Editor editorEdit = this.prefs.edit();
+    List<String> listPlaylists = playlists();
+    for (java.util.Map.Entry<String, List<Track>> entry : map.entrySet()) {
+      if (listPlaylists.contains(entry.getKey())) {
+        checkpoint(entry.getKey(), "Before cloud merge");
+      } else {
+        listPlaylists.add(entry.getKey());
+      }
+      JSONArray jSONArray = new JSONArray();
+      java.util.Iterator<Track> it = entry.getValue().iterator();
+      while (it.hasNext()) {
+        jSONArray.put(it.next().json());
+      }
+      editorEdit.putString("playlist:" + entry.getKey(), jSONArray.toString());
+    }
+    JSONArray jSONArray2 = new JSONArray();
+    java.util.Iterator<Track> it2 = list.iterator();
+    while (it2.hasNext()) {
+      jSONArray2.put(it2.next().json());
+    }
+    if (!editorEdit
+        .putString("playlists", new JSONArray((java.util.Collection) listPlaylists).toString())
+        .putString("favourites", jSONArray2.toString())
+        .commit()) {
+      throw new java.io.IOException(
+          "Couldn’t safely save synced collections. Your existing library was kept.");
+    }
+  }
+
   /** Saving the same mix twice reuses its copy; never overwrite a user's edited playlist. */
   public synchronized String savePlaylistCopy(String base, List<Track> songs) {
     String name = base.trim();

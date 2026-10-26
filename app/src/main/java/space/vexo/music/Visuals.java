@@ -11,17 +11,17 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class Visuals {
-  public static final int BG = Color.rgb(13, 16, 23),
-      PANEL = Color.rgb(25, 29, 39),
+  public static final int BG = Color.rgb(10, 9, 16),
+      PANEL = Color.rgb(28, 26, 37),
       TEXT = Color.rgb(246, 247, 242),
-      MUTED = Color.rgb(151, 160, 177),
-      LIME = Color.rgb(212, 252, 121),
-      PURPLE = Color.rgb(157, 141, 241);
+      MUTED = Color.rgb(164, 158, 179),
+      LIME = Color.rgb(212, 239, 113),
+      PURPLE = Color.rgb(197, 161, 232);
 
   public static GradientDrawable round(int color, float radius) {
     GradientDrawable d = new GradientDrawable();
     d.setColor(color);
-    if (color == PANEL) d.setStroke(1, 0xff343d4c);
+    if (color == PANEL) d.setStroke(1, 0xff3b3448);
     d.setCornerRadius(radius);
     return d;
   }

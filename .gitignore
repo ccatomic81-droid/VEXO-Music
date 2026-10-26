@@ -7,3 +7,6 @@ local.properties
 dist/
 *.apk
 *.zip
+**/node_modules/
+supabase/.temp/
+.wrangler/
