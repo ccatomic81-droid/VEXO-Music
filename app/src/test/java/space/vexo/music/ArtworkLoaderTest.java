@@ -132,7 +132,7 @@ public class ArtworkLoaderTest {
   }
 
   @Test
-  public void smallRowsUseSmallCoversAndAccentMatchesTheVioletTheme() {
+  public void smallRowsUseSmallCoversAndAccentMatchesTheGreenPalette() {
     ImageView small = view();
     assertEquals(128, ArtworkLoader.size(small));
     assertEquals(
@@ -141,6 +141,6 @@ public class ArtworkLoaderTest {
     assertEquals(
         "https://i.ytimg.com/vi/id/hqdefault.jpg",
         ArtworkQuality.forSize("https://i.ytimg.com/vi/id/hqdefault.jpg", 128));
-    assertEquals(Color.rgb(201, 174, 245), Visuals.ACCENT);
+    assertEquals(0xff1ed760, Visuals.ACCENT);
   }
 }

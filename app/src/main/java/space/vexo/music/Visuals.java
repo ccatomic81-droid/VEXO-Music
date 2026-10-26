@@ -7,18 +7,18 @@ import android.view.View;
 import android.widget.ImageView;
 
 public final class Visuals {
-  public static final int BG = Color.rgb(10, 9, 16),
-      PANEL = Color.rgb(28, 26, 37),
-      TEXT = Color.rgb(246, 247, 242),
-      MUTED = Color.rgb(164, 158, 179),
-      ACCENT = Color.rgb(201, 174, 245),
+  public static final int BG = 0xff121212,
+      PANEL = 0xff181818,
+      TEXT = Color.WHITE,
+      MUTED = 0xffb3b3b3,
+      ACCENT = 0xff1ed760,
       LIME = ACCENT,
-      PURPLE = Color.rgb(197, 161, 232);
+      PURPLE = ACCENT;
 
   public static GradientDrawable round(int color, float radius) {
     GradientDrawable d = new GradientDrawable();
     d.setColor(color);
-    if (color == PANEL) d.setStroke(1, 0xff3b3448);
+    if (color == PANEL) d.setStroke(1, 0xff333333);
     d.setCornerRadius(radius);
     return d;
   }
@@ -44,7 +44,7 @@ public final class Visuals {
       float x = b.left + w / 2, y = b.top + h / 2;
       paint.setStyle(Paint.Style.STROKE);
       paint.setStrokeWidth(Math.max(1, r * .012f));
-      paint.setColor(0xff4d5266);
+      paint.setColor(0xff535353);
       canvas.drawCircle(x, y, r * .32f, paint);
       canvas.drawCircle(x, y, r * .24f, paint);
       paint.setStyle(Paint.Style.FILL);
@@ -399,7 +399,7 @@ public final class Visuals {
               0,
               w,
               h,
-              new int[] {0xff263431, 0xff30304d, 0xff4b4264},
+              new int[] {0xff242424, 0xff181818, 0xff121212},
               null,
               Shader.TileMode.CLAMP));
       c.drawRoundRect(0, 0, w, h, 28, 28, p);
@@ -410,7 +410,7 @@ public final class Visuals {
       p.setStyle(Paint.Style.STROKE);
       p.setStrokeWidth(1.2f);
       for (int i = 0; i < 8; i++) {
-        p.setColor(Color.argb(45 + i * 8, 201, 174, 245));
+        p.setColor(Color.argb(45 + i * 8, 30, 215, 96));
         float r = h * (.15f + i * .055f);
         c.drawOval(-r * 1.5f, -r, r * 1.5f, r, p);
       }

@@ -7,14 +7,11 @@ import org.json.*;
 /** A release feed contains metadata only. Downloads always need a user tap. */
 final class AppRelease {
   static final String NOTES =
-      "• Search browse and song suggestions return correctly after switching tabs.\n"
-          + "• Faster, cached artwork with shared requests, size-aware covers and fallback"
-          + " loading.\n"
-          + "• Soft violet highlights replace the green accent throughout the app.\n"
-          + "• Dedicated YouTube Music song search, music-video fallback and more results.\n"
-          + "• Intro recognition from clearly labelled opening chapters, plus private saved"
-          + " starts.\n"
-          + "• Search work stays separate from Home refreshes and older requests are cancelled.";
+      "• Full-height YouTube and settings panels remove unused top and bottom space.\n"
+          + "• A fixed YouTube header keeps Close reachable while scrolling long music lists.\n"
+          + "• System bars, display cutouts and the keyboard get one safe-area inset.\n"
+          + "• Spotify green with black, white and neutral grey replaces the violet theme.\n"
+          + "• Existing music, YouTube connection, artwork caching and playlists are preserved.";
   final int code;
   final String version, summary, url;
   String sha256 = "";

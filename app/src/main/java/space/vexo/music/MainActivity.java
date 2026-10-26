@@ -1415,7 +1415,7 @@ public final class MainActivity extends ComponentActivity {
     control.setMinHeight(dp(48));
     control.setPadding(dp(8), dp(8), dp(8), dp(8));
     control.setMaxLines(2);
-    if (selected) control.setBackground(round(0xff3b304d, dp(10)));
+    if (selected) control.setBackground(round(0xff1c3b27, dp(10)));
     control.setSelected(selected);
     control.setOnClickListener(v -> action.run());
     return control;
@@ -2949,7 +2949,7 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private void showPureSong(Track selected) {
-    Dialog dialog = new Dialog(this);
+    Dialog dialog = new Dialog(this, android.R.style.Theme_Material_NoActionBar);
     dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
     Track track =
         selected != null
@@ -2995,15 +2995,9 @@ public final class MainActivity extends ComponentActivity {
                 dialog.dismiss();
               }
             });
-    panel.setBackground(Glass.dialogBackdrop(this));
-    panel.setClipToOutline(true);
-    dialog.setContentView(panel);
+    PanelWindow.content(dialog, panel);
     dialog.show();
-    blurDialog(dialog);
-    if (dialog.getWindow() != null)
-      dialog
-          .getWindow()
-          .setLayout(-1, (int) (getResources().getDisplayMetrics().heightPixels * .88f));
+    PanelWindow.expand(dialog);
   }
 
   private void showSmart(Track track) {
@@ -3011,7 +3005,7 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private void showSmart(Track track, boolean embedded) {
-    Dialog dialog = new Dialog(this);
+    Dialog dialog = new Dialog(this, android.R.style.Theme_Material_NoActionBar);
     SmartStore smart = new SmartStore(this);
     final boolean[] closed = {false};
     final int[] generation = {0};
@@ -3162,27 +3156,14 @@ public final class MainActivity extends ComponentActivity {
       content.addView(panel, new LinearLayout.LayoutParams(-1, 0, 1));
       return;
     }
-    panel.setBackground(Glass.dialogBackdrop(this));
-    panel.setClipToOutline(true);
-    dialog.setContentView(panel);
+    PanelWindow.content(dialog, panel);
     dialog.setOnDismissListener(
         d -> {
           closed[0] = true;
           generation[0]++;
         });
     dialog.show();
-    blurDialog(dialog);
-    if (dialog.getWindow() != null)
-      dialog
-          .getWindow()
-          .setLayout(-1, (int) (getResources().getDisplayMetrics().heightPixels * .88f));
-  }
-
-  private void blurDialog(Dialog dialog) {
-    Window window = dialog.getWindow();
-    if (window == null) return;
-    window.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
-    window.setDimAmount(.35f);
+    PanelWindow.expand(dialog);
   }
 
   private Bundle roomArgs(String action) {
@@ -3192,7 +3173,7 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private void showRemoteRoom() {
-    Dialog dialog = new Dialog(this);
+    Dialog dialog = new Dialog(this, android.R.style.Theme_Material_NoActionBar);
     RemoteRoomPanel panel =
         new RemoteRoomPanel(
             this,
@@ -3224,15 +3205,9 @@ public final class MainActivity extends ComponentActivity {
                 command(PlaybackService.ROOM_LEAVE, Bundle.EMPTY);
               }
             });
-    panel.setBackground(Glass.dialogBackdrop(this));
-    panel.setClipToOutline(true);
-    dialog.setContentView(panel);
+    PanelWindow.content(dialog, panel);
     dialog.show();
-    blurDialog(dialog);
-    if (dialog.getWindow() != null)
-      dialog
-          .getWindow()
-          .setLayout(-1, (int) (getResources().getDisplayMetrics().heightPixels * .88f));
+    PanelWindow.expand(dialog);
   }
 
   @Override
@@ -3293,7 +3268,7 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private void showAccount() {
-    Dialog dialog = new Dialog(this);
+    Dialog dialog = new Dialog(this, android.R.style.Theme_Material_NoActionBar);
     AccountPanel[] panels = new AccountPanel[1];
     panels[0] =
         new AccountPanel(
@@ -3357,14 +3332,9 @@ public final class MainActivity extends ComponentActivity {
               }
             });
     panels[0].busy(accountBusy);
-    panels[0].setBackground(Glass.dialogBackdrop(this));
-    dialog.setContentView(panels[0]);
+    PanelWindow.content(dialog, panels[0]);
     dialog.show();
-    blurDialog(dialog);
-    if (dialog.getWindow() != null)
-      dialog
-          .getWindow()
-          .setLayout(-1, (int) (getResources().getDisplayMetrics().heightPixels * .9f));
+    PanelWindow.expand(dialog);
     if (account.signedIn() && !accountBusy)
       accountAction(
           panels[0],
@@ -3415,7 +3385,7 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private void showNotifications() {
-    Dialog dialog = new Dialog(this);
+    Dialog dialog = new Dialog(this, android.R.style.Theme_Material_NoActionBar);
     MusicSurface panel = new MusicSurface(this);
     panel.body.addView(panel.text("NOTIFICATIONS", 11, LIME, true));
     panel.gap(panel.body, 12);
@@ -3507,14 +3477,9 @@ public final class MainActivity extends ComponentActivity {
                             + " channel.")));
     panel.gap(panel.body, 12);
     panel.body.addView(panel.action("Close", false, dialog::dismiss));
-    panel.setBackground(Glass.dialogBackdrop(this));
-    dialog.setContentView(panel);
+    PanelWindow.content(dialog, panel);
     dialog.show();
-    blurDialog(dialog);
-    if (dialog.getWindow() != null)
-      dialog
-          .getWindow()
-          .setLayout(-1, (int) (getResources().getDisplayMetrics().heightPixels * .9f));
+    PanelWindow.expand(dialog);
   }
 
   private void renderSettings() {

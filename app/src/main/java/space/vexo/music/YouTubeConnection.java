@@ -3,8 +3,6 @@ package space.vexo.music;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Intent;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -81,25 +79,16 @@ final class YouTubeConnection implements AutoCloseable {
   void show() {
     if (closed) return;
     if (dialog == null || !dialog.isShowing()) {
-      dialog = new Dialog(activity);
+      dialog = new Dialog(activity, android.R.style.Theme_Material_NoActionBar);
       draw();
       dialog.show();
     } else draw();
-    if (dialog.getWindow() != null) {
-      dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-      dialog
-          .getWindow()
-          .setLayout(-1, (int) (activity.getResources().getDisplayMetrics().heightPixels * .82f));
-    }
+    PanelWindow.expand(dialog);
   }
 
   private void draw() {
     if (dialog == null) return;
     MusicSurface panel = new MusicSurface(activity);
-    panel.setBackground(Glass.dialogBackdrop(activity));
-    panel.setClipToOutline(true);
-    panel.body.addView(panel.text("Your YouTube taste", 25, Visuals.TEXT, true));
-    panel.gap(panel.body, 12);
     panel.body.addView(
         panel.text(
             "Use connected YouTube music to shape Home, discovery, related songs and radio. "
@@ -237,7 +226,7 @@ final class YouTubeConnection implements AutoCloseable {
             "Google privacy policy", false, () -> open("https://policies.google.com/privacy")));
     panel.gap(panel.body, 10);
     panel.body.addView(panel.action("Close", false, () -> dialog.dismiss()));
-    dialog.setContentView(panel);
+    PanelWindow.content(dialog, panel, "Your YouTube taste");
   }
 
   private void songs(MusicSurface panel, List<Track> tracks, int limit) {
