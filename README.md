@@ -1,4 +1,4 @@
-# VEXO Music 0.16.0
+# VEXO Music 0.17.0
 
 Developer: **Kavindu Kavishka**.
 
