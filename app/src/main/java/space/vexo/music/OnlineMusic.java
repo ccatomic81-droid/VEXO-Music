@@ -60,19 +60,7 @@ public final class OnlineMusic {
     } catch (Exception unavailable) {
       if (Thread.currentThread().isInterrupted()) throw new InterruptedException();
     }
-    if (songs.size() < 3) {
-      try {
-        StreamInfo info = StreamInfo.getInfo(ServiceList.YouTube, seed.url);
-        LinkedHashMap<String, Track> merged = new LinkedHashMap<>();
-        for (Track song : songs) merged.put(QueuePolicy.identity(song.url), song);
-        for (Track song : convert(info.getRelatedItems()))
-          merged.putIfAbsent(QueuePolicy.identity(song.url), song);
-        songs = new ArrayList<>(merged.values());
-      } catch (Exception unavailable) {
-        if (Thread.currentThread().isInterrupted()) throw new InterruptedException();
-        if (songs.isEmpty()) throw unavailable;
-      }
-    }
+    // General YouTube related videos are not a music catalogue. Never mix them into radio.
     if (songs.isEmpty()) songs = search(seed.artist + " music").tracks;
     rememberRelated(seed.url, songs);
     return songs;
@@ -89,7 +77,9 @@ public final class OnlineMusic {
 
   private static synchronized void rememberRelated(String url, List<Track> songs) {
     if (relatedCache.size() >= 30) relatedCache.remove(relatedCache.keySet().iterator().next());
-    relatedCache.put(url, new ArrayList<>(songs));
+    List<Track> music = new ArrayList<>(songs);
+    music.removeIf(t -> !RadioPolicy.music(t));
+    relatedCache.put(url, music);
   }
 
   public static synchronized void initialize() {
@@ -297,7 +287,7 @@ public final class OnlineMusic {
     try {
       StreamInfo i = StreamInfo.getInfo(ServiceList.YouTube, url);
       IntroRecognition.remember(url, i.getDuration() * 1000, i.getStreamSegments());
-      rememberRelated(url, convert(i.getRelatedItems()));
+      // Playback must not overwrite music-radio metadata with general video recommendations.
       List<AudioStream> audio = new ArrayList<>();
       for (AudioStream s : i.getAudioStreams())
         if (s.isUrl() && s.getDeliveryMethod() == DeliveryMethod.PROGRESSIVE_HTTP) audio.add(s);

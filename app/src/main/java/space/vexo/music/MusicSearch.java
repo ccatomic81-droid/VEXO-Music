@@ -27,10 +27,8 @@ final class MusicSearch {
   }
 
   static Result load(String query, String country) throws Exception {
-    Result songs = parse(fetch(query, country, SONGS, ""), query, country);
-    return songs.tracks.isEmpty()
-        ? parse(fetch(query, country, VIDEOS, ""), query, country)
-        : songs;
+    // Keep the catalogue on Songs even when there are no matches.
+    return parse(fetch(query, country, SONGS, ""), query, country);
   }
 
   static Result more(Result previous) throws Exception {
@@ -117,6 +115,8 @@ final class MusicSearch {
     if (row.optString("musicItemRendererDisplayPolicy").contains("GREY_OUT")
         || row.optBoolean("isUnplayable")
         || podcast(row)) return null;
+    String type = find(row, "musicVideoType", 0);
+    if (!type.isEmpty() && !type.equals("MUSIC_VIDEO_TYPE_ATV")) return null;
     JSONArray columns = row.optJSONArray("flexColumns");
     if (columns == null || columns.length() == 0) return null;
     JSONObject titleText = column(columns.optJSONObject(0));

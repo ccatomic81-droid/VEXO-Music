@@ -70,6 +70,16 @@ public class MusicSearchTest {
   }
 
   @Test
+  public void explicitVideoAndPodcastTypesAreExcludedFromSongSearch() throws Exception {
+    JSONObject audio = song("abcdefghijk").put("musicVideoType", "MUSIC_VIDEO_TYPE_ATV");
+    JSONObject video = song("12345678901").put("musicVideoType", "MUSIC_VIDEO_TYPE_UGC");
+    JSONObject officialVideo = song("12345678902").put("musicVideoType", "MUSIC_VIDEO_TYPE_OMV");
+    List<Track> tracks = MusicSearch.parse(wrap(audio, video, officialVideo), "song", "LK").tracks;
+    assertEquals(1, tracks.size());
+    assertTrue(tracks.get(0).url.endsWith("abcdefghijk"));
+  }
+
+  @Test
   public void songsCarryArtistDurationBestCoverAndDeduplicateByVideo() throws Exception {
     MusicSearch.Result result =
         MusicSearch.parse(wrap(song("abcdefghijk"), song("abcdefghijk")), "සිංහල", "LK");
