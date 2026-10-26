@@ -40,7 +40,7 @@ public class YouTubeNavigationUiTest {
       assertNull(find.text(root, "Your YouTube taste"));
       new DiscoveryUiTest().capture(root, 320, 640, "navigation-transparent-320");
       find.description(root, "Settings tab").performClick();
-      find.text(root, "YouTube taste").performClick();
+      ((View) find.text(root, "YouTube taste").getParent().getParent()).performClick();
       Dialog dialog = ShadowDialog.getLatestDialog();
       assertNotNull(find.text(dialog.getWindow().getDecorView(), "Connect YouTube"));
       new DiscoveryUiTest()
