@@ -1,0 +1,52 @@
+{
+  "version": "0.19.0",
+  "versionCode": 25,
+  "applicationId": "space.vexo.music.radio",
+  "sourceCommit": "c90f74e9d1ce4e66ec853a2b6756626871a4c43d",
+  "ciRun": "https://github.com/ccatomic81-droid/VEXO-Music/actions/runs/40306425748",
+  "ciConclusion": "success",
+  "sha256": "f27b0e768d06b2a2ecde7d687c85b38010674320b4b61c751d510c8ccc4503b1",
+  "size": 9066297,
+  "certificateSha256": "0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3",
+  "debuggable": false,
+  "zipalign16KiB": "passed",
+  "signedEntriesMatchUnsigned": true,
+  "androidTests": {
+    "tests": 188,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 8
+  },
+  "liveDiscoveryTests": {
+    "tests": 5,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "liveCatalogue": {
+    "songs": 20,
+    "continuationSongs": 20,
+    "regionalMixSongs": 29,
+    "categoryFirstPage": 30,
+    "categoryContinuationSongs": 20
+  },
+  "lintDebugAndRelease": "passed",
+  "serviceTests": {
+    "tests": 21,
+    "passed": 21,
+    "failed": 0
+  },
+  "resolvedDependencyAdvisories": {
+    "source": "https://api.osv.dev/v1/querybatch",
+    "resolved_packages": 126,
+    "findings": [],
+    "scope": "Known OSV advisories for resolved Maven versions; not a complete security audit"
+  },
+  "layoutChecks": "Native restored Search at 320dp inspected; browse restoration, query preservation, shared artwork fetch, fallback, target rebinding, explicit intro recognition and cancellation passed.",
+  "physicalDeviceAcceptancePerformed": false,
+  "distribution": "Signed APK delivered directly; stable public update feed unchanged.",
+  "limitations": [
+    "Chapter recognition relies on explicit opening chapter labels; unknown songs remain full length.",
+    "Phone-specific network/artwork reliability, continuous audible playback and frame rate still need user acceptance."
+  ]
+}
