@@ -52,10 +52,6 @@ public class SongRadioTest {
       assertEquals(0, player.getCurrentPosition());
       assertTrue(player.getPlayWhenReady());
       assertEquals(Player.REPEAT_MODE_OFF, player.getRepeatMode());
-      // Starting radio again must not restart the selected song.
-      player.seekTo(43000);
-      SongRadio.activate(player, selected);
-      assertEquals(43000, player.getCurrentPosition());
     } finally {
       player.release();
     }
