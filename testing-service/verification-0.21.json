@@ -1,0 +1,24 @@
+{
+  "sourceCommit": "b4c8a3b724d561552ed1fe24b9f49091199a5ae6",
+  "workflowRun": 40332296821,
+  "apkSha256": "c1edf41510c1ade889fba3848439bcfa4a9d04bd73b2cbff1386f45fae46c6d8",
+  "sameCertificate": true,
+  "signedPayloadMatchesUnsignedCandidate": true,
+  "androidChecks": {
+    "tests": 198,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 8
+  },
+  "publicChecks": [
+    "manifest",
+    "apk checksum",
+    "page",
+    "range",
+    "head",
+    "old APK",
+    "closed writes",
+    "stable remains 0.19.3/code28"
+  ],
+  "onlyR2BindingRemains": true
+}

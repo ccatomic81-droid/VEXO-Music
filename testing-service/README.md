@@ -1,15 +1,15 @@
 # VEXO Music tester channel
 
-Tester page: https://vexo-music-testing.kavindukavishka785.workers.dev/
+Tester download: https://vexo-music-testing.kavindukavishka785.workers.dev/
 
-Current tester build: **0.20.0-dev, version code 29**. The non-debuggable release APK uses the original app certificate and can update public 0.19.3/code 28 while retaining app data. Source: `7d1ff89de54d03d698e45c6db0065217b094972c`; Android Actions run `40324049550`.
+Current tester build: **0.21.0-dev, version code 30**. Source commit: `b4c8a3b724d561552ed1fe24b9f49091199a5ae6`; Android Actions run `40332296821`; implementation PR #16. The non-debuggable release APK uses the existing signing certificate and updates 0.20.0-dev/code 29 or older compatible VEXO installations while retaining data.
 
-This build simplifies Home and Search while preserving all five navigation destinations, MindRadio, Pure Song, Smart Experience, personalization, accounts, crossfade, offline music and playlists.
+This update adds short-lived session recommendations from audible VEXO listening, manual queue priority, shuffle-safe Play next, queue recommendation labels, recent-history radio protection and less unrelated station drift. YouTube account connection stays optional. MindRadio, PureSong, Smart Experience, crossfade, offline music and the simpler Home/Search remain. See [behavior and fixes](../docs/SESSION-RADIO-QUEUE-0.21.md).
 
-Install from the tester page and choose **Update**. Keep VEXO installed. Check music playback, saved data, search suggestions, radio continuity, intro controls, crossfade, background listening and Bluetooth on a physical phone. Report issues through Settings → Report a problem.
+Download and choose **Update**; keep VEXO installed. Check music playback, saved data, guest recommendations, manual and shuffled queues, radio continuity, crossfade, background listening and Bluetooth on a physical phone. Report issues through Settings → Report a problem.
 
-This is a public opt-in tester link. The built-in updater continues to check the stable feed. The next upgrade must have a code above 29; Android does not install an older stable APK over this test build. Stable remains 0.19.3/code 28.
+This is an opt-in tester download. The built-in updater still checks stable; stable remains 0.19.3/code 28. Android will require a version code above 30 for the next upgrade.
 
-Validation: 193 Android tests, 0 failures/errors, 8 skipped integration tests; debug/release lint; debug/release builds; dependency and source security checks; 21 service checks. The release host has six checks for streaming, range/HEAD/cache, exact checksums, closed writes, stable isolation and archived APK routing. Physical-phone audio and device behavior still require acceptance testing.
+Validation: 198 Android tests, zero failures/errors, eight skipped integration tests (190 passed); debug/release lint and builds; dependency and source security checks; live discovery probe. Host tests cover streaming, range/HEAD/cache, immutable objects, closed writes, stable isolation and archived routes including 0.20.0-dev. Phone audio/background acceptance testing remains required.
 
-The APK was signed locally using the protected original key, certificate verified, and its non-signature archive contents compared with the exact CI candidate. Immutable files use `testing/0.20.0-dev/`; previous tester APK URLs remain supported. Only APK, manifest and checksums are exposed. The final Worker has only its R2 binding and no publication routes. No signing or publishing credential belongs in this repository.
+The APK certificate was checked and the signed archive contents were compared with the exact verified unsigned CI candidate. Current public files use `testing/0.21.0-dev/`; older APK addresses are preserved. The deployed Worker has only its R2 binding and no publication routes. No private signing or publication credentials belong in this repository.
