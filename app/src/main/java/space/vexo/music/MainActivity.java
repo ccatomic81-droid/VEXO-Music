@@ -168,7 +168,7 @@ public final class MainActivity extends ComponentActivity {
   private QueuePanel queuePanel;
   private NowPlayingPanel playerPanel;
   private List<Integer> queueViewIndices = new ArrayList<>();
-  private TextView speedButton, autoplayButton, radioStatus;
+  private TextView speedButton, radioStatus;
   private final android.content.SharedPreferences.OnSharedPreferenceChangeListener
       playbackStateChanged =
           (prefs, key) -> {
@@ -1742,7 +1742,7 @@ public final class MainActivity extends ComponentActivity {
               searchHistory.add(term);
               ((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE))
                   .hideSoftInputFromWindow(root.getWindowToken(), 0);
-              play(matches, index);
+              play(matches, index, true);
             });
         suggestionBody.addView(holder.itemView, new LinearLayout.LayoutParams(-1, -2));
       }
@@ -2289,13 +2289,13 @@ public final class MainActivity extends ComponentActivity {
       h.detail.setText(t.artist + (t.duration > 0 ? " · " + format(t.duration) : ""));
       artwork(h.art, t);
       h.itemView.setContentDescription("Play " + t.title + " by " + t.artist);
-      h.itemView.setOnClickListener(v -> play(tracks, h.getBindingAdapterPosition()));
+      h.itemView.setOnClickListener(v -> playResult(tracks, h.getBindingAdapterPosition(), collection));
       h.start.setContentDescription("Play " + t.title);
       h.start.setOnClickListener(
           v -> {
             int index = h.getBindingAdapterPosition();
             if (index < 0) index = pos;
-            play(tracks, index);
+            playResult(tracks, index, collection);
           });
       h.more.set("more", MUTED);
       h.more.setContentDescription("Options for " + t.title);
@@ -2342,12 +2342,21 @@ public final class MainActivity extends ComponentActivity {
     }
   }
 
+  private void playResult(List<Track> tracks, int index, String collection) {
+    play(tracks, index, tab.equals("Search") && collection == null && online);
+  }
+
   private void play(List<Track> tracks, int index) {
+    play(tracks, index, false);
+  }
+
+  private void play(List<Track> tracks, int index, boolean songOnly) {
     if (controller == null) {
       message("Player is connecting. Try again in a moment.");
       return;
     }
     if (index < 0 || index >= tracks.size()) return;
+    songOnly = songOnly && tracks.get(index).online();
     ((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE))
         .hideSoftInputFromWindow(root.getWindowToken(), 0);
     if (tab.equals("Search") && searchField != null)
@@ -2363,18 +2372,21 @@ public final class MainActivity extends ComponentActivity {
     for (Track t : tracks.subList(first, end)) queue.add(t.mediaItem());
     Bundle queueArgs = new Bundle();
     queueArgs.putString("track", tracks.get(index).json().toString());
+    queueArgs.putBoolean("play_song", songOnly);
     queueArgs.putString(
         "session_query",
-        tab.equals("Search") && searchCategory != null
+        !songOnly && tab.equals("Search") && searchCategory != null
             ? searchCategory.query("", searchLanguage)
             : "");
-    queueArgs.putString("ai_plan", pendingAiPlan == null ? "" : pendingAiPlan.toString());
+    queueArgs.putString("ai_plan", songOnly || pendingAiPlan == null ? "" : pendingAiPlan.toString());
     pendingAiPlan = null;
     controller.sendCustomCommand(
         new SessionCommand(PlaybackService.NEW_QUEUE, Bundle.EMPTY), queueArgs);
-    controller.setMediaItems(queue, index - first, 0);
-    controller.prepare();
-    controller.play();
+    if (!songOnly) {
+      controller.setMediaItems(queue, index - first, 0);
+      controller.prepare();
+      controller.play();
+    }
     showPlayer();
   }
 
@@ -3989,7 +4001,6 @@ public final class MainActivity extends ComponentActivity {
     if (playerDialog != null && playerDialog.isShowing()) {
       if (speedButton != null)
         speedButton.setText(speedLabel(controller.getPlaybackParameters().speed));
-      if (playerPanel != null) playerPanel.autoplayState(autoplayEnabled());
       playerTitle.setText(item.mediaMetadata.title);
       playerArtist.setText(item.mediaMetadata.artist);
       artwork(playerArt, Track.from(item));
@@ -4113,16 +4124,6 @@ public final class MainActivity extends ComponentActivity {
                     MediaItem current = controller.getCurrentMediaItem();
                     if (current != null) songMenu(Track.from(current), null);
                     break;
-                  case "autoplay":
-                    setAutoplay(!autoplayEnabled());
-                    break;
-                  case "start-radio":
-                    MediaItem seed = controller.getCurrentMediaItem();
-                    if (seed != null) startRadio(Track.from(seed));
-                    break;
-                  case "tune-radio":
-                    tuneRadio();
-                    break;
                   case "seek-start":
                     dragging = true;
                     break;
@@ -4146,14 +4147,12 @@ public final class MainActivity extends ComponentActivity {
     playerDuration = p.duration;
     playerState = p.state;
     speedButton = p.speed;
-    autoplayButton = p.autoplay;
     radioStatus = p.radioStatus;
     playerLike = p.favourite;
     playerShuffle = p.shuffle;
     playerPlay = p.play;
     playerRepeat = p.repeat;
     seek = p.seek;
-    p.autoplayState(autoplayEnabled());
     radioStatus.setText(getSharedPreferences("playback_state", 0).getString("autoplay_status", ""));
     androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(
         p,
@@ -4259,7 +4258,6 @@ public final class MainActivity extends ComponentActivity {
     if (controller != null)
       controller.sendCustomCommand(
           new SessionCommand(PlaybackService.AUTOPLAY_CHANGED, Bundle.EMPTY), Bundle.EMPTY);
-    if (playerPanel != null) playerPanel.autoplayState(enabled);
   }
 
   private void manualQueue(Track track, boolean next, int existing) {
@@ -4470,10 +4468,6 @@ public final class MainActivity extends ComponentActivity {
               public void clearAll() {
                 controller.sendCustomCommand(
                     new SessionCommand(PlaybackService.CLEAR_QUEUE, Bundle.EMPTY), Bundle.EMPTY);
-              }
-
-              public void tune() {
-                tuneRadio();
               }
 
               public void retry() {

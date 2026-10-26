@@ -95,7 +95,7 @@ final class ArtworkLoader {
     if (view.getBackground() == null)
       view.setBackground(Visuals.round(Visuals.PANEL,
           8 * view.getResources().getDisplayMetrics().density));
-    view.setScaleType(ImageView.ScaleType.CENTER_CROP);
+    view.setScaleType(ImageView.ScaleType.FIT_CENTER);
     view.setClipToOutline(true);
     start(view, load);
   }
@@ -118,7 +118,7 @@ final class ArtworkLoader {
     for (int i = sources.size() - 1; i >= 0; i--) {
       final boolean last = i == sources.size() - 1;
       RequestBuilder<Bitmap> next = Glide.with(view).asBitmap().load(sources.get(i))
-          .override(size, size).centerCrop().dontAnimate()
+          .override(size, size).fitCenter().dontAnimate()
           .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
           .placeholder(load.placeholder).error(load.placeholder)
           .listener(new RequestListener<Bitmap>() {

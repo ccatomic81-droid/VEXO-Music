@@ -156,7 +156,7 @@ public final class AutoplayManager {
                       check();
                       return;
                     }
-                    status.accept("Couldn’t load related songs · use Retry radio");
+                    status.accept("Couldn’t load related songs · retry from Up next");
                   }
                 });
             return;

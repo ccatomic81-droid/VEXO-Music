@@ -18,13 +18,11 @@ public final class NowPlayingPanel extends LinearLayout {
   }
 
   public final ImageView art;
-  public final TextView title, artist, elapsed, duration, state, speed, autoplay, radioStatus;
+  public final TextView title, artist, elapsed, duration, state, speed, radioStatus;
   public final Icon favourite, shuffle, play, repeat;
   public final SeekBar seek;
-  public final View cover, radioStart, radioTune;
+  public final View cover;
   public final ScrollView scroll;
-  private final Switch autoplayToggle;
-  private boolean updatingAutoplay;
 
   private int dp(int n) {
     return Math.round(n * getResources().getDisplayMetrics().density);
@@ -56,27 +54,6 @@ public final class NowPlayingPanel extends LinearLayout {
     v.setFocusable(true);
     v.setOnClickListener(w -> actions.action(name));
     return v;
-  }
-
-  private View radioButton(String glyph, String label, String command, Actions actions) {
-    LinearLayout button = row();
-    button.setPadding(dp(12), dp(10), dp(12), dp(10));
-    button.setMinimumHeight(dp(52));
-    button.setBackground(round(PANEL, dp(16)));
-    button.setFocusable(true);
-    button.setContentDescription(label);
-    button.setOnClickListener(v -> actions.action(command));
-    Icon image = new Icon(getContext(), glyph, LIME);
-    image.setGlyphSize(20);
-    image.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
-    button.addView(image, new LayoutParams(dp(20), dp(24)));
-    TextView copy = text(label, 13, TEXT, true);
-    copy.setGravity(Gravity.CENTER);
-    copy.setMaxLines(2);
-    LayoutParams tp = new LayoutParams(0, -2, 1);
-    tp.leftMargin = dp(8);
-    button.addView(copy, tp);
-    return button;
   }
 
   public NowPlayingPanel(Context c, Actions actions) {
@@ -156,7 +133,7 @@ public final class NowPlayingPanel extends LinearLayout {
         });
     art = new ImageView(c);
     art.setContentDescription("Album artwork");
-    art.setScaleType(ImageView.ScaleType.CENTER_CROP);
+    art.setScaleType(ImageView.ScaleType.FIT_CENTER);
     artwork.addView(art, new FrameLayout.LayoutParams(-1, -1));
     body.addView(artwork, new LayoutParams(-1, -2));
     cover = artwork;
@@ -238,38 +215,9 @@ public final class NowPlayingPanel extends LinearLayout {
     LayoutParams sp = new LayoutParams(0, dp(48), 1);
     sp.setMargins(0, 0, 0, 0);
     tools.addView(speed, sp);
-    tools.addView(icon("queue", MUTED, actions), new LayoutParams(0, dp(48), 1));
     tools.addView(icon("more", MUTED, actions), new LayoutParams(0, dp(48), 1));
     body.addView(tools, new LayoutParams(-1, -2));
     gap(body, 14);
-    LinearLayout automatic = row();
-    automatic.setPadding(dp(14), dp(4), dp(8), dp(4));
-    automatic.setBackground(round(PANEL, dp(16)));
-    autoplay = text("Autoplay on", 14, TEXT, false);
-    automatic.addView(autoplay, new LayoutParams(0, -2, 1));
-    autoplayToggle = new Switch(c);
-    autoplayToggle.setContentDescription("Autoplay related songs");
-    autoplayToggle.setMinHeight(dp(48));
-    autoplayToggle.setThumbTintList(
-        new android.content.res.ColorStateList(
-            new int[][] {new int[] {android.R.attr.state_checked}, new int[] {}},
-            new int[] {LIME, MUTED}));
-    autoplayToggle.setOnCheckedChangeListener(
-        (button, on) -> {
-          if (!updatingAutoplay) actions.action("autoplay");
-        });
-    automatic.addView(autoplayToggle, new LayoutParams(dp(58), dp(48)));
-    body.addView(automatic, new LayoutParams(-1, -2));
-    gap(body, 12);
-    LinearLayout radios = row();
-    radios.setGravity(Gravity.TOP);
-    radioStart = radioButton("radio", "Start radio", "start-radio", actions);
-    radioTune = radioButton("tune", "Tune radio", "tune-radio", actions);
-    LayoutParams rp = new LayoutParams(0, -2, 1);
-    rp.rightMargin = dp(12);
-    radios.addView(radioStart, rp);
-    radios.addView(radioTune, new LayoutParams(0, -2, 1));
-    body.addView(radios, new LayoutParams(-1, -2));
     radioStatus = text("", 12, MUTED, false);
     radioStatus.setMaxLines(4);
     radioStatus.setEllipsize(TextUtils.TruncateAt.END);
@@ -281,10 +229,4 @@ public final class NowPlayingPanel extends LinearLayout {
     body.addView(state, new LayoutParams(-1, -2));
   }
 
-  public void autoplayState(boolean enabled) {
-    updatingAutoplay = true;
-    autoplayToggle.setChecked(enabled);
-    autoplay.setText(enabled ? "Autoplay on" : "Autoplay off");
-    updatingAutoplay = false;
-  }
 }

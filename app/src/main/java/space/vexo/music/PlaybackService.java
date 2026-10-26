@@ -44,7 +44,9 @@ public final class PlaybackService extends MediaSessionService {
   private void startRadio(Track seed) {
     if (!RadioPolicy.music(seed)) return;
     try {
-      new SmartStore(this).preference("session_query", "");
+      SmartStore smart = new SmartStore(this);
+      smart.preference("session_query", "");
+      smart.preference("active_ai_plan", org.json.JSONObject.NULL);
     } catch (IllegalStateException unavailable) {
       /* Existing song radio remains usable. */
     }
@@ -116,33 +118,18 @@ public final class PlaybackService extends MediaSessionService {
       org.json.JSONObject prefs = new SmartStore(this).preferences();
       String session = prefs.optString("session_query");
       if (!session.isEmpty()) return new java.util.ArrayList<>(OnlineMusic.search(session).tracks);
-      boolean tuned = false;
-      for (String key :
-          new String[] {"radio_command", "genres", "language", "mood", "energy", "artists"})
-        if (!prefs.optString(key).trim().isEmpty()) tuned = true;
       org.json.JSONObject ai = prefs.optJSONObject("active_ai_plan");
       org.json.JSONArray aiQueries = ai == null ? null : ai.optJSONArray("queries");
-      if (aiQueries != null && aiQueries.length() > 0) tuned = true;
-      if (!tuned) return existing;
+      if (aiQueries == null || aiQueries.length() == 0) return existing;
       java.util.LinkedHashMap<String, Track> merged = new java.util.LinkedHashMap<>();
       for (Track t :
           OnlineMusic.search(
-                  aiQueries != null && aiQueries.length() > 0
-                      ? aiQueries.optString(0)
-                      : SmartPolicy.query(prefs, prefs.optString("radio_command")))
+                  aiQueries.optString(0))
               .tracks) merged.putIfAbsent(t.url, t);
       for (Track t : existing) merged.putIfAbsent(t.url, t);
       return new java.util.ArrayList<>(merged.values());
     } catch (Exception unavailable) {
       return existing;
-    }
-  }
-
-  private java.util.List<Track> interestSeeds() {
-    try {
-      return MusicInterests.read(this).seeds;
-    } catch (IllegalStateException unavailable) {
-      return java.util.Collections.emptyList();
     }
   }
 
@@ -305,7 +292,7 @@ public final class PlaybackService extends MediaSessionService {
                                   query, RegionPolicy.current(PlaybackService.this));
                             }
                           })
-                      .load(anchor, seed, interestSeeds());
+                      .load(anchor, seed);
               candidates = tuneCandidates(candidates);
               try {
                 SmartStore smart = new SmartStore(this);
@@ -644,8 +631,12 @@ public final class PlaybackService extends MediaSessionService {
                         if (selected.online()) anchor = selected;
                       } catch (Exception ignored) {
                       }
+                      autoplay.suspend();
                       radioStore.anchor(anchor);
+                      if (args.getBoolean("play_song") && anchor != null)
+                        SongRadio.playSelected(player, anchor);
                       autoplay.newQueue();
+                      if (args.getBoolean("play_song")) autoplay.check();
                       return Futures.immediateFuture(
                           new SessionResult(SessionResult.RESULT_SUCCESS));
                     }

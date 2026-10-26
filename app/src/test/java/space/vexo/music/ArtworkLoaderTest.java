@@ -64,6 +64,38 @@ public class ArtworkLoaderTest {
   }
 
   @Test
+  public void wideAndPortraitArtworkFitsWithoutCroppingOrStretching() throws Exception {
+    for (int[] dimensions : new int[][] {{320, 180}, {180, 320}}) {
+      Bitmap source = Bitmap.createBitmap(dimensions[0], dimensions[1], Bitmap.Config.ARGB_8888);
+      source.eraseColor(Color.BLUE);
+      Canvas canvas = new Canvas(source);
+      Paint edge = new Paint();
+      edge.setColor(Color.RED);
+      canvas.drawRect(0, 0, dimensions[0], 16, edge);
+      canvas.drawRect(0, dimensions[1] - 16, dimensions[0], dimensions[1], edge);
+      canvas.drawRect(0, 0, 16, dimensions[1], edge);
+      canvas.drawRect(dimensions[0] - 16, 0, dimensions[0], dimensions[1], edge);
+      ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+      source.compress(Bitmap.CompressFormat.PNG, 100, bytes);
+      byte[] data = bytes.toByteArray();
+      ArtworkLoader.configure(context, new OkHttpClient.Builder().addInterceptor(
+          chain -> response(chain, 200, data)).build());
+      ImageView target = view();
+      Visuals.artwork(target, "https://covers.example/fit-" + System.nanoTime() + ".png");
+      await(target, Color.BLUE);
+      Bitmap actual = ((BitmapDrawable) target.getDrawable()).getBitmap();
+      assertEquals((float) dimensions[0] / dimensions[1],
+          (float) actual.getWidth() / actual.getHeight(), .02f);
+      assertEquals(Color.RED, actual.getPixel(1, actual.getHeight() / 2));
+      assertEquals(Color.RED, actual.getPixel(actual.getWidth() - 2, actual.getHeight() / 2));
+      assertEquals(Color.RED, actual.getPixel(actual.getWidth() / 2, 1));
+      assertEquals(Color.RED, actual.getPixel(actual.getWidth() / 2, actual.getHeight() - 2));
+      assertEquals(ImageView.ScaleType.FIT_CENTER, target.getScaleType());
+      source.recycle();
+    }
+  }
+
+  @Test
   public void duplicateCoversShareOneFetchAndMemoryCacheDoesNotFlash() throws Exception {
     byte[] bytes = image(Color.BLUE);
     AtomicInteger calls = new AtomicInteger();

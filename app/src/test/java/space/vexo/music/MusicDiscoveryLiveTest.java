@@ -12,6 +12,27 @@ import org.robolectric.annotation.Config;
 @Config(sdk = 35)
 public class MusicDiscoveryLiveTest {
   @Test
+  public void selectedSongRadioProducesDistinctRelatedQueueWithoutSearchResults() throws Exception {
+    Assume.assumeTrue("1".equals(System.getenv("VEXO_MUSIC_LIVE_TEST")));
+    Track seed = OnlineMusic.preview("Ed Sheeran Perfect", "LK").stream()
+        .filter(RadioPolicy::music).findFirst().orElseThrow();
+    List<Track> related = OnlineMusic.relatedPreview(seed);
+    assertTrue("Expected an actual song radio", related.size() >= 10);
+    List<Track> candidates = new RadioCatalogue(new RadioCatalogue.Source() {
+      public List<Track> related(Track track) { return related; }
+      public List<Track> search(String query) { throw new AssertionError("Radio must use the song endpoint"); }
+    }).load(seed, seed);
+    List<Track> selected = RadioPolicy.select(seed, seed, candidates, Arrays.asList(seed),
+        Collections.emptyList(), Collections.emptyList(), Collections.emptySet(), RadioPolicy.Mode.BALANCED, 10);
+    assertEquals(10, selected.size());
+    assertTrue(selected.stream().noneMatch(song -> QueuePolicy.identity(song.url).equals(QueuePolicy.identity(seed.url))));
+    Set<String> artists = new HashSet<>();
+    for (Track song : selected) artists.add(RadioPolicy.artist(song));
+    assertTrue("Radio should include related artists", artists.size() > 1);
+    System.out.println("Selected-song radio: " + selected.size() + " tracks across " + artists.size() + " artists");
+  }
+
+  @Test
   @org.robolectric.annotation.GraphicsMode(org.robolectric.annotation.GraphicsMode.Mode.NATIVE)
   public void realMusicArtworkDownloadsAndDecodesWithPublicFallback() throws Exception {
     Assume.assumeTrue("1".equals(System.getenv("VEXO_MUSIC_LIVE_TEST")));

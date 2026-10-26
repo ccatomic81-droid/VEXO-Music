@@ -46,7 +46,6 @@ public class NowPlayingPanelTest {
     p.seek.setProgress(640);
     p.play.set("pause", Visuals.BG);
     p.favourite.set("liked", Visuals.LIME);
-    p.autoplayState(true);
     p.radioStatus.setText(
         "Radio · Rathinamo (Female Version) · Balanced\nRelated songs follow your queue");
     p.state.setText("Saved offline");
@@ -88,15 +87,18 @@ public class NowPlayingPanelTest {
   }
 
   @Test
-  public void realPlayerHasSquareCoverAlignedControlsAndSeparatedRadioButtons() throws Exception {
+  public void realPlayerFitsFullArtworkAndKeepsEssentialControls() throws Exception {
     for (int width : new int[] {320, 360, 420}) {
       List<String> actions = new ArrayList<>();
       NowPlayingPanel p = panel(width, 800, 1f, actions);
       assertEquals(p.cover.getWidth(), p.cover.getHeight());
       assertEquals(p.cover.getWidth(), p.art.getWidth());
       assertEquals(p.cover.getHeight(), p.art.getHeight());
-      assertTrue(p.radioTune.getLeft() - p.radioStart.getRight() >= 12);
-      assertEquals(p.radioStart.getWidth(), p.radioTune.getWidth());
+      RectF fitted = new RectF(0, 0, 480, 270);
+      p.art.getImageMatrix().mapRect(fitted);
+      assertTrue("Full image must fit horizontally", fitted.left >= -.1f && fitted.right <= p.art.getWidth() + .1f);
+      assertTrue("Full image must fit vertically", fitted.top >= -.1f && fitted.bottom <= p.art.getHeight() + .1f);
+      assertEquals(480f / 270f, fitted.width() / fitted.height(), .01f);
       ViewGroup tools = (ViewGroup) p.speed.getParent();
       float previous = -1, delta = -1;
       for (int i = 0; i < tools.getChildCount(); i++) {
@@ -114,10 +116,8 @@ public class NowPlayingPanelTest {
       assertEquals("1×", MainActivity.speedLabel(1f));
       assertEquals("1.25×", MainActivity.speedLabel(1.25f));
       assertTrue(actions.isEmpty());
-      p.radioStart.performClick();
-      p.radioTune.performClick();
       p.play.performClick();
-      assertEquals(Arrays.asList("start-radio", "tune-radio", "play"), actions);
+      assertEquals(Arrays.asList("play"), actions);
       render(p, width, 800, "now-playing-" + width);
     }
   }
@@ -130,8 +130,6 @@ public class NowPlayingPanelTest {
       View body = p.scroll.getChildAt(0);
       assertTrue(body.getHeight() > p.scroll.getHeight());
       assertTrue(body.getWidth() <= size[0]);
-      assertTrue(p.radioStart.getWidth() >= 48);
-      assertTrue(p.radioTune.getRight() <= ((View) p.radioTune.getParent()).getWidth());
       render(p, size[0], size[1], "now-playing-large-" + size[0]);
       Bitmap before = Bitmap.createBitmap(size[0], 52, Bitmap.Config.ARGB_8888);
       p.draw(new Canvas(before));

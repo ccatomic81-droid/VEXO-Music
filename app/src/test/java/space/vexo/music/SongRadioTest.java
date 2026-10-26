@@ -16,6 +16,52 @@ import org.robolectric.annotation.Config;
 @androidx.annotation.OptIn(markerClass = androidx.media3.common.util.UnstableApi.class)
 public class SongRadioTest {
   @Test
+  public void restartingRadioReplacesOnlyUpcomingAutomaticPicks() {
+    Context context = RuntimeEnvironment.getApplication();
+    CrossfadePlayer player = new CrossfadePlayer(context, new DefaultDataSource.Factory(context));
+    try {
+      Track past = AutoplayManagerTest.song("past"), current = AutoplayManagerTest.song("current"),
+          manual = AutoplayManagerTest.song("manual"), stale = AutoplayManagerTest.song("stale-radio");
+      player.setMediaItems(Arrays.asList(past.mediaItem(true), current.mediaItem(true),
+          manual.mediaItem(), stale.mediaItem(true)), 1, 54321);
+      player.pause();
+      SongRadio.activate(player, current);
+      assertEquals(3, player.getMediaItemCount());
+      assertEquals(current.url, player.getCurrentMediaItem().mediaId);
+      assertEquals(54321, player.getCurrentPosition());
+      assertFalse(player.getPlayWhenReady());
+      assertEquals(manual.url, player.getMediaItemAt(2).mediaId);
+      assertEquals(past.url, player.getMediaItemAt(0).mediaId);
+    } finally {
+      player.release();
+    }
+  }
+
+  @Test
+  public void selectedSearchSongReplacesOldResultsAndStartsAtTheBeginning() {
+    Context context = RuntimeEnvironment.getApplication();
+    CrossfadePlayer player = new CrossfadePlayer(context, new DefaultDataSource.Factory(context));
+    try {
+      player.setMediaItems(Arrays.asList(AutoplayManagerTest.song("old-result").mediaItem(),
+          AutoplayManagerTest.song("unrelated-result").mediaItem()), 0, 75234);
+      player.setRepeatMode(Player.REPEAT_MODE_ALL);
+      Track selected = AutoplayManagerTest.song("selected-search-song");
+      SongRadio.playSelected(player, selected);
+      assertEquals(selected.url, player.getCurrentMediaItem().mediaId);
+      assertEquals(1, player.getMediaItemCount());
+      assertEquals(0, player.getCurrentPosition());
+      assertTrue(player.getPlayWhenReady());
+      assertEquals(Player.REPEAT_MODE_OFF, player.getRepeatMode());
+      // Starting radio again must not restart the selected song.
+      player.seekTo(43000);
+      SongRadio.activate(player, selected);
+      assertEquals(43000, player.getCurrentPosition());
+    } finally {
+      player.release();
+    }
+  }
+
+  @Test
   public void startingRadioKeepsPlayingSongPositionAndManualQueueEvenForAnotherSeed() {
     Context context = RuntimeEnvironment.getApplication();
     CrossfadePlayer player = new CrossfadePlayer(context, new DefaultDataSource.Factory(context));
