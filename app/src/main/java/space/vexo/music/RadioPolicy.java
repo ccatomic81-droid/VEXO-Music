@@ -58,8 +58,13 @@ public final class RadioPolicy {
     if (t == null || !t.online() || t.title.trim().isEmpty() || t.duration < 30 || t.duration > 900)
       return false;
     String title = normalize(t.title);
+    String channel = normalize(t.artist);
+    // Recheck old saved/imported candidates too; a short video is not necessarily a song.
+    if (channel.matches(
+        ".*\\b(news|channel 4|bbc news|sky news|cnn|al jazeera|ada derana|hiru news|newsfirst|news first)\\b.*"))
+      return false;
     return !title.matches(
-        ".*\\b(full album|full movie|compilation|podcast|interview|reaction|nonstop|non stop|1"
+        ".*\\b(full album|full movie|compilation|podcast|interview|reaction|breaking news|news bulletin|news update|weather forecast|press conference|tutorial|gameplay|vlog|nonstop|non stop|1"
             + " hour|10 hours)\\b.*");
   }
 

@@ -23,6 +23,16 @@ public class RadioPolicyTest {
   }
 
   @Test
+  public void newsAndGeneralVideosAreRejectedEvenFromSavedCandidates() {
+    assertFalse(RadioPolicy.music(song("news", "BREAKING NEWS|Channel 4", "Channel 4")));
+    assertFalse(RadioPolicy.music(song("news", "Latest headlines", "BBC News")));
+    assertFalse(RadioPolicy.music(song("vlog", "My daily vlog", "Creator")));
+    assertFalse(RadioPolicy.music(song("game", "Game gameplay", "Creator")));
+    assertTrue(RadioPolicy.music(song("music", "KALYANI (with Shreya Ghoshal) OFFICIAL MUSIC VIDEO", "SANJUU ENT-")));
+    assertTrue(RadioPolicy.music(song("music", "Bad News", "Artist - Topic")));
+  }
+
+  @Test
   public void familiarityAndDiscoveryProduceDifferentFirstChoices() {
     Track favourite = song("fav", "Known favourite", "Loved Artist"),
         fresh = song("new", "New song", "New Artist");
