@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.22.0 — Artwork recovery and public experience update (26 October 2026)
+
+- Reload the same cover after Refresh & repair and restore cached artwork views on attachment.
+- Retry temporary artwork failures twice; stale retries cannot replace a newly bound song.
+- Fall back to the same song’s public thumbnail when artwork metadata is missing or stale.
+- Keep clipping backgrounds separate from mutable loading placeholders.
+- Publish simpler Home/Search, VEXO session learning, manual queue priority and shuffle-safe Play next.
+- Preserve optional YouTube connection, existing features, app identity and signing certificate.
+
 ## 0.16.0 — Notification invitation and source recovery (26 October 2026)
 
 - Ask once to enable notifications after startup, with Enable / Not now and persistent refusal handling.

@@ -1,0 +1,14 @@
+{
+  "applicationId": "space.vexo.music.radio",
+  "versionCode": 31,
+  "versionName": "0.22.0",
+  "summary": "Artwork fixes: reload after Refresh & repair, retries for temporary failures, and song-thumbnail fallbacks for missing or stale covers. Includes the simpler Home/Search, session-aware VEXO recommendations, manual queue priority and shuffle-safe Play next. YouTube account connection stays optional. MindRadio, PureSong, Smart Experience, crossfade, offline music, accounts and playlists remain.",
+  "downloadUrl": "https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.22.0.apk",
+  "sourceUrl": "https://github.com/ccatomic81-droid/VEXO-Music/archive/b94d75a29e93f036f6909d29109c1ab870b77506.zip",
+  "sourceCommit": "b94d75a29e93f036f6909d29109c1ab870b77506",
+  "size": 9082849,
+  "sha256": "6c5e073855b6bd1639691295117f0c31b46d398f4330bca39f044beabfbc3862",
+  "certificateSha256": "0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3",
+  "signedPayload": "eyJmb3JtYXQiOiJ2ZXhvLXJlbGVhc2UtdjEiLCJhcHBsaWNhdGlvbklkIjoic3BhY2UudmV4by5tdXNpYy5yYWRpbyIsInZlcnNpb25Db2RlIjozMSwidmVyc2lvbk5hbWUiOiIwLjIyLjAiLCJzdW1tYXJ5IjoiQXJ0d29yayBmaXhlczogcmVsb2FkIGFmdGVyIFJlZnJlc2ggJiByZXBhaXIsIHJldHJpZXMgZm9yIHRlbXBvcmFyeSBmYWlsdXJlcywgYW5kIHNvbmctdGh1bWJuYWlsIGZhbGxiYWNrcyBmb3IgbWlzc2luZyBvciBzdGFsZSBjb3ZlcnMuIEluY2x1ZGVzIHRoZSBzaW1wbGVyIEhvbWUvU2VhcmNoLCBzZXNzaW9uLWF3YXJlIFZFWE8gcmVjb21tZW5kYXRpb25zLCBtYW51YWwgcXVldWUgcHJpb3JpdHkgYW5kIHNodWZmbGUtc2FmZSBQbGF5IG5leHQuIFlvdVR1YmUgYWNjb3VudCBjb25uZWN0aW9uIHN0YXlzIG9wdGlvbmFsLiBNaW5kUmFkaW8sIFB1cmVTb25nLCBTbWFydCBFeHBlcmllbmNlLCBjcm9zc2ZhZGUsIG9mZmxpbmUgbXVzaWMsIGFjY291bnRzIGFuZCBwbGF5bGlzdHMgcmVtYWluLiIsImRvd25sb2FkVXJsIjoiaHR0cHM6Ly92ZXhvLW11c2ljLXVwZGF0ZXMua2F2aW5kdWthdmlzaGthNzg1LndvcmtlcnMuZGV2L3JlbGVhc2VzL1ZFWE8tTXVzaWMtMC4yMi4wLmFwayIsInNpemUiOjkwODI4NDksInNoYTI1NiI6IjZjNWUwNzM4NTViNmJkMTYzOTY5MTI5NTExN2YwYzMxYjQ2ZDM5OGY0MzMwYmNhMzlmMDQ0YmVhYmZiYzM4NjIiLCJjZXJ0aWZpY2F0ZVNoYTI1NiI6IjBiMzFjNTA5MDQ1NjczODliNzIzZTIzYWQ2MDQzYjJkMmZjNjYzNWMzMGRmZGIzZWQ1ZWYzZjliYTk3MjdlZjMiLCJzb3VyY2VDb21taXQiOiJiOTRkNzVhMjllOTNmMDM2ZjY5MDlkMjkxMDljMWFiODcwYjc3NTA2In0=",
+  "releaseSignature": "MJH/SYspsm/UXQQGv34pRSK6f1JNjXIoXy53x/tzf8xRplVqV2NZjJ5JxafRjkQ7QLRAdFA29BRGlE8cxQEJ/ARiZ4NvrZxUFi+AZyOVODdu+0GaLe2TRoqtapVKfWpSaeDyXXXi87vdxyZXBD9SL7Pzg3uOSHyThdKswwK5WcUDNcW3rNu/ph3XtQjU3Kd46XDNBtU9+mt16+v8sNgVXj9fAmYcAljRKUu6vj0SmznxdgYXof1E4HnvJsm0DUbmZjps1DGvFbgNIyzBRi40T3fN/P4ZXSuDLpgt9b8Hs/jsXgAqbJ75tsXe8oSeQDx1Oh6/HgocedkvwzfFDvAc/A=="
+}

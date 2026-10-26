@@ -1,0 +1,33 @@
+{
+  "version": "0.22.0",
+  "versionCode": 31,
+  "sourceCommit": "b94d75a29e93f036f6909d29109c1ab870b77506",
+  "workflowRun": 40359798909,
+  "apkSha256": "6c5e073855b6bd1639691295117f0c31b46d398f4330bca39f044beabfbc3862",
+  "sameCertificate": true,
+  "nonDebuggable": true,
+  "signedPayloadMatchesUnsignedCandidate": true,
+  "manifestSignatureVerified": true,
+  "androidChecks": {
+    "tests": 202,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 9
+  },
+  "publicChecks": [
+    "manifest",
+    "apk checksum",
+    "range",
+    "head",
+    "old public APK",
+    "closed writes"
+  ],
+  "onlyR2BindingRemains": true,
+  "liveChecks": {
+    "tests": 6,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "liveArtworkDecoded": 3
+}

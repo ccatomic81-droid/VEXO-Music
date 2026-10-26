@@ -1,8 +1,10 @@
-# VEXO Music 0.17.0
+# VEXO Music 0.22.0
 
 Developer: **Kavindu Kavishka**.
 
-Version **0.17.0** is public: transparent bottom navigation, Start radio without restarting the current song, and YouTube Music radio recommendations with existing discovery fallbacks. [Download VEXO Music 0.17.0](https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.17.0.apk) or open [the public release](https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.17.0). See [radio behavior and verification](docs/MUSIC-RADIO-0.17.md). Optional liked-music imports require the owner project [Google API/OAuth setup](docs/YOUTUBE-TASTE.md); public music search/radio do not require that connection. Existing accounts, library sync, notification controls and Smart Experience are retained.
+Public version **0.22.0** fixes artwork recovery, transient retries and missing/stale-cover fallbacks across Home, Search, queue and both players. It also includes the simpler interface and VEXO session/queue improvements from testing. YouTube account connection stays optional; MindRadio, PureSong, Smart Experience, crossfade, offline music, accounts and playlists remain.
+
+[Download VEXO Music 0.22.0](https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.22.0.apk), use Settings → Check for updates, or open the [GitHub release](https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.22.0). Install as an update; do not uninstall. Version code 31 upgrades public 0.19.3 and testers 0.20/0.21 using the existing app certificate. See [artwork behavior](docs/ARTWORK-0.22.md) and [verification](release/verification-0.22.0.json).
 
 Search now shows real song names, artwork and artists while typing, with direct play controls. Home has quick collection tiles, horizontally scrolling music cards, regional picks and VEXO mood mixes. Full playlist pages support Play all, a one-shot shuffled queue, adding songs, renaming and deleting a playlist, and removing individual tracks.
 
@@ -90,7 +92,7 @@ Auto-save is enabled by default and attempts to save the full audio of a played 
 
 ## Install or update VEXO Music
 
-Install `VEXO-Music-0.16.0.apk`. It appears as **VEXO Music**, package `space.vexo.music.radio`, version code 20.
+Install `VEXO-Music-0.22.0.apk`. It appears as **VEXO Music**, package `space.vexo.music.radio`, version code 31.
 
 The earlier delivery workspace and its signing key were reset. The v0.4.x line uses its backed-up development signing certificate and a separate app ID so it can coexist with v0.3.0. **Keep the old app installed to preserve its favourites, playlists and offline audio. That private app data does not automatically transfer to this build.** This APK is not an in-place update to v0.3.0.
 

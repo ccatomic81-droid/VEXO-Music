@@ -1,5 +1,7 @@
 # App updates and releases
 
+Current public release: **0.22.0 / code 31**. It updates public 0.19.3/code 28 and testers 0.20/0.21 codes 29/30 in place. The public manifest is signed and the APK uses the original certificate. Use Settings → Check for updates; Android still requires approval to install. See `release/public-0.22.0.json` and `release/verification-0.22.0.json`.
+
 ## Built-in delivery
 
 The public feed identifies the latest published VEXO release. Signed APK/source downloads are verified after each publication, including exact file checksums and resumable downloads. The production Worker has only its R2 binding and accepts GET/HEAD; temporary publishing access has been removed. Users do not configure an update address.
