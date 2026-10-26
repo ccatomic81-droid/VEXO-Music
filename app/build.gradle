@@ -1,4 +1,4 @@
-plugins { id 'com.android.application' }
+plugins { id 'com.android.application'; id 'com.google.gms.google-services' }
 android {
     namespace 'space.vexo.music'
     compileSdk 35
@@ -6,8 +6,8 @@ android {
         applicationId 'space.vexo.music.radio'
         minSdk 26
         targetSdk 35
-        versionCode 14
-        versionName '0.12.0'
+        versionCode 20
+        versionName '0.16.0'
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
     // Signing material is injected only at build time, never stored in the repository.
@@ -49,6 +49,17 @@ android {
     }
 }
 dependencies {
+    implementation platform('com.google.firebase:firebase-bom:35.1.0')
+    implementation 'com.google.firebase:firebase-auth'
+    implementation 'com.google.firebase:firebase-messaging'
+    implementation 'androidx.credentials:credentials:1.3.0'
+    implementation 'androidx.credentials:credentials-play-services-auth:1.3.0'
+    implementation 'com.google.android.libraries.identity.googleid:googleid:1.1.1'
+    constraints {
+        implementation('org.jsoup:jsoup:1.23.2') {
+            because 'Patched release for GHSA-65r4-943x-97jj and GHSA-pmhh-3w7g-xqp8'
+        }
+    }
     implementation 'androidx.activity:activity:1.10.1'
     implementation 'androidx.recyclerview:recyclerview:1.4.0'
     implementation 'androidx.media3:media3-exoplayer:1.8.0'
@@ -63,4 +74,24 @@ dependencies {
     testImplementation 'androidx.test:core:1.6.1'
     androidTestImplementation 'androidx.test:runner:1.6.2'
     androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+}
+
+// Inventory the versions Gradle actually resolved, including transitive Android dependencies.
+tasks.register('writeSecurityInventory') {
+    doLast {
+        def resolved = new TreeMap<String, Map>()
+        ['debugRuntimeClasspath', 'releaseRuntimeClasspath'].each { name ->
+            configurations.getByName(name).incoming.resolutionResult.allComponents.each { component ->
+                def module = component.moduleVersion
+                if (module != null && module.group && module.group != 'VEXO-Music') {
+                    def coordinate = module.group + ':' + module.name
+                    resolved[coordinate + ':' + module.version] = [package: [name: coordinate, ecosystem: 'Maven'], version: module.version]
+                }
+            }
+        }
+        def output = layout.buildDirectory.file('security/dependencies.json').get().asFile
+        output.parentFile.mkdirs()
+        output.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson([queries: resolved.values().toList()]))
+        println('Resolved dependency inventory: ' + resolved.size())
+    }
 }

@@ -1,6 +1,8 @@
-# VEXO Music 0.9.0
+# VEXO Music 0.16.0
 
 Developer: **Kavindu Kavishka**.
+
+The 0.16 release restores the latest Aurora UI, optional Google/email accounts, manual favourites/playlist sync and optional release alerts, with a one-time first-visit notification invitation. The source project has been recovered and is being verified before public promotion. See [recovery and verification](docs/RECOVERY-0.16.md).
 
 Search now shows real song names, artwork and artists while typing, with direct play controls. Home has quick collection tiles, horizontally scrolling music cards, regional picks and VEXO mood mixes. Full playlist pages support Play all, a one-shot shuffled queue, adding songs, renaming and deleting a playlist, and removing individual tracks.
 

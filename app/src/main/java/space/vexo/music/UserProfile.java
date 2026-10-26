@@ -1,7 +1,6 @@
 package space.vexo.music;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.graphics.*;
 import android.net.Uri;
 import android.os.Build;
@@ -12,11 +11,11 @@ import java.util.*;
 /** A device-local listening profile. No account, photo upload or broad gallery permission. */
 final class UserProfile {
   private final Context context;
-  private final SharedPreferences prefs;
+  private final PrivateStore prefs;
 
   UserProfile(Context c) {
     context = c.getApplicationContext();
-    prefs = context.getSharedPreferences("user_profile", 0);
+    prefs = new PrivateStore(context, "user_profile");
   }
 
   String name() {
@@ -50,13 +49,44 @@ final class UserProfile {
     return greeting(Calendar.getInstance().get(Calendar.HOUR_OF_DAY));
   }
 
-  File photo() {
+  private File legacyPhoto() {
     return new File(context.getFilesDir(), "profile-photo.jpg");
   }
 
+  private String photoBytes() {
+    String stored = prefs.getString("photo_bytes", "");
+    File old = legacyPhoto();
+    if (!stored.isEmpty()) {
+      if (old.isFile()) new AtomicFile(old).delete();
+      return stored;
+    }
+    if (old.isFile() && old.length() <= 2 * 1024 * 1024) {
+      try (InputStream in = new FileInputStream(old);
+          ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+        byte[] buffer = new byte[8192];
+        int n;
+        while ((n = in.read(buffer)) != -1) {
+          if (out.size() + n > 2 * 1024 * 1024) return "";
+          out.write(buffer, 0, n);
+        }
+        String encoded =
+            android.util.Base64.encodeToString(out.toByteArray(), android.util.Base64.NO_WRAP);
+        if (prefs.edit().putString("photo_bytes", encoded).commit()) new AtomicFile(old).delete();
+        return encoded;
+      } catch (IOException e) {
+        return "";
+      }
+    }
+    return "";
+  }
+
+  boolean hasPhoto() {
+    return !photoBytes().isEmpty();
+  }
+
   void removePhoto() {
-    new AtomicFile(photo()).delete();
-    prefs.edit().remove("photo_version").apply();
+    prefs.edit().remove("photo_bytes").remove("photo_version").apply();
+    new AtomicFile(legacyPhoto()).delete();
   }
 
   long photoVersion() {
@@ -64,7 +94,14 @@ final class UserProfile {
   }
 
   Bitmap avatar() {
-    return photo().isFile() ? BitmapFactory.decodeFile(photo().getAbsolutePath()) : null;
+    String encoded = photoBytes();
+    if (encoded.isEmpty()) return null;
+    try {
+      byte[] bytes = android.util.Base64.decode(encoded, android.util.Base64.NO_WRAP);
+      return BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+    } catch (IllegalArgumentException invalid) {
+      return null;
+    }
   }
 
   void importPhoto(Uri uri) throws IOException {
@@ -165,18 +202,18 @@ final class UserProfile {
           new Rect(left, top, left + side, top + side),
           new Rect(0, 0, 512, 512),
           new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG));
-      AtomicFile destination = new AtomicFile(photo());
-      FileOutputStream stream = null;
-      try {
-        stream = destination.startWrite();
-        if (!square.compress(Bitmap.CompressFormat.JPEG, 95, stream))
-          throw new IOException("Couldn’t save this photo");
-        destination.finishWrite(stream);
-      } catch (IOException e) {
-        if (stream != null) destination.failWrite(stream);
-        throw e;
-      }
-      prefs.edit().putLong("photo_version", System.currentTimeMillis()).apply();
+      ByteArrayOutputStream saved = new ByteArrayOutputStream();
+      if (!square.compress(Bitmap.CompressFormat.JPEG, 95, saved))
+        throw new IOException("Couldn’t save this photo");
+      if (!prefs
+          .edit()
+          .putString(
+              "photo_bytes",
+              android.util.Base64.encodeToString(saved.toByteArray(), android.util.Base64.NO_WRAP))
+          .putLong("photo_version", System.currentTimeMillis())
+          .commit())
+        throw new IOException("Couldn’t securely save this photo; existing photo kept");
+      new AtomicFile(legacyPhoto()).delete();
     } catch (OutOfMemoryError lowMemory) {
       Visuals.clearArtwork();
       throw new IOException("Not enough memory for this photo. Try a smaller image.", lowMemory);

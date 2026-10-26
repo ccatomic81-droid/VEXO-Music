@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.16.0 — Notification invitation and source recovery (26 October 2026)
+
+- Ask once to enable notifications after startup, with Enable / Not now and persistent refusal handling.
+- Retain Aurora Home, optional Google/email accounts, explicit favourites/playlist sync and release-alert controls.
+- Preserve the existing package, signing identity, encrypted collections, playback, search and Smart Experience.
+- Recover and publish maintainable source after the unpushed 0.14/0.15 project was lost.
+
 ## 0.9.0 — Refresh and repair (25 October 2026)
 
 - Morning begins at 04:00; local-minute, clock/time-zone and resume updates keep greetings current.

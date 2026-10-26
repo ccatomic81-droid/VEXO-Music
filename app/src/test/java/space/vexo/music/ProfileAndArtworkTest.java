@@ -64,9 +64,10 @@ public class ProfileAndArtworkTest {
       out.write("not an image".getBytes());
     }
     assertThrows(Exception.class, () -> profile.importPhoto(Uri.fromFile(invalid)));
-    assertTrue(profile.photo().isFile());
+    assertTrue(profile.hasPhoto());
+    assertFalse(new File(c.getFilesDir(), "profile-photo.jpg").exists());
     profile.removePhoto();
-    assertFalse(profile.photo().exists());
+    assertFalse(profile.hasPhoto());
   }
 
   @Test

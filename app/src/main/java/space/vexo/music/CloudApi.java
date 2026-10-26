@@ -18,6 +18,8 @@ final class CloudApi {
     client =
         OnlineMusic.HTTP
             .newBuilder()
+            .followRedirects(false)
+            .followSslRedirects(false)
             .callTimeout(40, java.util.concurrent.TimeUnit.SECONDS)
             .build();
   }

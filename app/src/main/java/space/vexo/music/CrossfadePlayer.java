@@ -132,13 +132,14 @@ public final class CrossfadePlayer extends ForwardingSimpleBasePlayer {
               QueuePolicy.appendOrder(order, items.size(), 0), System.nanoTime()));
     }
     NativeDeck deck = new NativeDeck(candidate);
+    deck.introPending = true;
     candidate.prepare();
     return deck;
   }
 
   private final class NativeDeck implements CrossfadeEngine.Deck {
     final ExoPlayer player;
-    boolean disposed;
+    boolean disposed, introPending;
 
     NativeDeck(ExoPlayer player) {
       this.player = player;
@@ -181,6 +182,25 @@ public final class CrossfadePlayer extends ForwardingSimpleBasePlayer {
     }
 
     public boolean ready() {
+      if (introPending && player.getPlaybackState() == Player.STATE_READY) {
+        introPending = false;
+        try {
+          MediaItem item = player.getCurrentMediaItem();
+          boolean room =
+              context.getSharedPreferences("playback_state", 0).getBoolean("room_active", false);
+          long start =
+              item == null
+                  ? 0
+                  : new PureSong(new SmartStore(context))
+                      .crossfadeStart(Track.from(item), player.getDuration(), room);
+          if (start > 0) {
+            player.seekTo(start);
+            return false;
+          }
+        } catch (IllegalStateException unavailable) {
+          /* Keep the full version if private markers are unavailable. */
+        }
+      }
       return player.getPlaybackState() == Player.STATE_READY;
     }
 

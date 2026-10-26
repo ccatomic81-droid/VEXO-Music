@@ -2,9 +2,9 @@ name: Build VEXO Music APK
 on:
   push:
     branches: [main]
-    paths: ['app/**', 'gradle/**', 'gradlew*', '*.gradle', 'gradle.properties', 'update-service/**', '.github/workflows/android.yml']
+    paths: ['app/**', 'gradle/**', 'gradlew*', '*.gradle', 'gradle.properties', 'update-service/**', 'cloud-service/**', 'supabase/functions/**', 'tools/**', '.github/workflows/android.yml']
   pull_request:
-    paths: ['app/**', 'gradle/**', 'gradlew*', '*.gradle', 'gradle.properties', 'update-service/**', '.github/workflows/android.yml']
+    paths: ['app/**', 'gradle/**', 'gradlew*', '*.gradle', 'gradle.properties', 'update-service/**', 'cloud-service/**', 'supabase/functions/**', 'tools/**', '.github/workflows/android.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -14,6 +14,9 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -27,15 +30,23 @@ jobs:
         run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
       - name: Check and build
         run: bash gradlew --no-daemon testDebugUnitTest lintDebug lintRelease assembleDebug assembleRelease
-      - name: Check update service
-        run: node --test update-service/service.test.mjs
+      - name: Audit resolved dependencies
+        run: |
+          bash gradlew --no-daemon :app:writeSecurityInventory
+          python3 tools/audit-dependencies.py app/build/security/dependencies.json
+      - name: Check security and services
+        run: |
+          npm ci --prefix supabase/functions/firebase-signin --ignore-scripts
+          python3 tools/security-check.py
+          node --check cloud-service/worker.mjs
+          node --test update-service/*.test.mjs cloud-service/policy.test.mjs testing-service/service.test.mjs supabase/functions/firebase-signin/*.test.mjs
       - name: Package APK
         run: |
           mkdir -p dist
-          cp app/build/outputs/apk/debug/app-debug.apk dist/VEXO-Music-0.12.0.apk
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose dist/VEXO-Music-0.12.0.apk
-          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging dist/VEXO-Music-0.12.0.apk | grep "versionCode='14' versionName='0.12.0'"
-          sha256sum dist/VEXO-Music-0.12.0.apk > dist/SHA256SUMS.txt
+          cp app/build/outputs/apk/debug/app-debug.apk dist/VEXO-Music-0.16.0.apk
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose dist/VEXO-Music-0.16.0.apk
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging dist/VEXO-Music-0.16.0.apk | grep "versionCode='20' versionName='0.16.0'"
+          sha256sum dist/VEXO-Music-0.16.0.apk > dist/SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
           name: VEXO-Music-CI-Test-APK
@@ -44,11 +55,11 @@ jobs:
       - name: Package unsigned production candidate
         run: |
           mkdir -p release-candidate
-          cp app/build/outputs/apk/release/app-release-unsigned.apk release-candidate/VEXO-Music-0.12.0-unsigned.apk
-          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging release-candidate/VEXO-Music-0.12.0-unsigned.apk > release-candidate/badging.txt
-          grep "versionCode='14' versionName='0.12.0'" release-candidate/badging.txt
+          cp app/build/outputs/apk/release/app-release-unsigned.apk release-candidate/VEXO-Music-0.16.0-unsigned.apk
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging release-candidate/VEXO-Music-0.16.0-unsigned.apk > release-candidate/badging.txt
+          grep "versionCode='20' versionName='0.16.0'" release-candidate/badging.txt
           if grep -q 'application-debuggable' release-candidate/badging.txt; then exit 1; fi
-          (cd release-candidate && sha256sum VEXO-Music-0.12.0-unsigned.apk > SHA256SUMS.txt)
+          (cd release-candidate && sha256sum VEXO-Music-0.16.0-unsigned.apk > SHA256SUMS.txt)
       - uses: actions/upload-artifact@v4
         with:
           name: VEXO-Music-Production-Candidate
@@ -62,6 +73,7 @@ jobs:
             app/build/reports/
             app/build/test-results/
             app/build/ui-checks/
+            app/build/security/
           if-no-files-found: ignore
       - name: Probe live music discovery
         id: discovery_probe

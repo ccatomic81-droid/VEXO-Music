@@ -1,4 +1,5 @@
 // Temporary publishing entrypoint. Deploy service.mjs after publishing to remove all write routes.
+import { authenticateRelease } from "./release-auth.mjs";
 import service, { FILE } from "./service.mjs";
 
 const certificate = "0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3";
@@ -23,6 +24,7 @@ export default {
         const release = await request.json();
         if (release.applicationId !== "space.vexo.music.radio" || !Number.isSafeInteger(release.versionCode) || release.versionCode < 1 || !/^\d+\.\d+\.\d+$/.test(release.versionName) || typeof release.summary !== "string" || !release.summary.trim() || release.summary.length > 12000 || !/^[a-f0-9]{64}$/.test(release.sha256 || "") || release.certificateSha256 !== certificate)
           return json({ error: "Invalid release" }, 400);
+        if (!await authenticateRelease(release)) return json({ error: "Untrusted release signature" }, 400);
         const apk = `VEXO-Music-${release.versionName}.apk`, source = `VEXO-Music-${release.versionName}-Source.zip`;
         const publicSource = /^[a-f0-9]{40}$/.test(release.sourceCommit || "") && release.sourceUrl === `https://github.com/ccatomic81-droid/VEXO-Music/archive/${release.sourceCommit}.zip`;
         if (release.downloadUrl !== `${url.origin}/releases/${apk}` || (!publicSource && release.sourceUrl !== `${url.origin}/releases/${source}`)) return json({ error: "Wrong download address" }, 400);

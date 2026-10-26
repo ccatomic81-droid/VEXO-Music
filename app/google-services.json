@@ -1,0 +1,34 @@
+{
+  "project_info": {
+    "project_number": "241670791889",
+    "project_id": "vexo-music-kavindu-2026",
+    "storage_bucket": "vexo-music-kavindu-2026.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:241670791889:android:978180780932841c67dbf0",
+        "android_client_info": {
+          "package_name": "space.vexo.music.radio"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "241670791889-sd2v43oj5fnej81i78afq0s38tce4mss.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDZeUFTiNAdq5m8k4R62ZjCLPLLxqyG97A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

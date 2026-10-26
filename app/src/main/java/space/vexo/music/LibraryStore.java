@@ -1,20 +1,19 @@
 package space.vexo.music;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import java.util.ArrayList;
 import java.util.List;
 import org.json.JSONArray;
 
 public final class LibraryStore {
-  private final SharedPreferences prefs;
+  private final PrivateStore prefs;
   private final Context context;
   private final SmartStore smart;
 
   LibraryStore(Context c, SmartStore smart) {
     context = c.getApplicationContext();
     this.smart = smart;
-    prefs = c.getSharedPreferences("library", Context.MODE_PRIVATE);
+    prefs = new PrivateStore(c, "library");
   }
 
   private void checkpoint(String name, String reason) {
@@ -24,7 +23,7 @@ public final class LibraryStore {
   public LibraryStore(Context c) {
     context = c.getApplicationContext();
     smart = new SmartStore(c);
-    prefs = c.getSharedPreferences("library", Context.MODE_PRIVATE);
+    prefs = new PrivateStore(c, "library");
   }
 
   public synchronized List<Track> tracks(String key) {
@@ -32,6 +31,8 @@ public final class LibraryStore {
     try {
       JSONArray a = new JSONArray(prefs.getString(key, "[]"));
       for (int i = 0; i < a.length(); i++) out.add(Track.from(a.getJSONObject(i)));
+    } catch (IllegalStateException unavailable) {
+      throw unavailable;
     } catch (Exception ignored) {
     }
     return out;
@@ -70,6 +71,8 @@ public final class LibraryStore {
     try {
       JSONArray a = new JSONArray(prefs.getString("playlists", "[]"));
       for (int i = 0; i < a.length(); i++) names.add(a.getString(i));
+    } catch (IllegalStateException unavailable) {
+      throw unavailable;
     } catch (Exception ignored) {
     }
     return names;
@@ -116,6 +119,37 @@ public final class LibraryStore {
         .putString("playlist:" + name, songs.toString())
         .apply();
     return true;
+  }
+
+  synchronized void mergeCollections(List<Track> list, java.util.Map<String, List<Track>> map)
+      throws java.io.IOException {
+    PrivateStore.Editor editorEdit = this.prefs.edit();
+    List<String> listPlaylists = playlists();
+    for (java.util.Map.Entry<String, List<Track>> entry : map.entrySet()) {
+      if (listPlaylists.contains(entry.getKey())) {
+        checkpoint(entry.getKey(), "Before cloud merge");
+      } else {
+        listPlaylists.add(entry.getKey());
+      }
+      JSONArray jSONArray = new JSONArray();
+      java.util.Iterator<Track> it = entry.getValue().iterator();
+      while (it.hasNext()) {
+        jSONArray.put(it.next().json());
+      }
+      editorEdit.putString("playlist:" + entry.getKey(), jSONArray.toString());
+    }
+    JSONArray jSONArray2 = new JSONArray();
+    java.util.Iterator<Track> it2 = list.iterator();
+    while (it2.hasNext()) {
+      jSONArray2.put(it2.next().json());
+    }
+    if (!editorEdit
+        .putString("playlists", new JSONArray((java.util.Collection) listPlaylists).toString())
+        .putString("favourites", jSONArray2.toString())
+        .commit()) {
+      throw new java.io.IOException(
+          "Couldn’t safely save synced collections. Your existing library was kept.");
+    }
   }
 
   /** Saving the same mix twice reuses its copy; never overwrite a user's edited playlist. */

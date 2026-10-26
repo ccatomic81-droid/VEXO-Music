@@ -7,14 +7,18 @@ import org.json.*;
 /** A release feed contains metadata only. Downloads always need a user tap. */
 final class AppRelease {
   static final String NOTES =
-      "• Cloud MindRadio understands music requests with a free daily allowance.\n"
-          + "• Create live listening rooms, share invites and request songs from multiple phones.\n"
-          + "• Host playback sync, fair request rotation and reconnect support.\n"
-          + "• Solid colors, refined navigation and a Smart tab after Settings.\n"
-          + "• Private history and memories remain on your device.\n"
-          + "• Shared playback timing depends on each device and connection.";
+      "• Aurora Home with purple/lime styling, aligned cards and rounded mini-player artwork.\n"
+          + "• A one-time invitation to enable notifications. Choose Enable or Not now.\n"
+          + "• Optional Google/email sign-in and manual online favourites/playlist sync.\n"
+          + "• Notification and release-alert controls in Settings.\n"
+          + "• Smart Experience, MindRadio, FairPlay, playback, crossfade and saved music are"
+          + " retained.\n"
+          + "• Install as an update to keep your music library and preferences.";
   final int code;
   final String version, summary, url;
+  String sha256 = "";
+  long size;
+  boolean authenticated;
 
   AppRelease(int code, String version, String summary, String url) {
     this.code = code;
@@ -45,7 +49,11 @@ final class AppRelease {
           || summary.isEmpty()
           || summary.length() > 12000)
         throw new IOException("The update information is incomplete.");
-      return new AppRelease(code, version, summary, url);
+      AppRelease release = new AppRelease(code, version, summary, url);
+      release.authenticated = ReleaseSecurity.verify(o, BuildConfig.VERSION_CODE);
+      release.sha256 = o.optString("sha256");
+      release.size = o.optLong("size");
+      return release;
     } catch (JSONException e) {
       throw new IOException("The update information could not be read.", e);
     }

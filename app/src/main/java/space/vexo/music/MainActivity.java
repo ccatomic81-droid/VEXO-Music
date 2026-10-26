@@ -128,7 +128,7 @@ public final class MainActivity extends ComponentActivity {
   private List<Track> previewSongs = new ArrayList<>();
   private List<String> previewTerms = new ArrayList<>();
   private boolean previewLoading, previewFailed, phraseFailed, keyboardOpen;
-  private View searchTitleView, searchSources;
+  private View searchTitleView, searchSources, searchLanguages, searchCategoryBack;
 
   private ScrollView suggestionScroll;
   private LinearLayout suggestionBody;
@@ -138,6 +138,16 @@ public final class MainActivity extends ComponentActivity {
   private boolean updateChecking;
 
   private Dialog playerDialog, queueDialog;
+  private NotificationPermissionPrompt notificationPrompt;
+  private AccountAuth account;
+  private boolean accountBusy;
+  private android.os.CancellationSignal googleCancellation;
+  private final ActivityResultLauncher<String> notificationPermission =
+      registerForActivityResult(
+          new ActivityResultContracts.RequestPermission(),
+          granted -> {
+            if (granted) message("Notifications enabled");
+          });
   private QueuePanel queuePanel;
   private NowPlayingPanel playerPanel;
   private List<Integer> queueViewIndices = new ArrayList<>();
@@ -205,13 +215,26 @@ public final class MainActivity extends ComponentActivity {
   public void onCreate(Bundle state) {
     super.onCreate(state);
     profile = new UserProfile(this);
+    account = new AccountAuth(this);
     store = new LibraryStore(this);
     searchHistory = new SearchHistory(this);
     suggestions =
         new SearchSuggestions(main, Executors.newSingleThreadExecutor(), SearchSuggestions.ONLINE);
-    musicPreview = new MusicPreview(main, Executors.newFixedThreadPool(2), OnlineMusic::preview);
+    musicPreview =
+        new MusicPreview(
+            main,
+            Executors.newFixedThreadPool(2),
+            (term, country) -> OnlineMusic.preview(categoryQuery(term), country));
     mixCatalogue = new MixCatalogue(this);
     updates = new UpdateChecker(this);
+    notificationPrompt =
+        new NotificationPermissionPrompt(
+            this,
+            () ->
+                profile.complete()
+                    && !profileEditing
+                    && (updateDialog == null || !updateDialog.isShowing()),
+            () -> notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS));
     getSharedPreferences("playback_state", 0)
         .registerOnSharedPreferenceChangeListener(playbackStateChanged);
     homeFeed = RegionalFeed.cached(this, RegionPolicy.current(this));
@@ -220,6 +243,8 @@ public final class MainActivity extends ComponentActivity {
       tab = state.getString("tab", "Home");
       shelf = state.getString("shelf", "Phone");
       query = state.getString("query", "");
+      searchCategory = MusicCategory.find(state.getString("category", ""));
+      searchLanguage = state.getString("search_language", "Any");
       online = state.getBoolean("online", true);
       activeCollection = state.getString("collection", "");
       collectionTitle = state.getString("collection_title", "");
@@ -229,6 +254,7 @@ public final class MainActivity extends ComponentActivity {
       profileEditing = state.getBoolean("profile_editing", false);
       profileDraft = state.getString("profile_draft", profile.name());
     }
+    if ("space.vexo.music.OPEN_UPDATES".equals(getIntent().getAction())) tab = "Settings";
     root = column();
     root.setBackground(Glass.backdrop());
     setContentView(root);
@@ -336,6 +362,7 @@ public final class MainActivity extends ComponentActivity {
   @Override
   protected void onResume() {
     super.onResume();
+    if (notificationPrompt != null) notificationPrompt.resume();
     main.removeCallbacks(tick);
     main.post(tick);
     if (homePanel != null) homePanel.personalize();
@@ -360,7 +387,14 @@ public final class MainActivity extends ComponentActivity {
   }
 
   @Override
+  public void onWindowFocusChanged(boolean hasFocus) {
+    super.onWindowFocusChanged(hasFocus);
+    if (hasFocus && notificationPrompt != null) notificationPrompt.schedule();
+  }
+
+  @Override
   protected void onPause() {
+    if (notificationPrompt != null) notificationPrompt.pause();
     stopClock();
     main.removeCallbacks(tick);
     super.onPause();
@@ -372,6 +406,8 @@ public final class MainActivity extends ComponentActivity {
     b.putString("tab", tab);
     b.putString("shelf", shelf);
     b.putString("query", query);
+    b.putString("category", searchCategory == null ? "" : searchCategory.id);
+    b.putString("search_language", searchLanguage);
     b.putBoolean("online", online);
     b.putString("collection", activeCollection);
     b.putString("collection_title", collectionTitle);
@@ -385,6 +421,8 @@ public final class MainActivity extends ComponentActivity {
 
   @Override
   protected void onDestroy() {
+    if (googleCancellation != null) googleCancellation.cancel();
+    if (notificationPrompt != null) notificationPrompt.close();
     destroyed = true;
     stopClock();
     discoveryEpoch++;
@@ -463,9 +501,11 @@ public final class MainActivity extends ComponentActivity {
   private void buildNav() {
     nav = row();
     nav.setPadding(dp(10), dp(2), dp(10), dp(4));
-    nav.setMinimumHeight(dp(72));
-    Glass.apply(nav, 26, false);
-    root.addView(nav, new LinearLayout.LayoutParams(-1, -2));
+    nav.setMinimumHeight(dp(64));
+    Glass.apply(nav, 20, false);
+    LinearLayout.LayoutParams navLayout = new LinearLayout.LayoutParams(-1, -2);
+    navLayout.setMargins(dp(16), 0, dp(16), dp(8));
+    root.addView(nav, navLayout);
   }
 
   private void refreshNav() {
@@ -477,9 +517,10 @@ public final class MainActivity extends ComponentActivity {
       boolean selected = label.equals(tab);
       LinearLayout item = column();
       item.setGravity(Gravity.CENTER);
-      Icon i = new Icon(this, names[j], selected ? LIME : MUTED);
-      item.addView(i, new LinearLayout.LayoutParams(dp(48), dp(48)));
-      if (selected) i.setBackground(round(PANEL, dp(16)));
+      Icon i = new Icon(this, names[j], selected ? BG : MUTED);
+      i.setGlyphSize(24);
+      item.addView(i, new LinearLayout.LayoutParams(dp(48), dp(40)));
+      if (selected) i.setBackground(round(LIME, dp(22)));
       i.setContentDescription(label);
       i.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
       TextView caption = text(label, 10, selected ? LIME : MUTED, selected);
@@ -487,7 +528,7 @@ public final class MainActivity extends ComponentActivity {
       caption.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
       item.addView(caption);
       caption.setOnClickListener(v -> item.performClick());
-      item.setMinimumHeight(dp(64));
+      item.setMinimumHeight(dp(60));
       item.setSelected(selected);
       item.setFocusable(true);
       item.setTooltipText(label);
@@ -516,17 +557,17 @@ public final class MainActivity extends ComponentActivity {
     background.setColor(PANEL);
     background.setCornerRadius(dp(18));
     background.setStroke(dp(1), 0xff303e39);
-    mini.setBackground(background);
+    Glass.apply(mini, 20, false);
     mini.setPadding(dp(8), dp(8), dp(4), dp(5));
     mini.setMinimumHeight(dp(66));
     LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-1, -2);
-    p.setMargins(dp(14), dp(6), dp(14), dp(4));
+    p.setMargins(dp(20), dp(8), dp(20), dp(8));
     root.addView(mini, p);
     mini.setVisibility(View.GONE);
     LinearLayout line = row();
     mini.addView(line, new LinearLayout.LayoutParams(-1, -2));
-    miniArt = new ImageView(this);
-    miniArt.setBackground(round(PANEL, dp(9)));
+    miniArt = new RoundedArtwork(this);
+    miniArt.setBackground(round(PANEL, dp(11)));
     miniArt.setClipToOutline(true);
     line.addView(miniArt, new LinearLayout.LayoutParams(dp(44), dp(44)));
     LinearLayout copy = column();
@@ -542,14 +583,17 @@ public final class MainActivity extends ComponentActivity {
     copy.addView(miniArtist);
     line.addView(copy, new LinearLayout.LayoutParams(0, -2, 1));
     miniPlay = icon("play", LIME, this::togglePlay);
+    miniPlay.setGlyphSize(24);
     line.addView(miniPlay);
-    line.addView(
+    Icon next =
         icon(
             "next",
             TEXT,
             () -> {
               if (controller != null) controller.seekToNextMediaItem();
-            }));
+            });
+    next.setGlyphSize(24);
+    line.addView(next);
     miniProgress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
     miniProgress.setMax(1000);
     miniProgress.setProgressTintList(android.content.res.ColorStateList.valueOf(LIME));
@@ -565,10 +609,13 @@ public final class MainActivity extends ComponentActivity {
 
   private void render() {
     if (destroyed) return;
+    if (notificationPrompt != null) notificationPrompt.schedule();
     suggestions.cancel();
     musicPreview.cancel();
     searchTitleView = null;
     searchSources = null;
+    searchLanguages = null;
+    searchCategoryBack = null;
     homePanel = null;
     suggestionsVisible = false;
     suggestionScroll = null;
@@ -727,6 +774,14 @@ public final class MainActivity extends ComponentActivity {
             homeError,
             homeFilter,
             new MusicHomePanel.Listener() {
+              public void pure() {
+                togglePureSong();
+              }
+
+              public void pureSettings() {
+                showPureSong(null);
+              }
+
               public void smart() {
                 showSmart(null);
               }
@@ -883,12 +938,124 @@ public final class MainActivity extends ComponentActivity {
     return t;
   }
 
+  private MusicCategory searchCategory;
+  private String searchLanguage = "Any";
+
+  private String categoryQuery(String term) {
+    if (isYouTubeLink(term)) return term;
+    if (searchCategory != null) return searchCategory.query(term, searchLanguage);
+    return searchLanguage.equals("Any") || isYouTubeLink(term)
+        ? term
+        : term + " " + searchLanguage + " music";
+  }
+
+  private void chooseSearchLanguage() {
+    String[] values = {"Any", "Sinhala", "Tamil", "English"};
+    String[] labels = {"All languages", "Sinhala", "Tamil", "English"};
+    int selected = Arrays.asList(values).indexOf(searchLanguage);
+    new AlertDialog.Builder(this)
+        .setTitle("Search language")
+        .setSingleChoiceItems(
+            labels,
+            Math.max(0, selected),
+            (dialog, which) -> {
+              searchLanguage = values[which];
+              searchGeneration++;
+              suggestions.cancel();
+              musicPreview.cancel();
+              dialog.dismiss();
+              if (searchCategory != null || !query.trim().isEmpty()) search();
+              else render();
+            })
+        .setNegativeButton("Cancel", null)
+        .show();
+  }
+
+  private void browseSearch(LinearLayout parent) {
+    parent.addView(
+        new SearchBrowsePanel(
+            this,
+            searchHistory.entries(),
+            new SearchBrowsePanel.Listener() {
+              public void category(MusicCategory category) {
+                searchCategory = category;
+                query = "";
+                online = true;
+                searchGeneration++;
+                suggestions.cancel();
+                musicPreview.cancel();
+                search();
+              }
+
+              public void recent(String term) {
+                searchField.setText(term);
+                search();
+              }
+
+              public void remove(String term) {
+                searchHistory.remove(term);
+                requestSuggestions();
+              }
+
+              public void clear() {
+                searchHistory.clear();
+                requestSuggestions();
+              }
+
+              public void allRecent() {
+                List<String> terms = searchHistory.entries();
+                new AlertDialog.Builder(MainActivity.this)
+                    .setTitle("Recent searches")
+                    .setItems(
+                        terms.toArray(new String[0]), (dialog, which) -> recent(terms.get(which)))
+                    .setNegativeButton("Close", null)
+                    .setNeutralButton("Clear", (dialog, which) -> clear())
+                    .show();
+              }
+            }),
+        new LinearLayout.LayoutParams(-1, -2));
+  }
+
+  private TextView searchSource(String title, boolean selected, Runnable action) {
+    TextView control = text(title, 13, selected ? LIME : MUTED, selected);
+    control.setGravity(Gravity.CENTER);
+    control.setMinHeight(dp(48));
+    control.setPadding(dp(8), dp(8), dp(8), dp(8));
+    control.setMaxLines(2);
+    if (selected) control.setBackground(round(0xff2b3b2c, dp(10)));
+    control.setSelected(selected);
+    control.setOnClickListener(v -> action.run());
+    return control;
+  }
+
   private void renderSearch() {
     LinearLayout h = column();
-    h.setPadding(dp(20), dp(12), dp(20), dp(8));
-    searchTitleView = text("Search music", 23, TEXT, true);
-    h.addView(searchTitleView);
-    gap(h, 10);
+    h.setPadding(dp(20), dp(8), dp(20), dp(8));
+    LinearLayout titleRow = row();
+    TextView title =
+        text(searchCategory == null ? "Search music" : searchCategory.name, 24, TEXT, true);
+    title.setMaxLines(2);
+    titleRow.addView(title, new LinearLayout.LayoutParams(0, -2, 1));
+    if (online) {
+      TextView language =
+          text(
+              (searchLanguage.equals("Any") ? "All languages" : searchLanguage) + " ▾",
+              12,
+              MUTED,
+              true);
+      language.setMinHeight(dp(48));
+      language.setMaxWidth(dp(132));
+      language.setMaxLines(2);
+      language.setPadding(dp(12), dp(8), 0, dp(8));
+      language.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+      language.setContentDescription("Choose search language. Current: " + searchLanguage);
+      language.setOnClickListener(v -> chooseSearchLanguage());
+      titleRow.addView(language);
+      searchLanguages = language;
+    }
+    searchTitleView = title;
+    h.addView(titleRow);
+    gap(h, 8);
     content.addView(h);
     if (!addingToPlaylist.isEmpty()) {
       TextView done =
@@ -905,22 +1072,27 @@ public final class MainActivity extends ComponentActivity {
       gap(h, 8);
     }
     LinearLayout box = row();
-    box.setBackground(round(PANEL, dp(18)));
+    box.setBackground(round(PANEL, dp(16)));
     box.setPadding(dp(8), 0, dp(4), 0);
     Icon find = icon("search", LIME, this::search);
+    find.setGlyphSize(22);
     box.addView(find);
     searchField = new EditText(this);
     searchField.setTextColor(TEXT);
     searchField.setHintTextColor(MUTED);
     searchField.setTextSize(15);
     searchField.setSingleLine();
-    searchField.setHint("Songs, artists, or YouTube link");
+    searchField.setHint(
+        searchCategory == null
+            ? "Songs, artists, or YouTube link"
+            : "Search in " + searchCategory.name);
     searchField.setBackgroundColor(Color.TRANSPARENT);
     searchField.setImeOptions(EditorInfo.IME_ACTION_SEARCH);
     searchField.setInputType(android.text.InputType.TYPE_CLASS_TEXT);
     searchField.setText(query);
     searchField.setSelectAllOnFocus(false);
-    searchField.setContentDescription("Search songs or artists");
+    searchField.setContentDescription(
+        searchCategory == null ? "Search songs or artists" : "Search in " + searchCategory.name);
     searchField.addTextChangedListener(
         new TextWatcher() {
           public void beforeTextChanged(CharSequence value, int start, int count, int after) {}
@@ -954,43 +1126,67 @@ public final class MainActivity extends ComponentActivity {
           return false;
         });
     box.addView(searchField, new LinearLayout.LayoutParams(0, dp(56), 1));
-    box.addView(
+    Icon clearQuery =
         icon(
             "close",
             MUTED,
             () -> {
               searchField.setText("");
               query = "";
-            }));
+            });
+    clearQuery.setGlyphSize(20);
+    clearQuery.setContentDescription("Clear search query");
+    box.addView(clearQuery);
     h.addView(box);
-    gap(h, 14);
+    gap(h, 12);
     LinearLayout source = row();
+    source.setPadding(dp(4), dp(4), dp(4), dp(4));
+    source.setBackground(round(PANEL, dp(14)));
     source.addView(
-        chip(
+        searchSource(
             "YouTube",
             online,
             () -> {
               online = true;
               render();
-            }));
+            }),
+        new LinearLayout.LayoutParams(0, -2, 1));
     source.addView(
-        chip(
+        searchSource(
             "On this phone",
             !online,
             () -> {
               online = false;
+              searchCategory = null;
               searchGeneration++;
               searching = false;
               render();
-            }));
-    h.addView(source);
+            }),
+        new LinearLayout.LayoutParams(0, -2, 1));
+    h.addView(source, new LinearLayout.LayoutParams(-1, -2));
     searchSources = source;
+    if (online && searchCategory != null) {
+      searchCategoryBack = text("‹ All categories", 13, LIME, true);
+      ((TextView) searchCategoryBack).setMinHeight(dp(48));
+      ((TextView) searchCategoryBack).setGravity(Gravity.CENTER_VERTICAL);
+      searchCategoryBack.setOnClickListener(
+          v -> {
+            searchCategory = null;
+            query = "";
+            results = new ArrayList<>();
+            onlinePage = null;
+            searching = false;
+            searchGeneration++;
+            render();
+          });
+      h.addView(searchCategoryBack);
+    }
     gap(h, 6);
     status =
         text(
             searching
                 ? "Searching YouTube…"
-                : query.isEmpty()
+                : query.isEmpty() && searchCategory == null
                     ? "Find a song to get started."
                     : online ? results.size() + " results" : "Your phone’s music",
             13,
@@ -999,11 +1195,18 @@ public final class MainActivity extends ComponentActivity {
     h.addView(status);
     suggestionScroll = new ScrollView(this);
     suggestionBody = column();
-    suggestionBody.setPadding(dp(22), 0, dp(22), dp(12));
+    suggestionBody.setPadding(dp(20), dp(8), dp(20), dp(20));
     suggestionScroll.addView(suggestionBody);
     suggestionScroll.setVisibility(View.GONE);
     content.addView(suggestionScroll, new LinearLayout.LayoutParams(-1, 0, 1));
     if (online) {
+      if (searchCategory != null && !results.isEmpty()) {
+        TextView playCategory =
+            button("Play " + searchCategory.name + " mix", () -> play(new ArrayList<>(results), 0));
+        LinearLayout.LayoutParams categoryParams = new LinearLayout.LayoutParams(-1, -2);
+        categoryParams.setMargins(dp(22), 0, dp(22), dp(8));
+        content.addView(playCategory, categoryParams);
+      }
       addList(results, null);
       if (!searching
           && onlinePage != null
@@ -1024,20 +1227,28 @@ public final class MainActivity extends ComponentActivity {
       else addList(filtered, null);
     }
     updateSearchChrome();
-    if (online && query.isEmpty()) requestSuggestions();
+    if (online && query.isEmpty() && searchCategory == null) requestSuggestions();
   }
 
   private void updateSearchChrome() {
     if (searchTitleView != null)
       searchTitleView.setVisibility(keyboardOpen ? View.GONE : View.VISIBLE);
     if (searchSources != null) searchSources.setVisibility(keyboardOpen ? View.GONE : View.VISIBLE);
+    if (searchLanguages != null)
+      searchLanguages.setVisibility(keyboardOpen ? View.GONE : View.VISIBLE);
+    if (searchCategoryBack != null)
+      searchCategoryBack.setVisibility(keyboardOpen ? View.GONE : View.VISIBLE);
     if (tab.equals("Search") && status != null)
-      status.setVisibility(keyboardOpen ? View.GONE : View.VISIBLE);
+      status.setVisibility(
+          keyboardOpen || online && query.trim().isEmpty() && searchCategory == null
+              ? View.GONE
+              : View.VISIBLE);
   }
 
   private void requestSuggestions() {
     if (searchField == null || suggestionBody == null || !online || !tab.equals("Search")) return;
     final String value = SearchHistory.clean(searchField.getText().toString());
+    boolean changed = !previewTerm.equals(value);
     previewTerm = value;
     previewTerms = new ArrayList<>();
     previewSongs = new ArrayList<>();
@@ -1045,6 +1256,12 @@ public final class MainActivity extends ComponentActivity {
     previewFailed = false;
     phraseFailed = false;
     showSuggestions(value, previewTerms, false);
+    if (changed && suggestionScroll != null) suggestionScroll.scrollTo(0, 0);
+    if (value.isEmpty()) {
+      suggestions.cancel();
+      musicPreview.cancel();
+      return;
+    }
     suggestions.request(
         value,
         RegionPolicy.current(this),
@@ -1077,6 +1294,8 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private List<Track> cachedSearchSongs(String term) {
+    if (searchCategory != null)
+      return MusicPreview.combine(term, Collections.emptyList(), previewSongs, 6);
     List<Track> cached = new ArrayList<>(store.tracks("history"));
     cached.addAll(store.tracks("favourites"));
     cached.addAll(OfflineLibrary.get(this).saved());
@@ -1093,6 +1312,10 @@ public final class MainActivity extends ComponentActivity {
     for (int i = 2; i < content.getChildCount(); i++)
       content.getChildAt(i).setVisibility(View.GONE);
     suggestionBody.removeAllViews();
+    if (term.trim().isEmpty() && searchCategory == null) {
+      browseSearch(suggestionBody);
+      return;
+    }
     List<String> recent = searchHistory.entries();
     List<String> choices = SearchHistory.merge(term, recent, remote);
     TextView title =
@@ -1194,6 +1417,7 @@ public final class MainActivity extends ComponentActivity {
                   searchHistory.remove(choice);
                   requestSuggestions();
                 });
+        remove.setGlyphSize(18);
         remove.setContentDescription("Remove recent search " + choice);
         row.addView(remove);
       }
@@ -1206,6 +1430,7 @@ public final class MainActivity extends ComponentActivity {
                 searchField.setSelection(choice.length());
                 searchField.requestFocus();
               });
+      fill.setGlyphSize(20);
       fill.setContentDescription("Use suggestion " + choice);
       row.addView(fill);
       suggestionBody.addView(row);
@@ -1252,7 +1477,7 @@ public final class MainActivity extends ComponentActivity {
 
   private void search() {
     if (searchField != null) query = searchField.getText().toString().trim();
-    if (query.isEmpty()) {
+    if (query.isEmpty() && searchCategory == null) {
       message("Enter a song or artist first");
       return;
     }
@@ -1265,7 +1490,7 @@ public final class MainActivity extends ComponentActivity {
       return;
     }
     int generation = ++searchGeneration;
-    String request = query;
+    String request = categoryQuery(query);
     searching = true;
     results = new ArrayList<>();
     onlinePage = null;
@@ -1711,6 +1936,11 @@ public final class MainActivity extends ComponentActivity {
     for (Track t : tracks.subList(first, end)) queue.add(t.mediaItem());
     Bundle queueArgs = new Bundle();
     queueArgs.putString("track", tracks.get(index).json().toString());
+    queueArgs.putString(
+        "session_query",
+        tab.equals("Search") && searchCategory != null
+            ? searchCategory.query("", searchLanguage)
+            : "");
     queueArgs.putString("ai_plan", pendingAiPlan == null ? "" : pendingAiPlan.toString());
     pendingAiPlan = null;
     controller.sendCustomCommand(
@@ -1731,6 +1961,7 @@ public final class MainActivity extends ComponentActivity {
                 "Play next",
                 "Add to queue"));
     options.add("Smart feedback & song memory");
+    options.add("PureSong & intro markers");
     if (getSharedPreferences("playback_state", 0).getBoolean("room_active", false))
       options.add("Request in listening room");
     if (track.online()) {
@@ -1762,6 +1993,10 @@ public final class MainActivity extends ComponentActivity {
                 } catch (Exception error) {
                   message("Couldn’t add the room request");
                 }
+                return;
+              }
+              if (action.equals("PureSong & intro markers")) {
+                showPureSong(track);
                 return;
               }
               if (action.equals("Smart feedback & song memory")) {
@@ -2252,6 +2487,87 @@ public final class MainActivity extends ComponentActivity {
     message("Report copied");
   }
 
+  private void pureCommand(String action) {
+    if (controller == null) return;
+    Bundle args = new Bundle();
+    args.putString("action", action);
+    controller.sendCustomCommand(
+        new SessionCommand(PlaybackService.PURE_ACTION, Bundle.EMPTY), args);
+  }
+
+  private void togglePureSong() {
+    try {
+      PureSong pure = new PureSong(new SmartStore(this));
+      pure.enabled(!pure.enabled());
+      pureCommand("changed");
+      render();
+      message(
+          pure.enabled()
+              ? "Intro skipping on · confirmed imported-audio markers only"
+              : "Intro skipping off · full songs");
+    } catch (IllegalStateException unavailable) {
+      message(unavailable.getMessage());
+    }
+  }
+
+  private void showPureSong(Track selected) {
+    Dialog dialog = new Dialog(this);
+    dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+    Track track =
+        selected != null
+            ? selected
+            : controller == null || controller.getCurrentMediaItem() == null
+                ? null
+                : Track.from(controller.getCurrentMediaItem());
+    PureSongPanel panel =
+        new PureSongPanel(
+            this,
+            new SmartStore(this),
+            track,
+            new PureSongPanel.Listener() {
+              public Track current() {
+                return controller == null || controller.getCurrentMediaItem() == null
+                    ? null
+                    : Track.from(controller.getCurrentMediaItem());
+              }
+
+              public long position() {
+                return controller == null ? 0 : controller.getCurrentPosition();
+              }
+
+              public long duration() {
+                return controller == null ? 0 : controller.getDuration();
+              }
+
+              public boolean inRoom() {
+                return getSharedPreferences("playback_state", 0).getBoolean("room_active", false);
+              }
+
+              public void changed() {
+                pureCommand("changed");
+                radioChanged();
+                if (tab.equals("Home") || tab.equals("Settings")) render();
+              }
+
+              public void transport(String action) {
+                pureCommand(action);
+              }
+
+              public void close() {
+                dialog.dismiss();
+              }
+            });
+    panel.setBackground(Glass.dialogBackdrop(this));
+    panel.setClipToOutline(true);
+    dialog.setContentView(panel);
+    dialog.show();
+    blurDialog(dialog);
+    if (dialog.getWindow() != null)
+      dialog
+          .getWindow()
+          .setLayout(-1, (int) (getResources().getDisplayMetrics().heightPixels * .88f));
+  }
+
   private void showSmart(Track track) {
     showSmart(track, false);
   }
@@ -2267,6 +2583,10 @@ public final class MainActivity extends ComponentActivity {
             smart,
             store,
             new SmartExperiencePanel.Listener() {
+              public void pure() {
+                showPureSong(null);
+              }
+
               private org.json.JSONObject selectedAiPlan;
 
               public void changed() {
@@ -2475,6 +2795,285 @@ public final class MainActivity extends ComponentActivity {
           .setLayout(-1, (int) (getResources().getDisplayMetrics().heightPixels * .88f));
   }
 
+  @Override
+  protected void onNewIntent(Intent intent) {
+    super.onNewIntent(intent);
+    setIntent(intent);
+    if ("space.vexo.music.OPEN_UPDATES".equals(intent.getAction())) {
+      tab = "Settings";
+      activeCollection = "";
+      activeMix = "";
+      render();
+    }
+  }
+
+  interface AccountWork {
+    String run() throws Exception;
+  }
+
+  private void accountAction(AccountPanel panel, Dialog dialog, String mode, AccountWork work) {
+    if (accountBusy || destroyed) return;
+    accountBusy = true;
+    panel.busy(true);
+    io.execute(
+        () -> {
+          String result;
+          boolean success;
+          try {
+            result = work.run();
+            success = true;
+          } catch (Exception e) {
+            result =
+                e instanceof java.io.IOException && e.getMessage() != null
+                    ? e.getMessage()
+                    : "Couldn’t securely complete this request. Your library is safe.";
+            success = false;
+          }
+          final String message = result;
+          final boolean ok = success;
+          main.post(
+              () -> {
+                accountBusy = false;
+                if (destroyed) return;
+                if (ok && mode.equals("signout")) GoogleAccount.clear(this);
+                if (!dialog.isShowing()) return;
+                if (ok
+                    && (mode.equals("signout")
+                        || (!mode.equals("validate") && account.signedIn()))) {
+                  dialog.dismiss();
+                  if (tab.equals("Settings")) render();
+                  if (!message.isEmpty()) message(message);
+                  showAccount();
+                } else panel.result(message, ok);
+              });
+        });
+  }
+
+  private void showAccount() {
+    Dialog dialog = new Dialog(this);
+    AccountPanel[] panels = new AccountPanel[1];
+    panels[0] =
+        new AccountPanel(
+            this,
+            account,
+            new AccountPanel.Listener() {
+              public void close() {
+                dialog.dismiss();
+              }
+
+              public void submit(String mode, String email, String password) {
+                accountAction(panels[0], dialog, mode, () -> account.submit(mode, email, password));
+              }
+
+              public void google() {
+                if (accountBusy || destroyed) return;
+                accountBusy = true;
+                panels[0].busy(true);
+                googleCancellation =
+                    GoogleAccount.start(
+                        MainActivity.this,
+                        new GoogleAccount.Listener() {
+                          public void failed(String error) {
+                            accountBusy = false;
+                            googleCancellation = null;
+                            if (!destroyed && dialog.isShowing()) panels[0].result(error, false);
+                          }
+
+                          public void token(String token) {
+                            accountBusy = false;
+                            googleCancellation = null;
+                            if (!destroyed && dialog.isShowing())
+                              accountAction(
+                                  panels[0], dialog, "google", () -> account.google(token));
+                          }
+                        });
+              }
+
+              public void signOut() {
+                accountAction(
+                    panels[0],
+                    dialog,
+                    "signout",
+                    () -> {
+                      account.signOut();
+                      return "Signed out on this phone. Your music is still here.";
+                    });
+              }
+
+              public void sync() {
+                if (accountBusy) return;
+                new AlertDialog.Builder(MainActivity.this)
+                    .setTitle("Sync your library?")
+                    .setMessage(
+                        "Merge online favourites and playlists with this account. Phone audio,"
+                            + " photos, history and Smart memories stay on this phone. Deletions"
+                            + " are not synced.")
+                    .setNegativeButton("Cancel", null)
+                    .setPositiveButton("Sync now", (d, w) -> syncAccountLibrary(panels[0], dialog))
+                    .show();
+              }
+            });
+    panels[0].busy(accountBusy);
+    panels[0].setBackground(Glass.dialogBackdrop(this));
+    dialog.setContentView(panels[0]);
+    dialog.show();
+    blurDialog(dialog);
+    if (dialog.getWindow() != null)
+      dialog
+          .getWindow()
+          .setLayout(-1, (int) (getResources().getDisplayMetrics().heightPixels * .9f));
+    if (account.signedIn() && !accountBusy)
+      accountAction(
+          panels[0],
+          dialog,
+          "validate",
+          () -> {
+            account.validate();
+            return "";
+          });
+  }
+
+  private void syncAccountLibrary(AccountPanel panel, Dialog dialog) {
+    if (accountBusy || destroyed) return;
+    accountBusy = true;
+    panel.busy(true);
+    io.execute(
+        () -> {
+          try {
+            AccountAuth.Credentials identity = account.credentials();
+            org.json.JSONObject merged =
+                new LibrarySync().sync(identity, LibrarySync.snapshot(store));
+            main.post(
+                () -> {
+                  accountBusy = false;
+                  if (destroyed) return;
+                  try {
+                    if (!account.stillCurrent(identity))
+                      throw new java.io.IOException("Account changed. Sign in and sync again.");
+                    LibrarySync.apply(store, merged);
+                    if (dialog.isShowing())
+                      panel.result("Library synced. Your existing local songs were kept.", true);
+                  } catch (java.io.IOException e) {
+                    if (dialog.isShowing()) panel.result(e.getMessage(), false);
+                  }
+                });
+          } catch (Exception e) {
+            String error =
+                e instanceof java.io.IOException && e.getMessage() != null
+                    ? e.getMessage()
+                    : "Couldn’t sync safely. Your local library stays unchanged.";
+            main.post(
+                () -> {
+                  accountBusy = false;
+                  if (!destroyed && dialog.isShowing()) panel.result(error, false);
+                });
+          }
+        });
+  }
+
+  private void showNotifications() {
+    Dialog dialog = new Dialog(this);
+    MusicSurface panel = new MusicSurface(this);
+    panel.body.addView(panel.text("NOTIFICATIONS", 11, LIME, true));
+    panel.gap(panel.body, 12);
+    panel.body.addView(panel.text("Your alerts, your choice.", 26, TEXT, true));
+    panel.gap(panel.body, 16);
+    panel.body.addView(
+        panel.text(
+            AppNotifications.enabled(this)
+                ? "Android notifications are enabled."
+                : "Android notifications are off.",
+            14,
+            MUTED,
+            false));
+    panel.gap(panel.body, 16);
+    panel.body.addView(
+        panel.action(
+            "Android notification settings",
+            false,
+            () -> {
+              if (Build.VERSION.SDK_INT >= 33
+                  && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
+                      != PackageManager.PERMISSION_GRANTED
+                  && !getSharedPreferences("settings", 0)
+                      .getBoolean("notifications_asked", false)) {
+                getSharedPreferences("settings", 0)
+                    .edit()
+                    .putBoolean("notifications_asked", true)
+                    .apply();
+                notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS);
+              } else {
+                try {
+                  startActivity(AppNotifications.settings(this));
+                } catch (ActivityNotFoundException e) {
+                  message("Open Android Settings → Apps → VEXO Music → Notifications.");
+                }
+              }
+            }));
+    boolean alerts = getSharedPreferences("settings", 0).getBoolean("update_alerts", false);
+    panel.gap(panel.body, 10);
+    panel.body.addView(
+        panel.action(
+            alerts ? "Update alerts: ON" : "Update alerts: OFF",
+            false,
+            () -> {
+              getSharedPreferences("settings", 0)
+                  .edit()
+                  .putBoolean("update_alerts", !alerts)
+                  .apply();
+              dialog.dismiss();
+              showNotifications();
+            }));
+    boolean push = PushNotifications.optedIn(this);
+    panel.gap(panel.body, 10);
+    panel.body.addView(
+        panel.action(
+            push ? "Push release alerts: ON" : "Push release alerts: OFF",
+            false,
+            () -> {
+              if (!push && !AppNotifications.enabled(this)) {
+                message("Enable notifications in Android first, then turn on push alerts.");
+                return;
+              }
+              PushNotifications.enabled(this, !push);
+              dialog.dismiss();
+              showNotifications();
+            }));
+    panel.gap(panel.body, 8);
+    TextView status = panel.text(PushNotifications.status(this), 12, MUTED, false);
+    status.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
+    panel.body.addView(status);
+    android.content.SharedPreferences prefs = getSharedPreferences("settings", 0);
+    android.content.SharedPreferences.OnSharedPreferenceChangeListener changes =
+        (p, key) -> {
+          if ("push_status".equals(key)) status.setText(PushNotifications.status(this));
+        };
+    prefs.registerOnSharedPreferenceChangeListener(changes);
+    dialog.setOnDismissListener(d -> prefs.unregisterOnSharedPreferenceChangeListener(changes));
+    panel.gap(panel.body, 12);
+    panel.body.addView(
+        panel.action(
+            "Send a test notification",
+            false,
+            () ->
+                message(
+                    AppNotifications.post(
+                            this, 43, "VEXO is ready", "Your notification alerts are working.")
+                        ? "Test notification sent"
+                        : "Enable notifications in Android settings, including the App updates"
+                            + " channel.")));
+    panel.gap(panel.body, 12);
+    panel.body.addView(panel.action("Close", false, dialog::dismiss));
+    panel.setBackground(Glass.dialogBackdrop(this));
+    dialog.setContentView(panel);
+    dialog.show();
+    blurDialog(dialog);
+    if (dialog.getWindow() != null)
+      dialog
+          .getWindow()
+          .setLayout(-1, (int) (getResources().getDisplayMetrics().heightPixels * .9f));
+  }
+
   private void renderSettings() {
     header("MAKE IT YOURS", "Settings");
     ScrollView scroll = new ScrollView(this);
@@ -2483,6 +3082,18 @@ public final class MainActivity extends ComponentActivity {
     scroll.addView(body);
     content.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
     setting(body, "Your profile", profile.name() + " · name and photo", false, this::openProfile);
+    setting(
+        body,
+        "VEXO account",
+        account.signedIn() ? account.email() : "Sign in or continue as a guest",
+        false,
+        this::showAccount);
+    setting(
+        body,
+        "Notifications",
+        "Permissions and optional update alerts",
+        false,
+        this::showNotifications);
     setting(
         body,
         "Refresh & repair",
@@ -2603,6 +3214,14 @@ public final class MainActivity extends ComponentActivity {
             : crossfade + (crossfade == 1 ? " second" : " seconds") + " · smoothly overlap songs",
         false,
         this::crossfadeSettings);
+    setting(
+        body,
+        "PureSong & skip intros",
+        new PureSong(new SmartStore(this)).enabled()
+            ? "On · confirmed local intro markers"
+            : "Off · play full songs",
+        false,
+        () -> showPureSong(null));
     setting(body, "Playback speed", "Choose 0.75× to 2×", false, this::playbackSpeed);
     setting(body, "Sleep timer", "Pause playback after a time you choose", false, this::sleepTimer);
     setting(
@@ -2623,7 +3242,9 @@ public final class MainActivity extends ComponentActivity {
                 .setPositiveButton(
                     "Clear",
                     (d, w) -> {
+                      new SmartStore(this).clearHistory();
                       store.save("history", Collections.emptyList());
+                      radioChanged();
                       message("History cleared");
                     })
                 .show());
@@ -2753,6 +3374,7 @@ public final class MainActivity extends ComponentActivity {
                     if (manual) message("You’re using the latest version");
                     return;
                   }
+                  AppNotifications.update(this, release);
                   if (!manual && updates.snoozed(release)) return;
                   if (updateDialog != null && updateDialog.isShowing()) return;
                   updateDialog =
@@ -2761,7 +3383,8 @@ public final class MainActivity extends ComponentActivity {
                           .setMessage(
                               release.summary + "\n\nInstalled: " + BuildConfig.VERSION_NAME)
                           .setNegativeButton("Later", (d, w) -> updates.snooze(release))
-                          .setPositiveButton("Get update", (d, w) -> openUrl(release.url))
+                          .setPositiveButton(
+                              "Get update", (d, w) -> downloadVerifiedUpdate(release))
                           .create();
                   updateDialog.setOnDismissListener(
                       d -> {
@@ -2778,6 +3401,103 @@ public final class MainActivity extends ComponentActivity {
                   if (!destroyed && manual)
                     message(
                         "Couldn’t check for updates. Check your connection, then" + " try again.");
+                });
+          }
+        });
+  }
+
+  private boolean updateDownloading;
+
+  private void downloadVerifiedUpdate(AppRelease release) {
+    if (updateDownloading) {
+      message("An update download is already running");
+      return;
+    }
+    if (!release.authenticated) {
+      message("This update could not be authenticated");
+      return;
+    }
+    updateDownloading = true;
+    message("Downloading and verifying the VEXO update…");
+    io.execute(
+        () -> {
+          try {
+            java.io.File file = UpdateInstaller.prepare(this, release);
+            main.post(
+                () -> {
+                  updateDownloading = false;
+                  if (destroyed || isFinishing()) return;
+                  new AlertDialog.Builder(this)
+                      .setTitle("Verified update ready")
+                      .setMessage(
+                          "VEXO Music "
+                              + release.version
+                              + " passed download and signing checks. Android will ask you to"
+                              + " approve installation.")
+                      .setNegativeButton("Later", null)
+                      .setPositiveButton(
+                          "Install update",
+                          (d, w) -> {
+                            try {
+                              if (Build.VERSION.SDK_INT >= 26
+                                  && !getPackageManager().canRequestPackageInstalls()) {
+                                new AlertDialog.Builder(this)
+                                    .setTitle("Allow VEXO updates")
+                                    .setMessage(
+                                        "Enable Allow from this source for VEXO, then return to"
+                                            + " Settings → Check for updates. The verified download"
+                                            + " will be reused.")
+                                    .setNegativeButton("Later", null)
+                                    .setPositiveButton(
+                                        "Open Android settings",
+                                        (p, q) ->
+                                            startActivity(
+                                                new Intent(
+                                                    android.provider.Settings
+                                                        .ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                                                    Uri.parse("package:" + getPackageName()))))
+                                    .show();
+                              } else installVerifiedUpdate(file, release);
+                            } catch (Exception e) {
+                              message("Couldn’t open the verified update. Please try again.");
+                            }
+                          })
+                      .show();
+                });
+          } catch (Exception error) {
+            AppDiagnostics.record(this, "verified_update", error);
+            main.post(
+                () -> {
+                  updateDownloading = false;
+                  if (!destroyed)
+                    message(
+                        "Update verification failed. Existing app and data were kept. Try again"
+                            + " later.");
+                });
+          }
+        });
+  }
+
+  private void installVerifiedUpdate(java.io.File file, AppRelease release) {
+    message("Rechecking the verified update…");
+    io.execute(
+        () -> {
+          try {
+            Intent intent = UpdateInstaller.installIntent(this, file, release);
+            main.post(
+                () -> {
+                  if (destroyed || isFinishing()) return;
+                  try {
+                    startActivity(intent);
+                  } catch (ActivityNotFoundException unavailable) {
+                    message("Android’s package installer is unavailable.");
+                  }
+                });
+          } catch (Exception error) {
+            main.post(
+                () -> {
+                  if (!destroyed)
+                    message("Update verification failed. Check for updates and try again.");
                 });
           }
         });
