@@ -6,3 +6,12 @@
 - Keep VEXO Music naming, account data, app palette and playback functionality.
 
 The editable native paths share the geometry in branding/vexo-music-mark.svg. This is a vector rendition, not a new generated redesign. Original supplied artwork was not modified. Icon renders are inspected at launcher and notification sizes; physical launcher caching/themed appearance may vary by device.
+
+Included since the previous public release:
+
+- Faster page switching with preserved scroll, restored Search browse/suggestions and full-height feature panels.
+- Green and dark neutral UI, shared/disk-cached artwork with fallback and cancellable search requests.
+- Dedicated YouTube Music catalogue search/pagination, improved related discovery and personal picks based on connected YouTube music and in-app preferences.
+- Explicit chapter intro recognition and optional private music-start markers. Unknown tracks remain full length.
+
+Install over your existing VEXO Music app to retain data. Optional Google/YouTube access can still show Google's unverified-app warning pending provider review.
