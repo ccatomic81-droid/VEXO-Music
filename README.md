@@ -2,7 +2,7 @@
 
 Developer: **Kavindu Kavishka**.
 
-The 0.16 release restores the latest Aurora UI, optional Google/email accounts, manual favourites/playlist sync and optional release alerts, with a one-time first-visit notification invitation. The recovered source and verified, originally signed production APK are published. [Download VEXO Music 0.16.0](https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.16.0.apk) or open [the public release](https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.16.0). See [recovery and verification](docs/RECOVERY-0.16.md).
+Version **0.17.0** is public: transparent bottom navigation, Start radio without restarting the current song, and YouTube Music radio recommendations with existing discovery fallbacks. [Download VEXO Music 0.17.0](https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.17.0.apk) or open [the public release](https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.17.0). See [radio behavior and verification](docs/MUSIC-RADIO-0.17.md). Optional liked-music imports require the owner project [Google API/OAuth setup](docs/YOUTUBE-TASTE.md); public music search/radio do not require that connection. Existing accounts, library sync, notification controls and Smart Experience are retained.
 
 Search now shows real song names, artwork and artists while typing, with direct play controls. Home has quick collection tiles, horizontally scrolling music cards, regional picks and VEXO mood mixes. Full playlist pages support Play all, a one-shot shuffled queue, adding songs, renaming and deleting a playlist, and removing individual tracks.
 

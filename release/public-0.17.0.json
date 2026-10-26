@@ -1,0 +1,14 @@
+{
+  "applicationId": "space.vexo.music.radio",
+  "versionCode": 21,
+  "versionName": "0.17.0",
+  "summary": "• Removed the dark background around bottom navigation.\n• Start radio keeps the current song, playback position, pause state and manual queue.\n• YouTube Music radio recommendations with automatic discovery fallback.\n• Optional YouTube taste controls for liked music; Google API/OAuth setup is still required for account imports.\n• Install as an update to keep your music and preferences.",
+  "downloadUrl": "https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.17.0.apk",
+  "size": 8799846,
+  "sha256": "18153b909f0e56377c3c86eda2e277c76f47cf2d10f60812470a753c700000f6",
+  "certificateSha256": "0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3",
+  "sourceCommit": "80d534587c63e8e70dcea1cda9b67d6fe2c72b0a",
+  "sourceUrl": "https://github.com/ccatomic81-droid/VEXO-Music/archive/80d534587c63e8e70dcea1cda9b67d6fe2c72b0a.zip",
+  "signedPayload": "eyJmb3JtYXQiOiJ2ZXhvLXJlbGVhc2UtdjEiLCJhcHBsaWNhdGlvbklkIjoic3BhY2UudmV4by5tdXNpYy5yYWRpbyIsInZlcnNpb25Db2RlIjoyMSwidmVyc2lvbk5hbWUiOiIwLjE3LjAiLCJzdW1tYXJ5Ijoi4oCiIFJlbW92ZWQgdGhlIGRhcmsgYmFja2dyb3VuZCBhcm91bmQgYm90dG9tIG5hdmlnYXRpb24uXG7igKIgU3RhcnQgcmFkaW8ga2VlcHMgdGhlIGN1cnJlbnQgc29uZywgcGxheWJhY2sgcG9zaXRpb24sIHBhdXNlIHN0YXRlIGFuZCBtYW51YWwgcXVldWUuXG7igKIgWW91VHViZSBNdXNpYyByYWRpbyByZWNvbW1lbmRhdGlvbnMgd2l0aCBhdXRvbWF0aWMgZGlzY292ZXJ5IGZhbGxiYWNrLlxu4oCiIE9wdGlvbmFsIFlvdVR1YmUgdGFzdGUgY29udHJvbHMgZm9yIGxpa2VkIG11c2ljOyBHb29nbGUgQVBJL09BdXRoIHNldHVwIGlzIHN0aWxsIHJlcXVpcmVkIGZvciBhY2NvdW50IGltcG9ydHMuXG7igKIgSW5zdGFsbCBhcyBhbiB1cGRhdGUgdG8ga2VlcCB5b3VyIG11c2ljIGFuZCBwcmVmZXJlbmNlcy4iLCJkb3dubG9hZFVybCI6Imh0dHBzOi8vdmV4by1tdXNpYy11cGRhdGVzLmthdmluZHVrYXZpc2hrYTc4NS53b3JrZXJzLmRldi9yZWxlYXNlcy9WRVhPLU11c2ljLTAuMTcuMC5hcGsiLCJzaXplIjo4Nzk5ODQ2LCJzaGEyNTYiOiIxODE1M2I5MDlmMGU1NjM3N2MzYzg2ZWRhMmUyNzdjNzZmNDdjZjJkMTBmNjA4MTI0NzBhNzUzYzcwMDAwMGY2IiwiY2VydGlmaWNhdGVTaGEyNTYiOiIwYjMxYzUwOTA0NTY3Mzg5YjcyM2UyM2FkNjA0M2IyZDJmYzY2MzVjMzBkZmRiM2VkNWVmM2Y5YmE5NzI3ZWYzIiwic291cmNlQ29tbWl0IjoiODBkNTM0NTg3YzYzZThlNzBkY2VhMWNkYTliNjdkNmZlMmM3MmIwYSJ9",
+  "releaseSignature": "ZW+VtkP0CqdX7yWx8Th54kz7RJHyZYo/r6X4PexZBM++oXc/wsNrNBd0/L+gLZLmOjWtBXjwzMCFXcg2YLQ25+pPXlfAaaQw0WJOTJONANqtXzyxiV6C3fNuMgtSIQIMaa038swxwz1Lnczo3r54zoT6fCb8GAgedowbILCS9OPnMkfXj8gAr5fdlH/OSfk0dJtnYYF6AVpTe83B76ibl5xYQxSZlqm98VbLxlMecYyFKv2R5UASFAtR7omlbuYWORZl/ws8tCvlrbCtIv5bWmd6NuFTx9su9CnQ61yKzN/XXduSaQ2VCD87Dz5rRDkEX4yHPbxa7zX8FLsoOmOfSg=="
+}

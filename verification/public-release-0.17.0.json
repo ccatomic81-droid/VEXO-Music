@@ -1,0 +1,37 @@
+{
+  "version": "0.17.0",
+  "versionCode": 21,
+  "sourceCommit": "80d534587c63e8e70dcea1cda9b67d6fe2c72b0a",
+  "apkSha256": "18153b909f0e56377c3c86eda2e277c76f47cf2d10f60812470a753c700000f6",
+  "size": 8799846,
+  "certificateSha256": "0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3",
+  "debuggable": false,
+  "ciRun": "https://github.com/ccatomic81-droid/VEXO-Music/actions/runs/40275278178",
+  "androidTests": {
+    "total": 158,
+    "passed": 151,
+    "skipped": 7,
+    "failed": 0
+  },
+  "serviceChecks": {
+    "passed": 21,
+    "failed": 0
+  },
+  "liveMetadataChecks": {
+    "passed": 4,
+    "failed": 0,
+    "musicRadioSongs": 50,
+    "searchMatches": 20,
+    "regionalMixSongs": 27
+  },
+  "publicFeed": "https://vexo-music-updates.kavindukavishka785.workers.dev/stable.json",
+  "publicApk": "https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.17.0.apk",
+  "publicApkReadbackChecksumVerified": true,
+  "publicFeedSignatureVerified": true,
+  "publishingRouteRemoved": true,
+  "limits": [
+    "Physical-device listening and Google authorization were not tested.",
+    "The optional read-only liked-music connection requires the owner project YouTube Data API/OAuth setup. Public music search and radio operate without it."
+  ],
+  "verifiedAt": "2026-10-26T05:45:50.202042+00:00"
+}
