@@ -177,7 +177,6 @@ final class MusicHomePanel extends MusicSurface {
             listener.refresh();
           }
         });
-    linearLayoutRow.addView(icon, new LinearLayout.LayoutParams(dp(48.0f), dp(48.0f)));
     this.body.addView(linearLayoutRow);
     gap(this.body, 16);
     try {
