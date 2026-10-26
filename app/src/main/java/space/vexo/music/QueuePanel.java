@@ -190,8 +190,9 @@ public final class QueuePanel extends LinearLayout {
       Track t = songs.get(position);
       h.title.setText(t.title);
       h.artist.setText(
-          (position == current ? (playing ? "Playing now · " : "Selected · ") : "") + t.artist);
-      artwork(h.image, t.artwork);
+          (position == current ? (playing ? "Playing now · " : "Selected · ")
+              : t.recommended ? "Recommended · " : "In your queue · ") + t.artist);
+      artwork(h.image, t);
       h.itemView.setBackground(position == current ? round(PANEL, dp(14)) : null);
       h.play.set(position == current && playing ? "pause" : "play", LIME);
       Runnable start =

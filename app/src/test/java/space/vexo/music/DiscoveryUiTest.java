@@ -166,7 +166,7 @@ public class DiscoveryUiTest {
               .build();
       ViewCompat.dispatchApplyWindowInsets(appRoot, keyboard);
       capture(root, 320, 568, "search-with-keyboard-space");
-      assertEquals(View.GONE, text(root, "Search music").getVisibility());
+      assertEquals(View.GONE, text(root, "Search").getVisibility());
       Field page = MainActivity.class.getDeclaredField("content");
       page.setAccessible(true);
       View song = find((View) page.get(activity), "Play Sky lights");

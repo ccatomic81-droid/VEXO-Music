@@ -7,6 +7,38 @@ import okhttp3.HttpUrl;
 import org.schabi.newpipe.extractor.Image;
 
 final class ArtworkQuality {
+  static String normalizeSource(String source) {
+    String value = source == null ? "" : source.trim().replace("&amp;", "&");
+    if (value.startsWith("//")) value = "https:" + value;
+    if (value.startsWith("content://")) return value;
+    HttpUrl url = HttpUrl.parse(value);
+    if (url == null || !url.username().isEmpty() || !url.password().isEmpty()) return "";
+    if (!url.isHttps()) {
+      String host = url.host();
+      if (!host.equals("i.ytimg.com") && !host.equals("img.youtube.com")
+          && !host.equals("lh3.googleusercontent.com") && !host.equals("yt3.ggpht.com")
+          && !host.equals("yt3.googleusercontent.com")) return "";
+      url = url.newBuilder().scheme("https").build();
+    }
+    return url.toString();
+  }
+
+  static List<String> candidates(String artwork, String trackUrl, int size) {
+    LinkedHashSet<String> out = new LinkedHashSet<>();
+    String source = normalizeSource(artwork);
+    if (!source.isEmpty()) {
+      out.add(forSize(source, size));
+      out.add(source);
+    }
+    String identity = QueuePolicy.identity(trackUrl == null ? "" : trackUrl);
+    String id = identity.startsWith("youtube:") ? identity.substring(8) : "";
+    if (id.matches("[A-Za-z0-9_-]{11}")) {
+      out.add("https://i.ytimg.com/vi/" + id + "/hqdefault.jpg");
+      out.add("https://i.ytimg.com/vi/" + id + "/mqdefault.jpg");
+    }
+    return new ArrayList<>(out);
+  }
+
   static String forSize(String original, int pixels) {
     HttpUrl url = HttpUrl.parse(original == null ? "" : original);
     if (url == null) return original;

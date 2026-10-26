@@ -12,6 +12,33 @@ import org.robolectric.annotation.Config;
 @Config(sdk = 35)
 public class MusicDiscoveryLiveTest {
   @Test
+  @org.robolectric.annotation.GraphicsMode(org.robolectric.annotation.GraphicsMode.Mode.NATIVE)
+  public void realMusicArtworkDownloadsAndDecodesWithPublicFallback() throws Exception {
+    Assume.assumeTrue("1".equals(System.getenv("VEXO_MUSIC_LIVE_TEST")));
+    List<Track> songs = OnlineMusic.preview("Ed Sheeran", "LK");
+    assertFalse(songs.isEmpty());
+    okhttp3.OkHttpClient client = new okhttp3.OkHttpClient.Builder()
+        .callTimeout(15, java.util.concurrent.TimeUnit.SECONDS).build();
+    int decoded = 0;
+    for (Track track : songs.subList(0, Math.min(3, songs.size()))) {
+      for (String url : ArtworkQuality.candidates(track.artwork, track.url, 512)) {
+        try (okhttp3.Response response = client.newCall(new okhttp3.Request.Builder().url(url).build()).execute()) {
+          if (!response.isSuccessful() || response.body() == null
+              || !response.header("Content-Type", "").startsWith("image/")) continue;
+          android.graphics.Bitmap image = ArtworkQuality.decode(response.body().byteStream());
+          if (image != null && image.getWidth() > 0 && image.getHeight() > 0) {
+            decoded++;
+            image.recycle();
+            break;
+          }
+        } catch (java.io.IOException unavailable) { /* Try the bounded public fallback. */ }
+      }
+    }
+    assertTrue("Expected real cover bytes, not just artwork URLs", decoded >= 2);
+    System.out.println("Live artwork decoded: " + decoded);
+  }
+
+  @Test
   public void directMusicCatalogueProvidesSongsAndProviderContinuation() throws Exception {
     Assume.assumeTrue("1".equals(System.getenv("VEXO_MUSIC_LIVE_TEST")));
     MusicSearch.Result result = MusicSearch.load("Ed Sheeran", "LK");

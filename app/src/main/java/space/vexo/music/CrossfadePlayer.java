@@ -261,6 +261,9 @@ public final class CrossfadePlayer extends ForwardingSimpleBasePlayer {
   public void setShuffleOrder(ShuffleOrder order) {
     changed();
     active.player.setShuffleOrder(order);
+    // ForwardingSimpleBasePlayer otherwise exposes the old order until onEvents is delivered.
+    // Consecutive manual queue commands must see the order just installed.
+    invalidateState();
   }
 
   @Override

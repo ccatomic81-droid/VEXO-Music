@@ -120,7 +120,7 @@ public class UiSmokeTest {
       assertNotNull(find(root, "Regional YouTube search · not a ranked chart · Sri Lanka"));
       render(root, 320, 568, "home-small");
       findDescription(root, "Search tab").performClick();
-      assertNotNull(find(root, "Search music"));
+      assertNotNull(find(root, "Search"));
       render(root, 360, 800, "search");
       findDescription(root, "Library tab").performClick();
       assertNotNull(find(root, "Your library"));

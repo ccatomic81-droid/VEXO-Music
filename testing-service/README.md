@@ -1,31 +1,15 @@
-# Opt-in VEXO Music test release host
+# VEXO Music tester channel
 
-Public tester page: https://vexo-music-testing.kavindukavishka785.workers.dev/
+Tester download: https://vexo-music-testing.kavindukavishka785.workers.dev/
 
-Current candidate: **0.13.1-dev, version code 16**, signed with VEXO's original certificate and built with debug mode disabled. Its non-signature APK contents exactly match the tested CI release candidate from `03b4c9d44a2c8583c9d7196bf22ebc14ca1edec8` (Android Actions 40193399178). The public stable release stays at 0.12.0/code 14. No stable branch merge or automatic enrolment is part of this test publication.
+Current tester build: **0.21.0-dev, version code 30**. Source commit: `b4c8a3b724d561552ed1fe24b9f49091199a5ae6`; Android Actions run `40332296821`; implementation PR #16. The non-debuggable release APK uses the existing signing certificate and updates 0.20.0-dev/code 29 or older compatible VEXO installations while retaining data.
 
-## Test installation
+This update adds short-lived session recommendations from audible VEXO listening, manual queue priority, shuffle-safe Play next, queue recommendation labels, recent-history radio protection and less unrelated station drift. YouTube account connection stays optional. MindRadio, PureSong, Smart Experience, crossfade, offline music and the simpler Home/Search remain. See [behavior and fixes](../docs/SESSION-RADIO-QUEUE-0.21.md).
 
-1. Open the tester page on an Android 8+ phone and download the APK.
-2. Keep the existing VEXO app installed; choose **Update** when Android opens the APK. Android may ask to allow installation from the browser.
-3. Check existing playlists, favourites, profile, memories and queue. Do not uninstall or clear app data.
-4. Test automatic next songs, category/language search, local intro markers with crossfade and full-version override, network interruption recovery, Bluetooth controls and background playback. Test rooms on two phones.
-5. Report problems through **Settings → Report a problem**. Test installations wait for a newer test/public build; an in-place downgrade to 0.12 is not provided. The next public update must use code 17 or higher.
+Download and choose **Update**; keep VEXO installed. Check music playback, saved data, guest recommendations, manual and shuffled queues, radio continuity, crossfade, background listening and Bluetooth on a physical phone. Report issues through Settings → Report a problem.
 
-This is a public opt-in link, not an authenticated closed-testing group. The installed app still reads the stable feed; testers must use this link to install this candidate. No new update push notification or sign-in system is claimed.
+This is an opt-in tester download. The built-in updater still checks stable; stable remains 0.19.3/code 28. Android will require a version code above 30 for the next upgrade.
 
-## Scope and limits
+Validation: 198 Android tests, zero failures/errors, eight skipped integration tests (190 passed); debug/release lint and builds; dependency and source security checks; live discovery probe. Host tests cover streaming, range/HEAD/cache, immutable objects, closed writes, stable isolation and archived routes including 0.20.0-dev. Phone audio/background acceptance testing remains required.
 
-The candidate adds private audible-time listening learning, category/language search, Home Skip intros controls, shared PureSong settings, encrypted legacy library/profile migration, authenticated future updates and safer media controls. Existing VEXO solid colors and music features remain. Intro markers apply only to confirmed imported audio; online songs remain uncut. Accounts, push notifications and authorized YouTube library sync need project configuration. Licensed lyrics, complete transliteration, popularity/audio features and newly authorized online offline playback remain external dependencies. Physical Android acceptance testing is still required.
-
-## Hosting and isolation
-
-Only exact checksum-pinned APK/manifest/checksum names in `artifacts.mjs` can be read. New objects are immutable under `testing/0.13.1-dev/` in the existing release bucket. The 0.10, 0.11 and 0.13.0 test APK addresses remain supported at their original immutable prefixes. No source ZIP is uploaded here; corresponding source links the already-public GitHub commit.
-
-`service.mjs` is the final read-only entrypoint with the R2 binding alone. It streams downloads, supports ranges/HEAD/ETags and noindexes the test page. The temporary publisher uses a short-lived capability, checks hashes/sizes, rejects differing overwrites, and publishes the manifest only after all artifacts exist. It cannot address stable objects. After publication, remove the publisher entrypoint and publishing bindings. Never commit tokens, signing keys or passwords.
-
-Tests cover ranges/cache, closed writes, authentication/expiry, checksum validation, publication ordering, stable isolation and archived APK routing. Live verification independently downloads and checks the served APK and original certificate, compares the stable manifest before/after, checks HEAD/ranges, and confirms write routes are closed. See `verification-0.13.1-dev.json`, `../release/verification-0.13.1-dev.json` and `../release/update-0.13.1-dev.json`.
-
-No paid plan or new paid resource is enabled. This reuses the existing release bucket and test Worker, subject to existing account quotas.
-
-The 0.13.1 update specifically cleans Search: compact language/source controls, horizontal recent queries, uniform category widths and spacing, matched mini-player/content margins and reduced navigation glyphs. Native checks include 393dp, 320dp, keyboard-visible and 160% text layouts.
+The APK certificate was checked and the signed archive contents were compared with the exact verified unsigned CI candidate. Current public files use `testing/0.21.0-dev/`; older APK addresses are preserved. The deployed Worker has only its R2 binding and no publication routes. No private signing or publication credentials belong in this repository.

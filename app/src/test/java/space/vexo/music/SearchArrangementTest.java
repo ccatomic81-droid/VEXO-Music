@@ -62,7 +62,7 @@ public class SearchArrangementTest {
     ((TextView) field(activity, "miniTitle")).setText("Rathinamo (Female Version)");
     ((TextView) field(activity, "miniArtist")).setText("Saurav Srishan");
     layout(root, width, height, name);
-    View recent = find.text(root, "Recent searches"), browse = find.text(root, "Browse categories");
+    View recent = find.text(root, "Recent searches"), browse = find.text(root, "Browse all");
     int[] xyRecent = new int[2], xyBrowse = new int[2];
     recent.getLocationOnScreen(xyRecent);
     browse.getLocationOnScreen(xyBrowse);

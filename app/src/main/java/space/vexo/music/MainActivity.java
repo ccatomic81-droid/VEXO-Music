@@ -546,10 +546,10 @@ public final class MainActivity extends ComponentActivity {
     nav.setPadding(dp(10), dp(2), dp(10), dp(4));
     nav.setMinimumHeight(dp(64));
     // Only the pill has a surface; the surrounding overlay stays transparent.
-    Glass.apply(nav, 30, false);
-    nav.setElevation(dp(6));
+    nav.setBackgroundColor(BG);
+    nav.setElevation(0);
     LinearLayout.LayoutParams navLayout = new LinearLayout.LayoutParams(-1, -2);
-    navLayout.setMargins(dp(16), 0, dp(16), dp(8));
+    navLayout.setMargins(0, 0, 0, 0);
     floatingDock.addView(nav, navLayout);
   }
 
@@ -587,8 +587,8 @@ public final class MainActivity extends ComponentActivity {
         LinearLayout item = (LinearLayout) nav.getChildAt(j);
         boolean selected = labels[j].equals(tab);
         Icon glyph = (Icon) item.getChildAt(0);
-        glyph.set(names[j], selected ? BG : MUTED);
-        glyph.setBackground(selected ? round(LIME, dp(22)) : null);
+        glyph.set(names[j], selected ? LIME : MUTED);
+        glyph.setBackground(null);
         TextView caption = (TextView) item.getChildAt(1);
         caption.setTextColor(selected ? LIME : MUTED);
         item.setSelected(selected);
@@ -600,10 +600,10 @@ public final class MainActivity extends ComponentActivity {
       boolean selected = label.equals(tab);
       LinearLayout item = column();
       item.setGravity(Gravity.CENTER);
-      Icon i = new Icon(this, names[j], selected ? BG : MUTED);
+      Icon i = new Icon(this, names[j], selected ? LIME : MUTED);
       i.setGlyphSize(24);
       item.addView(i, new LinearLayout.LayoutParams(dp(48), dp(40)));
-      if (selected) i.setBackground(round(LIME, dp(22)));
+
       i.setContentDescription(label);
       i.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
       TextView caption = text(label, 10, selected ? LIME : MUTED, selected);
@@ -1426,7 +1426,7 @@ public final class MainActivity extends ComponentActivity {
     h.setPadding(dp(20), dp(8), dp(20), dp(8));
     LinearLayout titleRow = row();
     TextView title =
-        text(searchCategory == null ? "Search music" : searchCategory.name, 24, TEXT, true);
+        text(searchCategory == null ? "Search" : searchCategory.name, 28, TEXT, true);
     title.setMaxLines(2);
     titleRow.addView(title, new LinearLayout.LayoutParams(0, -2, 1));
     if (online) {
@@ -1465,7 +1465,7 @@ public final class MainActivity extends ComponentActivity {
       gap(h, 8);
     }
     LinearLayout box = row();
-    box.setBackground(round(PANEL, dp(16)));
+    box.setBackground(round(PANEL, dp(28)));
     box.setPadding(dp(8), 0, dp(4), 0);
     Icon find = icon("search", LIME, this::search);
     find.setGlyphSize(22);
@@ -1477,7 +1477,7 @@ public final class MainActivity extends ComponentActivity {
     searchField.setSingleLine();
     searchField.setHint(
         searchCategory == null
-            ? "Songs, artists, or YouTube link"
+            ? "What do you want to listen to?"
             : "Search in " + searchCategory.name);
     searchField.setBackgroundColor(Color.TRANSPARENT);
     searchField.setImeOptions(EditorInfo.IME_ACTION_SEARCH);
@@ -2287,7 +2287,7 @@ public final class MainActivity extends ComponentActivity {
       Track t = tracks.get(pos);
       h.title.setText(t.title);
       h.detail.setText(t.artist + (t.duration > 0 ? " · " + format(t.duration) : ""));
-      artwork(h.art, t.artwork);
+      artwork(h.art, t);
       h.itemView.setContentDescription("Play " + t.title + " by " + t.artist);
       h.itemView.setOnClickListener(v -> play(tracks, h.getBindingAdapterPosition()));
       h.start.setContentDescription("Play " + t.title);
@@ -2455,16 +2455,12 @@ public final class MainActivity extends ComponentActivity {
                   break;
                 case 2:
                   if (controller != null && queueHasRoom()) {
-                    controller.setShuffleModeEnabled(false);
-                    controller.addMediaItem(
-                        Math.max(0, controller.getCurrentMediaItemIndex() + 1), track.mediaItem());
-                    message("Added to play next");
+                    manualQueue(track, true, -1);
                   }
                   break;
                 case 3:
                   if (controller != null && queueHasRoom()) {
-                    controller.addMediaItem(track.mediaItem());
-                    message("Added to queue");
+                    manualQueue(track, false, -1);
                   }
                   break;
                 default:
@@ -3989,14 +3985,14 @@ public final class MainActivity extends ComponentActivity {
     miniPlay.set(controller.isPlaying() ? "pause" : "play", LIME);
     String art =
         item.mediaMetadata.artworkUri == null ? "" : item.mediaMetadata.artworkUri.toString();
-    if (!art.equals(miniArt.getTag())) artwork(miniArt, art);
+    artwork(miniArt, Track.from(item));
     if (playerDialog != null && playerDialog.isShowing()) {
       if (speedButton != null)
         speedButton.setText(speedLabel(controller.getPlaybackParameters().speed));
       if (playerPanel != null) playerPanel.autoplayState(autoplayEnabled());
       playerTitle.setText(item.mediaMetadata.title);
       playerArtist.setText(item.mediaMetadata.artist);
-      if (!art.equals(playerArt.getTag())) artwork(playerArt, art);
+      artwork(playerArt, Track.from(item));
       playerPlay.set(controller.isPlaying() ? "pause" : "play", BG);
       playerLike.set(store.contains("favourites", Track.from(item)) ? "liked" : "heart", LIME);
       playerShuffle.set("shuffle", controller.getShuffleModeEnabled() ? LIME : MUTED);
@@ -4266,6 +4262,31 @@ public final class MainActivity extends ComponentActivity {
     if (playerPanel != null) playerPanel.autoplayState(enabled);
   }
 
+  private void manualQueue(Track track, boolean next, int existing) {
+    if (controller == null) return;
+    Bundle args = new Bundle();
+    if (existing >= 0) {
+      args.putInt("index", existing);
+      args.putString("expected", track.url);
+    } else {
+      args.putString("track", track.json().toString());
+      args.putBoolean("next", next);
+    }
+    ListenableFuture<SessionResult> result = controller.sendCustomCommand(
+        new SessionCommand(PlaybackService.MANUAL_QUEUE, Bundle.EMPTY), args);
+    result.addListener(() -> {
+      if (destroyed) return;
+      try {
+        message(result.get().resultCode == SessionResult.RESULT_SUCCESS
+            ? next ? "Added to play next" : "Added before automatic recommendations"
+            : "The queue changed or is full. Try again.");
+      } catch (Exception error) {
+        message("Couldn’t change the queue. Try again.");
+      }
+      refreshQueue();
+    }, main::post);
+  }
+
   private boolean queueHasRoom() {
     if (controller != null && controller.getMediaItemCount() >= QueuePolicy.MAX_ITEMS) {
       message("Your queue is full. Remove a few songs first.");
@@ -4378,11 +4399,7 @@ public final class MainActivity extends ComponentActivity {
               }
               switch (w) {
                 case 0:
-                  controller.setShuffleModeEnabled(false);
-                  if (index != controller.getCurrentMediaItemIndex())
-                    controller.moveMediaItem(
-                        index,
-                        QueuePolicy.playNextTarget(index, controller.getCurrentMediaItemIndex()));
+                  manualQueue(track, true, index);
                   break;
                 case 1:
                   controller.setShuffleModeEnabled(false);

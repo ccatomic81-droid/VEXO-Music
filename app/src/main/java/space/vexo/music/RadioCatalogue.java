@@ -44,7 +44,7 @@ public final class RadioCatalogue {
       failure = e;
     }
     // A single additional taste seed broadens sparse stations without unbounded requests.
-    for (Track taste : interests) {
+    for (Track taste : pool.size() < 20 ? interests : Collections.<Track>emptyList()) {
       if (Thread.currentThread().isInterrupted()) throw new InterruptedException();
       if (!RadioPolicy.music(taste)
           || RadioPolicy.artist(taste).equals(RadioPolicy.artist(anchor))
