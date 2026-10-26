@@ -37,6 +37,7 @@ public class SearchUiTest {
   }
 
   View description(View v, String text) {
+    if (v.getVisibility() != View.VISIBLE) return null;
     if (text.contentEquals(v.getContentDescription() == null ? "" : v.getContentDescription()))
       return v;
     if (v instanceof ViewGroup)
