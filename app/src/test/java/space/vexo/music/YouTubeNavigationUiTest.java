@@ -25,14 +25,15 @@ public class YouTubeNavigationUiTest {
   }
 
   @Test
-  public void floatingPillHasTransparentSurroundingsAndYouTubeIsOptional() throws Exception {
+  public void flatNavigationKeepsTransparentDockAndOptionalYouTube() throws Exception {
     try (ActivityController<MainActivity> activity =
         Robolectric.buildActivity(MainActivity.class).setup()) {
       MainActivity a = activity.get();
       View root = a.findViewById(android.R.id.content);
       View nav = (View) find.description(root, "Settings tab").getParent();
-      assertTrue(nav.getBackground() instanceof Glass);
-      assertTrue(nav.getElevation() > 0);
+      assertTrue(nav.getBackground() instanceof android.graphics.drawable.ColorDrawable);
+      assertEquals(Visuals.BG, ((android.graphics.drawable.ColorDrawable) nav.getBackground()).getColor());
+      assertEquals(0f, nav.getElevation(), 0f);
       View dock = (View) nav.getParent();
       assertNull(dock.getBackground());
       assertTrue(dock.getParent() instanceof android.widget.FrameLayout);
@@ -78,8 +79,8 @@ public class YouTubeNavigationUiTest {
       View page = content.getChildAt(content.getChildCount() - 1);
       assertTrue(page instanceof android.widget.ScrollView);
       assertTrue(page.getPaddingBottom() >= dock.getHeight());
-      assertTrue(nav.getLeft() > 0);
-      assertTrue(nav.getRight() < backdrop.getWidth());
+      assertEquals(0, nav.getLeft());
+      assertEquals(backdrop.getWidth(), nav.getRight());
     }
   }
 

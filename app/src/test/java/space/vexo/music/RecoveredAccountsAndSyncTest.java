@@ -143,23 +143,25 @@ public class RecoveredAccountsAndSyncTest {
 
   @Test
   public void pushRequiresOptInChannelAndNewVersionAndDeduplicatesSuccessfulDisplay() {
+    String channel = BuildConfig.VERSION_NAME.contains("dev") ? "testing" : "stable";
+    String otherChannel = channel.equals("testing") ? "stable" : "testing";
     Context c = RuntimeEnvironment.getApplication();
     NotificationManager manager = c.getSystemService(NotificationManager.class);
     var controller = Robolectric.buildService(VexoMessagingService.class).create();
     try {
       VexoMessagingService service = controller.get();
       com.google.firebase.messaging.RemoteMessage newer =
-          push("new", BuildConfig.VERSION_CODE + 1, "stable");
+          push("new", BuildConfig.VERSION_CODE + 1, channel);
       service.onMessageReceived(newer);
       assertEquals(0, Shadows.shadowOf(manager).size());
       c.getSharedPreferences("settings", 0).edit().putBoolean("push_release_alerts", true).commit();
-      service.onMessageReceived(push("old", BuildConfig.VERSION_CODE, "stable"));
-      service.onMessageReceived(push("other", BuildConfig.VERSION_CODE + 1, "testing"));
+      service.onMessageReceived(push("old", BuildConfig.VERSION_CODE, channel));
+      service.onMessageReceived(push("other", BuildConfig.VERSION_CODE + 1, otherChannel));
       assertEquals(0, Shadows.shadowOf(manager).size());
       service.onMessageReceived(newer);
       assertEquals(1, Shadows.shadowOf(manager).size());
       manager.cancelAll();
-      service.onMessageReceived(push("same-version", BuildConfig.VERSION_CODE + 1, "stable"));
+      service.onMessageReceived(push("same-version", BuildConfig.VERSION_CODE + 1, channel));
       assertEquals(0, Shadows.shadowOf(manager).size());
     } finally {
       controller.destroy();
