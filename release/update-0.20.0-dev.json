@@ -1,0 +1,21 @@
+{
+  "channel": "testing",
+  "version": "0.20.0-dev",
+  "versionName": "0.20.0-dev",
+  "versionCode": 29,
+  "packageName": "space.vexo.music.radio",
+  "downloadUrl": "https://vexo-music-testing.kavindukavishka785.workers.dev/releases/VEXO-Music-0.20.0-dev.apk",
+  "sha256": "639125fcbdd3bb12b5e3cc00dee0a939041948ebe6b38df7977b4fc8749fa0cc",
+  "sizeBytes": 9066465,
+  "sourceCommit": "7d1ff89de54d03d698e45c6db0065217b094972c",
+  "sourceUrl": "https://github.com/ccatomic81-droid/VEXO-Music/archive/7d1ff89de54d03d698e45c6db0065217b094972c.zip",
+  "signingCertificateSha256": "0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3",
+  "releaseNotes": "Simpler Home header and compact collections; cleaner Search with vertical recent searches; clearer five-tab navigation. MindRadio, Pure Song, Smart Experience, personalization, accounts, crossfade, offline music and playlists remain accessible.",
+  "minimumAndroidApi": 26,
+  "debugDevelopmentBuild": false,
+  "automaticTestUpdates": false,
+  "limitations": [
+    "Physical-phone upgrade, audio, Bluetooth and background playback acceptance testing remains required.",
+    "The built-in updater checks the stable feed; install this tester build using its download page."
+  ]
+}
