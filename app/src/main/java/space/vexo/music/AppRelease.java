@@ -7,7 +7,8 @@ import org.json.*;
 /** A release feed contains metadata only. Downloads always need a user tap. */
 final class AppRelease {
   static final String NOTES =
-      "• Session-aware music discovery with optional YouTube imports.\n"
+      "• Artwork reloads after repair, retries temporary failures and uses song thumbnail fallbacks.\n"
+          + "• Session-aware music discovery with optional YouTube imports.\n"
           + "• Manual queue priority, recommendation labels and shuffle-safe Play next.\n"
           + "• Simpler Home with your greeting, profile and compact collection cards.\n"
           + "• Cleaner Search with vertical recent searches and a rounded search field.\n"

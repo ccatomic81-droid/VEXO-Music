@@ -31,6 +31,10 @@ public final class Visuals {
     ArtworkLoader.load(view, url, new CoverPlaceholder());
   }
 
+  public static void artwork(ImageView view, Track track) {
+    ArtworkLoader.load(view, track.artwork, track.url, new CoverPlaceholder());
+  }
+
   private static final class CoverPlaceholder extends android.graphics.drawable.Drawable {
     final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
 

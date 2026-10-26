@@ -132,6 +132,77 @@ public class ArtworkLoaderTest {
   }
 
   @Test
+  public void repairAllowsTheSameArtworkToLoadAgain() throws Exception {
+    byte[] bytes = image(Color.GREEN);
+    ArtworkLoader.configure(context, new OkHttpClient.Builder().addInterceptor(
+        chain -> response(chain, 200, bytes)).build());
+    ImageView target = view();
+    String url = "https://covers.example/repair-" + System.nanoTime() + ".png";
+    Visuals.artwork(target, url);
+    await(target, Color.GREEN);
+    Visuals.clearArtwork();
+    assertNull("Clearing must invalidate the URL marker used by Now Playing", target.getTag());
+    assertFalse(target.getDrawable() instanceof BitmapDrawable);
+    Visuals.artwork(target, url);
+    await(target, Color.GREEN);
+    assertNotSame("Placeholder must not also be the mutable clipping background",
+        target.getBackground(), target.getDrawable());
+  }
+
+  @Test
+  public void missingAndExpiredMetadataUseTheSameSongsPublicThumbnail() throws Exception {
+    byte[] bytes = image(Color.MAGENTA);
+    java.util.List<String> requests = java.util.Collections.synchronizedList(new java.util.ArrayList<>());
+    ArtworkLoader.configure(context, new OkHttpClient.Builder().addInterceptor(chain -> {
+      requests.add(chain.request().url().toString());
+      return chain.request().url().host().equals("i.ytimg.com")
+          ? response(chain, 200, bytes) : response(chain, 404, new byte[0]);
+    }).build());
+    Track expired = new Track("https://www.youtube.com/watch?v=abcdefghijk", "Song", "Artist",
+        "https://lh3.googleusercontent.com/expired-" + System.nanoTime() + "=w60-h60", 180);
+    ImageView a = view(), b = view();
+    Visuals.artwork(a, expired);
+    await(a, Color.MAGENTA);
+    Track missing = new Track(expired.url, "Song", "Artist", "", 180);
+    Visuals.artwork(b, missing);
+    await(b, Color.MAGENTA);
+    assertTrue(requests.contains("https://i.ytimg.com/vi/abcdefghijk/hqdefault.jpg"));
+    assertEquals("track:" + expired.url, b.getTag());
+    assertTrue(ArtworkQuality.candidates("", "https://unrelated.example/abcdefghijk", 128).isEmpty());
+    assertEquals("https://i.ytimg.com/vi/abcdefghijk/hqdefault.jpg",
+        ArtworkQuality.normalizeSource("//i.ytimg.com/vi/abcdefghijk/hqdefault.jpg"));
+    assertEquals("", ArtworkQuality.normalizeSource("http://unrelated.example/picture.jpg"));
+  }
+
+  @Test
+  public void transientFailuresRetryOnAttachedViewsAndCannotReplaceReboundArtwork() throws Exception {
+    byte[] blue = image(Color.BLUE), red = image(Color.RED);
+    AtomicInteger calls = new AtomicInteger();
+    ArtworkLoader.configure(context, new OkHttpClient.Builder().addInterceptor(chain -> {
+      if (chain.request().url().encodedPath().contains("retry"))
+        return calls.incrementAndGet() == 1 ? response(chain, 503, new byte[0])
+            : response(chain, 200, blue);
+      return response(chain, 200, red);
+    }).build());
+    try (var activity = Robolectric.buildActivity(android.app.Activity.class).setup()) {
+      ImageView target = view();
+      activity.get().setContentView(target);
+      Visuals.artwork(target, "https://covers.example/retry-" + System.nanoTime());
+      long end = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+      while (calls.get() < 2 && System.nanoTime() < end) {
+        Shadows.shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofMillis(200));
+        Thread.sleep(10);
+      }
+      await(target, Color.BLUE);
+      assertEquals(2, calls.get());
+      Visuals.artwork(target, "https://covers.example/red-after-retry-" + System.nanoTime());
+      // Rebinding owns the target even when an earlier retry callback is still pending.
+      Visuals.artwork(target, "https://covers.example/new-cover-" + System.nanoTime());
+      await(target, Color.RED);
+    }
+  }
+
+  @Test
   public void smallRowsUseSmallCoversAndAccentMatchesTheGreenPalette() {
     ImageView small = view();
     assertEquals(128, ArtworkLoader.size(small));

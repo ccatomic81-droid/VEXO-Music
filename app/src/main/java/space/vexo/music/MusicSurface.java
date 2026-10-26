@@ -104,6 +104,7 @@ class MusicSurface extends ScrollView {
   }
 
   FrameLayout cover(String str, List<Track> list, int i, int i2) {
+    Track selected = null;
     String str2;
     FrameLayout frameLayout = new FrameLayout(getContext());
     GradientDrawable gradientDrawable =
@@ -118,15 +119,16 @@ class MusicSurface extends ScrollView {
         break;
       }
       Track next = it.next();
-      if (!next.artwork.isEmpty()) {
+      if (!ArtworkQuality.candidates(next.artwork, next.url, i).isEmpty()) {
+        selected = next;
         str2 = next.artwork;
         break;
       }
     }
-    if (!str2.isEmpty()) {
+    if (selected != null) {
       ImageView imageView = new ImageView(getContext());
       frameLayout.addView(imageView, new FrameLayout.LayoutParams(-1, -1));
-      Visuals.artwork(imageView, str2);
+      Visuals.artwork(imageView, selected);
     } else {
       TextView textViewText =
           text(

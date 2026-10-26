@@ -2287,7 +2287,7 @@ public final class MainActivity extends ComponentActivity {
       Track t = tracks.get(pos);
       h.title.setText(t.title);
       h.detail.setText(t.artist + (t.duration > 0 ? " · " + format(t.duration) : ""));
-      artwork(h.art, t.artwork);
+      artwork(h.art, t);
       h.itemView.setContentDescription("Play " + t.title + " by " + t.artist);
       h.itemView.setOnClickListener(v -> play(tracks, h.getBindingAdapterPosition()));
       h.start.setContentDescription("Play " + t.title);
@@ -3985,14 +3985,14 @@ public final class MainActivity extends ComponentActivity {
     miniPlay.set(controller.isPlaying() ? "pause" : "play", LIME);
     String art =
         item.mediaMetadata.artworkUri == null ? "" : item.mediaMetadata.artworkUri.toString();
-    if (!art.equals(miniArt.getTag())) artwork(miniArt, art);
+    artwork(miniArt, Track.from(item));
     if (playerDialog != null && playerDialog.isShowing()) {
       if (speedButton != null)
         speedButton.setText(speedLabel(controller.getPlaybackParameters().speed));
       if (playerPanel != null) playerPanel.autoplayState(autoplayEnabled());
       playerTitle.setText(item.mediaMetadata.title);
       playerArtist.setText(item.mediaMetadata.artist);
-      if (!art.equals(playerArt.getTag())) artwork(playerArt, art);
+      artwork(playerArt, Track.from(item));
       playerPlay.set(controller.isPlaying() ? "pause" : "play", BG);
       playerLike.set(store.contains("favourites", Track.from(item)) ? "liked" : "heart", LIME);
       playerShuffle.set("shuffle", controller.getShuffleModeEnabled() ? LIME : MUTED);
