@@ -1,6 +1,7 @@
 package space.vexo.music;
 
 import static org.junit.Assert.*;
+
 import android.app.Dialog;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
@@ -19,10 +20,15 @@ import org.robolectric.shadows.ShadowDialog;
 public class YouTubeNavigationUiTest {
   private final SearchUiTest find = new SearchUiTest();
 
-  @Before public void seed() { new DiscoveryUiTest().seed(); }
+  @Before
+  public void seed() {
+    new DiscoveryUiTest().seed();
+  }
 
-  @Test public void navigationHasNoPlateOrSystemScrimAndYouTubeIsOptional() throws Exception {
-    try (ActivityController<MainActivity> activity = Robolectric.buildActivity(MainActivity.class).setup()) {
+  @Test
+  public void navigationHasNoPlateOrSystemScrimAndYouTubeIsOptional() throws Exception {
+    try (ActivityController<MainActivity> activity =
+        Robolectric.buildActivity(MainActivity.class).setup()) {
       MainActivity a = activity.get();
       View root = a.findViewById(android.R.id.content);
       View nav = (View) find.description(root, "Settings tab").getParent();
@@ -37,18 +43,24 @@ public class YouTubeNavigationUiTest {
       find.text(root, "YouTube taste").performClick();
       Dialog dialog = ShadowDialog.getLatestDialog();
       assertNotNull(find.text(dialog.getWindow().getDecorView(), "Connect YouTube"));
-      new DiscoveryUiTest().capture(dialog.getWindow().getDecorView(), 320, 640, "youtube-consent-320");
+      new DiscoveryUiTest()
+          .capture(dialog.getWindow().getDecorView(), 320, 640, "youtube-consent-320");
       find.text(dialog.getWindow().getDecorView(), "Close").performClick();
       assertFalse(new YouTubeTaste(a).read().connected);
     }
   }
 
-  @Test public void optedInHomeAndDisconnectRemoveOnlyYouTubeData() throws Exception {
+  @Test
+  public void optedInHomeAndDisconnectRemoveOnlyYouTubeData() throws Exception {
     Track like = YouTubeTasteTest.song("abcdefghijk", "Night song", "First artist");
     Track pick = YouTubeTasteTest.song("bcdefghijkl", "New suggestion", "Second artist");
-    new YouTubeTaste(RuntimeEnvironment.getApplication()).save(
-        Collections.singletonList(like), Collections.singletonList(pick), System.currentTimeMillis());
-    try (ActivityController<MainActivity> activity = Robolectric.buildActivity(MainActivity.class).setup()) {
+    new YouTubeTaste(RuntimeEnvironment.getApplication())
+        .save(
+            Collections.singletonList(like),
+            Collections.singletonList(pick),
+            System.currentTimeMillis());
+    try (ActivityController<MainActivity> activity =
+        Robolectric.buildActivity(MainActivity.class).setup()) {
       MainActivity a = activity.get();
       View root = a.findViewById(android.R.id.content);
       assertNotNull(find.text(root, "Your YouTube taste"));
@@ -56,7 +68,8 @@ public class YouTubeNavigationUiTest {
       find.text(root, "Manage").performClick();
       Dialog dialog = ShadowDialog.getLatestDialog();
       assertNotNull(find.text(dialog.getWindow().getDecorView(), "Liked on YouTube"));
-      find.text(dialog.getWindow().getDecorView(), "Disconnect & remove imported data").performClick();
+      find.text(dialog.getWindow().getDecorView(), "Disconnect & remove imported data")
+          .performClick();
       assertFalse(new YouTubeTaste(a).read().connected);
       assertNull(find.text(root, "Your YouTube taste"));
       assertEquals(1, new LibraryStore(a).tracks("favourites").size());
@@ -64,9 +77,11 @@ public class YouTubeNavigationUiTest {
     }
   }
 
-  @Test @Config(sdk = 26, qualifiers = "w320dp-h640dp-mdpi")
+  @Test
+  @Config(sdk = 26, qualifiers = "w320dp-h640dp-mdpi")
   public void olderAndroidKeepsNavigationAndSettingsReachable() throws Exception {
-    try (ActivityController<MainActivity> activity = Robolectric.buildActivity(MainActivity.class).setup()) {
+    try (ActivityController<MainActivity> activity =
+        Robolectric.buildActivity(MainActivity.class).setup()) {
       View root = activity.get().findViewById(android.R.id.content);
       new DiscoveryUiTest().capture(root, 320, 640, "navigation-transparent-api26");
       assertNotNull(find.description(root, "Home tab"));

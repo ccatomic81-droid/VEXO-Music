@@ -47,7 +47,10 @@ final class YouTubeTaste {
         clear();
         return Snapshot.empty();
       }
-      return new Snapshot(true, at, tracks(data.optJSONArray("likes"), 100),
+      return new Snapshot(
+          true,
+          at,
+          tracks(data.optJSONArray("likes"), 100),
           tracks(data.optJSONArray("picks"), 10));
     } catch (IllegalStateException unavailable) {
       throw unavailable;
@@ -71,8 +74,11 @@ final class YouTubeTaste {
 
   void save(List<Track> likes, List<Track> picks, long now) {
     try {
-      JSONObject data = new JSONObject().put("at", now)
-          .put("likes", json(likes, 100)).put("picks", json(picks, 10));
+      JSONObject data =
+          new JSONObject()
+              .put("at", now)
+              .put("likes", json(likes, 100))
+              .put("picks", json(picks, 10));
       prefs.edit().putString("snapshot", data.toString()).apply();
     } catch (org.json.JSONException invalid) {
       throw new IllegalStateException("Couldn’t save your YouTube music.", invalid);

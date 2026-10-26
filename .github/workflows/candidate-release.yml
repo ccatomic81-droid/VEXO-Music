@@ -1,9 +1,6 @@
 name: Prepare signed VEXO 0.17 candidate
 on:
   workflow_dispatch:
-  push:
-    branches: [codex/youtube-taste-navigation]
-    paths: ['app/**', '.github/workflows/candidate-release.yml']
 permissions:
   contents: read
 concurrency:
