@@ -1,0 +1,32 @@
+{
+  "version": "0.18.1",
+  "versionCode": 24,
+  "applicationId": "space.vexo.music.radio",
+  "sourceCommit": "f5fa022a3db6d0a1dbc65464e037494c476db62e",
+  "ciRun": "https://github.com/ccatomic81-droid/VEXO-Music/actions/runs/40300407191",
+  "ciConclusion": "success",
+  "sha256": "a56909aff884a9174d01c8d79f7d899b10a0c89ff41ce54e244326f6859245d5",
+  "size": 8816230,
+  "certificateSha256": "0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3",
+  "debuggable": false,
+  "zipalign16KiB": "passed",
+  "signedEntriesMatchUnsigned": true,
+  "androidTests": {
+    "tests": 176,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 7
+  },
+  "lintDebugAndRelease": "passed",
+  "serviceTests": {
+    "tests": 21,
+    "passed": 21,
+    "failed": 0
+  },
+  "layoutChecks": "Native 320dp Home, Settings and keyboard Search renders inspected; rapid tab switching, preserved scroll, bounded page count and animation settling passed.",
+  "physicalDeviceFrameRateMeasured": false,
+  "distribution": "Signed APK delivered directly; stable public update feed unchanged.",
+  "limitations": [
+    "Physical phone frame-rate and continuous audible playback during navigation still need user acceptance."
+  ]
+}
