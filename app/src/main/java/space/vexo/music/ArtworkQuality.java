@@ -7,6 +7,20 @@ import okhttp3.HttpUrl;
 import org.schabi.newpipe.extractor.Image;
 
 final class ArtworkQuality {
+  static String forSize(String original, int pixels) {
+    HttpUrl url = HttpUrl.parse(original == null ? "" : original);
+    if (url == null) return original;
+    int size = Math.max(128, Math.min(1024, pixels));
+    if (url.host().equals("lh3.googleusercontent.com")
+        || url.host().equals("yt3.googleusercontent.com")
+        || url.host().equals("yt3.ggpht.com"))
+      return original
+          .replaceFirst("=w\\d+-h\\d+", "=w" + size + "-h" + size)
+          .replaceFirst("=s\\d+", "=s" + size);
+    // Avoid a speculative maxres request for every tiny search row.
+    return size >= 720 ? higherResolution(original) : original;
+  }
+
   static String best(List<Image> images) {
     Image best = null;
     long score = -1;

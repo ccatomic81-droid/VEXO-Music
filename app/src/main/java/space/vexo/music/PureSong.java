@@ -2,7 +2,7 @@ package space.vexo.music;
 
 import org.json.*;
 
-/** User-confirmed markers for imported local audio. No guessed cuts or platform-ad bypass. */
+/** Confirmed track markers take priority over an explicitly labelled online intro chapter. */
 final class PureSong {
   private final SmartStore smart;
 
@@ -19,13 +19,14 @@ final class PureSong {
   }
 
   static boolean permitted(Track t) {
-    return t != null && t.url.startsWith("content://");
+    return t != null && (t.url.startsWith("content://") || !MusicRadio.videoId(t).isEmpty());
   }
 
   long start(Track t, long duration) {
     if (!permitted(t)) return 0;
     JSONObject m = smart.intros().optJSONObject(QueuePolicy.identity(t.url));
-    if (m == null || Math.abs(m.optLong("duration") - duration) > 1500) return 0;
+    if (m == null) return IntroRecognition.start(t, duration);
+    if (Math.abs(m.optLong("duration") - duration) > 1500) return 0;
     long value = m.optLong("start");
     return value >= 1000 && value < duration - 5000 ? value : 0;
   }

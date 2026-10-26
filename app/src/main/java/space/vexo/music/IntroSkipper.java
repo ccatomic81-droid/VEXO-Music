@@ -30,6 +30,7 @@ final class IntroSkipper implements Player.Listener {
   @Override
   public void onEvents(Player p, Player.Events events) {
     if (!armed || player.getPlaybackState() != Player.STATE_READY) return;
+    if (!player.getPlayWhenReady()) return;
     armed = false;
     try {
       if (!pure.enabled()

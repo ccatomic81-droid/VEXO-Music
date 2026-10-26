@@ -3,19 +3,16 @@ package space.vexo.music;
 import android.content.Context;
 import android.graphics.*;
 import android.graphics.drawable.GradientDrawable;
-import android.util.LruCache;
 import android.view.View;
 import android.widget.ImageView;
-import java.lang.ref.WeakReference;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public final class Visuals {
   public static final int BG = Color.rgb(10, 9, 16),
       PANEL = Color.rgb(28, 26, 37),
       TEXT = Color.rgb(246, 247, 242),
       MUTED = Color.rgb(164, 158, 179),
-      LIME = Color.rgb(212, 239, 113),
+      ACCENT = Color.rgb(201, 174, 245),
+      LIME = ACCENT,
       PURPLE = Color.rgb(197, 161, 232);
 
   public static GradientDrawable round(int color, float radius) {
@@ -26,115 +23,12 @@ public final class Visuals {
     return d;
   }
 
-  private static final LruCache<String, Bitmap> cache =
-      new LruCache<String, Bitmap>(
-          (int)
-              Math.min(
-                  24L * 1024 * 1024,
-                  Math.max(8L * 1024 * 1024, Runtime.getRuntime().maxMemory() / 16))) {
-        @Override
-        protected int sizeOf(String k, Bitmap b) {
-          return b.getByteCount();
-        }
-      };
-  private static final ThreadPoolExecutor images =
-      new ThreadPoolExecutor(
-          2,
-          2,
-          30,
-          TimeUnit.SECONDS,
-          new ArrayBlockingQueue<>(48),
-          new ThreadPoolExecutor.DiscardOldestPolicy());
-  private static final AtomicInteger imageGeneration = new AtomicInteger();
-
   static void clearArtwork() {
-    synchronized (cache) {
-      imageGeneration.incrementAndGet();
-      images.getQueue().clear();
-      cache.evictAll();
-    }
-  }
-
-  static int pendingArtwork() {
-    return images.getQueue().size();
+    ArtworkLoader.clear();
   }
 
   public static void artwork(ImageView view, String url) {
-    view.setTag(url);
-    view.setImageDrawable(null);
-    view.setBackground(new CoverPlaceholder());
-    view.setScaleType(ImageView.ScaleType.CENTER_CROP);
-    view.setClipToOutline(true);
-    if (url == null || url.isEmpty()) return;
-    Bitmap hit = cache.get(url);
-    if (hit != null) {
-      view.setImageBitmap(hit);
-      return;
-    }
-    Context context = view.getContext().getApplicationContext();
-    WeakReference<ImageView> target = new WeakReference<>(view);
-    int generation = imageGeneration.get();
-    images.execute(
-        () -> {
-          try {
-            ImageView current = target.get();
-            if (current == null
-                || !url.equals(current.getTag())
-                || generation != imageGeneration.get()) return;
-            current = null;
-            Bitmap bitmap;
-            if (url.startsWith("content://")) {
-              try (java.io.InputStream in =
-                  context.getContentResolver().openInputStream(android.net.Uri.parse(url))) {
-                bitmap = ArtworkQuality.decode(in);
-              }
-            } else {
-              if (!url.startsWith("https://")) return;
-              bitmap = null;
-              String better = ArtworkQuality.higherResolution(url);
-              for (String candidate :
-                  better.equals(url) ? new String[] {url} : new String[] {better, url}) {
-                try (okhttp3.Response r =
-                    OnlineMusic.HTTP
-                        .newCall(new okhttp3.Request.Builder().url(candidate).build())
-                        .execute()) {
-                  if (!r.isSuccessful() || r.body() == null) continue;
-                  try (java.io.InputStream in = r.body().byteStream()) {
-                    bitmap = ArtworkQuality.decode(in);
-                  }
-                  if (bitmap != null && !candidate.equals(url) && bitmap.getWidth() <= 120) {
-                    bitmap.recycle();
-                    bitmap = null;
-                    continue;
-                  }
-                  if (bitmap != null) break;
-                } catch (Exception ignored) {
-                }
-              }
-            }
-            if (bitmap == null) return;
-            synchronized (cache) {
-              if (generation != imageGeneration.get()) {
-                bitmap.recycle();
-                return;
-              }
-              cache.put(url, bitmap);
-            }
-            final Bitmap loaded = bitmap;
-            new android.os.Handler(android.os.Looper.getMainLooper())
-                .post(
-                    () -> {
-                      ImageView destination = target.get();
-                      if (destination != null
-                          && generation == imageGeneration.get()
-                          && url.equals(destination.getTag())) destination.setImageBitmap(loaded);
-                    });
-          } catch (OutOfMemoryError lowMemory) {
-            clearArtwork();
-            AppDiagnostics.record(context, "artwork_memory", lowMemory);
-          } catch (Exception ignored) {
-          }
-        });
+    ArtworkLoader.load(view, url, new CoverPlaceholder());
   }
 
   private static final class CoverPlaceholder extends android.graphics.drawable.Drawable {
@@ -516,7 +410,7 @@ public final class Visuals {
       p.setStyle(Paint.Style.STROKE);
       p.setStrokeWidth(1.2f);
       for (int i = 0; i < 8; i++) {
-        p.setColor(Color.argb(45 + i * 8, 212, 252, 121));
+        p.setColor(Color.argb(45 + i * 8, 201, 174, 245));
         float r = h * (.15f + i * .055f);
         c.drawOval(-r * 1.5f, -r, r * 1.5f, r, p);
       }

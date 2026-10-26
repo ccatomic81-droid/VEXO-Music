@@ -23,12 +23,12 @@ public class VexoApplication extends Application {
   @Override
   public void onTrimMemory(int level) {
     super.onTrimMemory(level);
-    if (level >= TRIM_MEMORY_RUNNING_LOW) Visuals.clearArtwork();
+    ArtworkLoader.trim(level);
   }
 
   @Override
   public void onLowMemory() {
     super.onLowMemory();
-    Visuals.clearArtwork();
+    ArtworkLoader.trim(TRIM_MEMORY_COMPLETE);
   }
 }

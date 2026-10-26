@@ -137,11 +137,23 @@ public final class OnlineMusic {
     final List<Track> tracks;
     final Page next;
     final SearchQueryHandler query;
+    final MusicSearch.Result music;
 
     Results(List<Track> t, Page p, SearchQueryHandler q) {
       tracks = t;
       next = p;
       query = q;
+      music = null;
+    }
+
+    Results(MusicSearch.Result page) {
+      tracks = page.tracks;
+      next =
+          page.continuation.isEmpty()
+              ? null
+              : new Page("https://music.youtube.com/youtubei/v1/search");
+      query = null;
+      music = page;
     }
   }
 
@@ -158,12 +170,34 @@ public final class OnlineMusic {
   }
 
   public static Results search(String text) throws Exception {
+    String country = Locale.getDefault().getCountry();
+    return search(text, RegionPolicy.valid(country) ? country : "LK");
+  }
+
+  public static Results search(String text, String country) throws Exception {
     initialize();
+    PREVIEW.set(true);
+    try {
+      return new Results(MusicSearch.load(text, country));
+    } catch (Exception unavailable) {
+      if (Thread.currentThread().isInterrupted()) throw new InterruptedException();
+      return legacySearch(text, country);
+    } finally {
+      PREVIEW.remove();
+    }
+  }
+
+  private static Results legacySearch(String text, String country) throws Exception {
     SearchQueryHandler q =
         ServiceList.YouTube.getSearchQHFactory()
             .fromQuery(text, Collections.singletonList("music_songs"), "");
-    SearchInfo info = SearchInfo.getInfo(ServiceList.YouTube, q);
-    return new Results(convert(info.getRelatedItems()), info.getNextPage(), q);
+    org.schabi.newpipe.extractor.search.SearchExtractor extractor =
+        ServiceList.YouTube.getSearchExtractor(q);
+    extractor.forceContentCountry(
+        new org.schabi.newpipe.extractor.localization.ContentCountry(country));
+    extractor.fetchPage();
+    ListExtractor.InfoItemsPage<InfoItem> page = extractor.getInitialPage();
+    return new Results(convert(page.getItems()), page.getNextPage(), q);
   }
 
   public static List<Track> preview(String text, String country) throws Exception {
@@ -176,18 +210,18 @@ public final class OnlineMusic {
   }
 
   public static List<Track> regionalSearch(String text, String country) throws Exception {
-    initialize();
-    org.schabi.newpipe.extractor.search.SearchExtractor extractor =
-        ServiceList.YouTube.getSearchExtractor(
-            ServiceList.YouTube.getSearchQHFactory()
-                .fromQuery(text, Collections.singletonList("music_songs"), ""));
-    extractor.forceContentCountry(
-        new org.schabi.newpipe.extractor.localization.ContentCountry(country));
-    extractor.fetchPage();
-    return convert(extractor.getInitialPage().getItems());
+    return search(text, country).tracks;
   }
 
   public static Results more(Results previous) throws Exception {
+    if (previous.music != null) {
+      PREVIEW.set(true);
+      try {
+        return new Results(MusicSearch.more(previous.music));
+      } finally {
+        PREVIEW.remove();
+      }
+    }
     ListExtractor.InfoItemsPage<InfoItem> p =
         SearchInfo.getMoreItems(ServiceList.YouTube, previous.query, previous.next);
     return new Results(convert(p.getItems()), p.getNextPage(), previous.query);
@@ -210,6 +244,7 @@ public final class OnlineMusic {
   public static synchronized void resetTransientCaches() {
     cache.clear();
     relatedCache.clear();
+    IntroRecognition.clear();
   }
 
   public static String resolve(String url, boolean dataSaver) throws IOException {
@@ -221,6 +256,7 @@ public final class OnlineMusic {
     }
     try {
       StreamInfo i = StreamInfo.getInfo(ServiceList.YouTube, url);
+      IntroRecognition.remember(url, i.getDuration() * 1000, i.getStreamSegments());
       rememberRelated(url, convert(i.getRelatedItems()));
       List<AudioStream> audio = new ArrayList<>();
       for (AudioStream s : i.getAudioStreams())

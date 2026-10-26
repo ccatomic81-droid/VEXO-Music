@@ -38,7 +38,7 @@ final class Glass extends Drawable {
             rectF.top,
             rectF.right,
             rectF.bottom,
-            this.accent ? new int[] {-13025238, -14210016} : new int[] {-231198139, -266594010},
+            this.accent ? new int[] {0xff453552, 0xff2d253c} : new int[] {-231198139, -266594010},
             (float[]) null,
             Shader.TileMode.CLAMP));
     float f = this.radius;
@@ -46,7 +46,7 @@ final class Glass extends Drawable {
     this.p.setShader(null);
     this.p.setStyle(Paint.Style.STROKE);
     this.p.setStrokeWidth(1.2f);
-    this.p.setColor(this.accent ? -10391998 : -11450785);
+    this.p.setColor(this.accent ? 0xff8a6fad : -11450785);
     float f2 = this.radius;
     canvas.drawRoundRect(rectF, f2, f2, this.p);
     this.p.setStyle(Paint.Style.FILL);

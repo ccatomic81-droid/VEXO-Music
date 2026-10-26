@@ -149,39 +149,6 @@ public class RecoveryAndClockTest {
   }
 
   @Test
-  public void artworkQueueIsBoundedAndRepairDropsStaleWork() throws Exception {
-    java.lang.reflect.Field field = Visuals.class.getDeclaredField("images");
-    field.setAccessible(true);
-    java.util.concurrent.ThreadPoolExecutor worker =
-        (java.util.concurrent.ThreadPoolExecutor) field.get(null);
-    java.util.concurrent.CountDownLatch started = new java.util.concurrent.CountDownLatch(2),
-        release = new java.util.concurrent.CountDownLatch(1);
-    try {
-      for (int i = 0; i < 2; i++)
-        worker.execute(
-            () -> {
-              started.countDown();
-              try {
-                release.await();
-              } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-              }
-            });
-      assertTrue(started.await(2, java.util.concurrent.TimeUnit.SECONDS));
-      for (int i = 0; i < 100; i++)
-        Visuals.artwork(
-            new ImageView(RuntimeEnvironment.getApplication()), "https://example.invalid/art-" + i);
-      assertTrue(Visuals.pendingArtwork() <= 48);
-      assertTrue(Visuals.pendingArtwork() > 0);
-      Visuals.clearArtwork();
-      assertEquals(0, Visuals.pendingArtwork());
-    } finally {
-      Visuals.clearArtwork();
-      release.countDown();
-    }
-  }
-
-  @Test
   public void miniPlayerAndHomeFitNarrowScreensWithLargeText() throws Exception {
     Context app = RuntimeEnvironment.getApplication();
     android.content.res.Configuration config =

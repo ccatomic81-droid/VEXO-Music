@@ -35,6 +35,8 @@ import java.util.concurrent.*;
 @UnstableApi
 public final class MainActivity extends ComponentActivity {
   private final ExecutorService io = Executors.newFixedThreadPool(3);
+  private final ThreadPoolExecutor searchIo = (ThreadPoolExecutor) Executors.newFixedThreadPool(2);
+  private Future<?> searchTask;
   private final Handler main = new Handler(Looper.getMainLooper());
   private LibraryStore store;
   private UserProfile profile;
@@ -474,6 +476,8 @@ public final class MainActivity extends ComponentActivity {
     if (updateDialog != null) updateDialog.dismiss();
     OfflineLibrary.get(this).removeListener(offlineChanged);
     searchGeneration++;
+    cancelSearchWork();
+    searchIo.shutdownNow();
     scanGeneration++;
     main.removeCallbacksAndMessages(null);
     if (playerDialog != null) playerDialog.dismiss();
@@ -702,7 +706,6 @@ public final class MainActivity extends ComponentActivity {
     suggestions.cancel();
     musicPreview.cancel();
     if (tab.equals("Search")) {
-      hideSuggestions();
       if (searchField != null) searchField.clearFocus();
     }
     boolean keep = !renderedTab.isEmpty();
@@ -729,6 +732,10 @@ public final class MainActivity extends ComponentActivity {
       updatePlayback();
       updateSearchChrome();
       updateDockSpace();
+      if (target.equals("Search")
+          && online
+          && (suggestionsVisible || query.trim().isEmpty() && searchCategory == null))
+        requestSuggestions();
       if (homePanel != null) {
         homePanel.personalize();
         loadPersonal(false);
@@ -1408,7 +1415,7 @@ public final class MainActivity extends ComponentActivity {
     control.setMinHeight(dp(48));
     control.setPadding(dp(8), dp(8), dp(8), dp(8));
     control.setMaxLines(2);
-    if (selected) control.setBackground(round(0xff2b3b2c, dp(10)));
+    if (selected) control.setBackground(round(0xff3b304d, dp(10)));
     control.setSelected(selected);
     control.setOnClickListener(v -> action.run());
     return control;
@@ -1486,6 +1493,7 @@ public final class MainActivity extends ComponentActivity {
           public void onTextChanged(CharSequence value, int start, int before, int count) {
             query = value.toString();
             searchGeneration++;
+            cancelSearchWork();
             searching = false;
             results = new ArrayList<>();
             onlinePage = null;
@@ -1574,7 +1582,11 @@ public final class MainActivity extends ComponentActivity {
                 ? "Searching YouTube…"
                 : query.isEmpty() && searchCategory == null
                     ? "Find a song to get started."
-                    : online ? results.size() + " results" : "Your phone’s music",
+                    : online
+                        ? results.isEmpty()
+                            ? "No songs found. Try another artist or title."
+                            : results.size() + " results"
+                        : "Your phone’s music",
             13,
             MUTED,
             false);
@@ -1880,75 +1892,79 @@ public final class MainActivity extends ComponentActivity {
       render();
       return;
     }
+    cancelSearchWork();
     int generation = ++searchGeneration;
     String request = categoryQuery(query);
+    String country = RegionPolicy.current(this);
     searching = true;
     results = new ArrayList<>();
     onlinePage = null;
     render();
-    io.execute(
-        () -> {
-          try {
-            OnlineMusic.initialize();
-            if (isYouTubeLink(request)) {
-              org.schabi.newpipe.extractor.stream.StreamInfo info =
-                  org.schabi.newpipe.extractor.stream.StreamInfo.getInfo(
-                      org.schabi.newpipe.extractor.ServiceList.YouTube, request);
-              String artwork = ArtworkQuality.best(info.getThumbnails());
-              List<Track> tracks =
-                  Collections.singletonList(
-                      new Track(
-                          info.getUrl(),
-                          info.getName(),
-                          info.getUploaderName(),
-                          artwork,
-                          info.getDuration()));
-              main.post(
-                  () -> {
-                    if (destroyed || generation != searchGeneration) return;
-                    results = tracks;
-                    searching = false;
-                    if (tab.equals("Search")) render();
-                    else invalidateTab("Search");
-                  });
-            } else {
-              OnlineMusic.Results found = OnlineMusic.search(request);
-              if (found.tracks.isEmpty()) {
-                for (String variant : SmartPolicy.variants(request)) {
-                  if (variant.equals(request)) continue;
-                  OnlineMusic.Results alternative = OnlineMusic.search(variant);
-                  if (!alternative.tracks.isEmpty()) {
-                    found = alternative;
-                    break;
+    searchTask =
+        searchIo.submit(
+            () -> {
+              try {
+                OnlineMusic.initialize();
+                if (isYouTubeLink(request)) {
+                  org.schabi.newpipe.extractor.stream.StreamInfo info =
+                      org.schabi.newpipe.extractor.stream.StreamInfo.getInfo(
+                          org.schabi.newpipe.extractor.ServiceList.YouTube, request);
+                  String artwork = ArtworkQuality.best(info.getThumbnails());
+                  List<Track> tracks =
+                      Collections.singletonList(
+                          new Track(
+                              info.getUrl(),
+                              info.getName(),
+                              info.getUploaderName(),
+                              artwork,
+                              info.getDuration()));
+                  main.post(
+                      () -> {
+                        if (destroyed || generation != searchGeneration) return;
+                        results = tracks;
+                        searching = false;
+                        if (tab.equals("Search")) render();
+                        else invalidateTab("Search");
+                      });
+                } else {
+                  OnlineMusic.Results found = OnlineMusic.search(request, country);
+                  if (found.tracks.isEmpty()) {
+                    for (String variant : SmartPolicy.variants(request)) {
+                      if (variant.equals(request)) continue;
+                      OnlineMusic.Results alternative = OnlineMusic.search(variant, country);
+                      if (!alternative.tracks.isEmpty()) {
+                        found = alternative;
+                        break;
+                      }
+                    }
                   }
+                  final OnlineMusic.Results delivered = found;
+                  main.post(
+                      () -> {
+                        if (destroyed || generation != searchGeneration) return;
+                        onlinePage = delivered;
+                        results = new ArrayList<>(delivered.tracks);
+                        searching = false;
+                        if (tab.equals("Search")) render();
+                        else invalidateTab("Search");
+                      });
                 }
+              } catch (Exception e) {
+                main.post(
+                    () -> {
+                      if (destroyed || generation != searchGeneration) return;
+                      searching = false;
+                      invalidateTab("Search");
+                      if (tab.equals("Search")) {
+                        render();
+                        if (status != null)
+                          status.setText(
+                              "Couldn’t reach YouTube. Check your connection and tap search to"
+                                  + " retry.");
+                      }
+                    });
               }
-              final OnlineMusic.Results delivered = found;
-              main.post(
-                  () -> {
-                    if (destroyed || generation != searchGeneration) return;
-                    onlinePage = delivered;
-                    results = new ArrayList<>(delivered.tracks);
-                    searching = false;
-                    if (tab.equals("Search")) render();
-                    else invalidateTab("Search");
-                  });
-            }
-          } catch (Exception e) {
-            main.post(
-                () -> {
-                  if (destroyed || generation != searchGeneration) return;
-                  searching = false;
-                  invalidateTab("Search");
-                  if (tab.equals("Search")) {
-                    render();
-                    if (status != null)
-                      status.setText(
-                          "Couldn’t reach YouTube. Check your connection and tap search to retry.");
-                  }
-                });
-          }
-        });
+            });
   }
 
   private boolean isYouTubeLink(String q) {
@@ -1965,34 +1981,47 @@ public final class MainActivity extends ComponentActivity {
     }
   }
 
+  private void cancelSearchWork() {
+    if (searchTask != null) searchTask.cancel(true);
+    searchTask = null;
+    searchIo.purge();
+  }
+
   private void loadMore() {
     if (searching || onlinePage == null) return;
+    cancelSearchWork();
     int generation = ++searchGeneration;
     OnlineMusic.Results previous = onlinePage;
     searching = true;
     render();
-    io.execute(
-        () -> {
-          try {
-            OnlineMusic.Results next = OnlineMusic.more(previous);
-            main.post(
-                () -> {
-                  if (destroyed || generation != searchGeneration) return;
-                  results.addAll(next.tracks);
-                  onlinePage = next;
-                  searching = false;
-                  if (tab.equals("Search")) render();
-                });
-          } catch (Exception e) {
-            main.post(
-                () -> {
-                  if (destroyed || generation != searchGeneration) return;
-                  searching = false;
-                  if (tab.equals("Search")) render();
-                  message("Could not load more. Tap Load more to retry.");
-                });
-          }
-        });
+    searchTask =
+        searchIo.submit(
+            () -> {
+              try {
+                OnlineMusic.Results next = OnlineMusic.more(previous);
+                main.post(
+                    () -> {
+                      if (destroyed || generation != searchGeneration) return;
+                      Set<String> seen = new HashSet<>();
+                      for (Track song : results) seen.add(QueuePolicy.identity(song.url));
+                      for (Track song : next.tracks)
+                        if (seen.add(QueuePolicy.identity(song.url))) results.add(song);
+                      onlinePage = next;
+                      searching = false;
+                      if (tab.equals("Search")) render();
+                      else invalidateTab("Search");
+                    });
+              } catch (Exception e) {
+                main.post(
+                    () -> {
+                      if (destroyed || generation != searchGeneration) return;
+                      searching = false;
+                      if (tab.equals("Search")) render();
+                      else invalidateTab("Search");
+                      message("Could not load more. Tap Load more to retry.");
+                    });
+              }
+            });
   }
 
   private void renderLibrary() {
@@ -2909,7 +2938,7 @@ public final class MainActivity extends ComponentActivity {
       render();
       message(
           pure.enabled()
-              ? "Intro skipping on · confirmed imported-audio markers only"
+              ? "Intro skipping on · recognized chapters and saved music starts"
               : "Intro skipping off · full songs");
     } catch (IllegalStateException unavailable) {
       message(unavailable.getMessage());
@@ -3635,7 +3664,7 @@ public final class MainActivity extends ComponentActivity {
         body,
         "PureSong & skip intros",
         new PureSong(new SmartStore(this)).enabled()
-            ? "On · confirmed local intro markers"
+            ? "On · recognized chapters and saved starts"
             : "Off · play full songs",
         false,
         () -> showPureSong(null));

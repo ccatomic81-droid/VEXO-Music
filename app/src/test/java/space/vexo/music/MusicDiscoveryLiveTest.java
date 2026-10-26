@@ -7,6 +7,17 @@ import org.junit.*;
 
 public class MusicDiscoveryLiveTest {
   @Test
+  public void directMusicCatalogueProvidesSongsAndProviderContinuation() throws Exception {
+    Assume.assumeTrue("1".equals(System.getenv("VEXO_MUSIC_LIVE_TEST")));
+    MusicSearch.Result result = MusicSearch.load("Ed Sheeran", "LK");
+    assertFalse("Expected public YouTube Music songs", result.tracks.isEmpty());
+    assertTrue(result.tracks.stream().allMatch(t -> t.duration > 0 && !t.artist.isEmpty()));
+    int more = result.continuation.isEmpty() ? 0 : MusicSearch.more(result).tracks.size();
+    System.out.println(
+        "Direct music catalogue: " + result.tracks.size() + "; continuation=" + more);
+  }
+
+  @Test
   public void playableMatchesAndRegionalMixLoadRealMetadata() throws Exception {
     Assume.assumeTrue("1".equals(System.getenv("VEXO_MUSIC_LIVE_TEST")));
     List<Track> songs = OnlineMusic.preview("Ed Sheeran", "LK");

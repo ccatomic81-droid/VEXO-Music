@@ -24,3 +24,8 @@ The YouTube Music radio adapter was informed by the public queue/parsing archite
 [Metrolist](https://github.com/MetrolistGroup/Metrolist) (GPL-3.0) and the music transport
 in NewPipeExtractor (GPL-3.0). VEXO retains its existing GPL source distribution.
 See `docs/MUSIC-RADIO-0.17.md` for the scope and implementation references.
+
+# Search/artwork research (0.19)
+
+- The public music catalogue adapter is informed by MetrolistGroup/Metrolist (GPL-3.0), revision 876e355181fd3b04e7063b10442fef1b721d53b3. See docs/MUSIC-SEARCH-0.19.md.
+- Glide 5.0.9 and OkHttp integration — Copyright the Glide contributors, BSD-style licence; includes separately licensed components. Source and licence: https://github.com/bumptech/glide/tree/v5.0.9 and https://github.com/bumptech/glide/blob/v5.0.9/LICENSE

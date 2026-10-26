@@ -6,7 +6,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.widget.TextView;
 
-/** Shared native controls; online music remains uncut until a permitted timing source exists. */
+/** Intro chapter recognition and private, user-confirmed start points. */
 final class PureSongPanel extends MusicSurface {
   interface Listener {
     Track current();
@@ -78,8 +78,9 @@ final class PureSongPanel extends MusicSurface {
     gap(body, 12);
     body.addView(
         text(
-            "Skip intros uses only start points you confirm for imported audio. Unknown songs play"
-                + " in full. Turn it off anytime from Home.",
+            "Skip intros recognizes clearly labelled opening chapters on YouTube. You can also"
+                + " save your own music start for a song. Unknown songs play in full. Turn it off"
+                + " anytime from Home.",
             14,
             MUTED,
             false));
@@ -108,7 +109,8 @@ final class PureSongPanel extends MusicSurface {
             false));
     gap(body, 18);
     if (track == null) {
-      body.addView(text("Open a song’s menu to manage its intro marker.", 14, TEXT, false));
+      body.addView(
+          text("Open a song’s menu to see its intro or save a music start.", 14, TEXT, false));
       return;
     }
     body.addView(text(track.title, 18, TEXT, true));
@@ -116,8 +118,7 @@ final class PureSongPanel extends MusicSurface {
     if (!PureSong.permitted(track)) {
       body.addView(
           text(
-              "Online intro timing needs a permitted, verified source. This version leaves online"
-                  + " songs unchanged and does not block platform ads.",
+              "Intro markers support imported audio and individual YouTube songs.",
               14,
               MUTED,
               false));
@@ -125,8 +126,8 @@ final class PureSongPanel extends MusicSurface {
     }
     body.addView(
         text(
-            "Play this imported file, pause at the first music you want, then save that position."
-                + " Markers are private and bound to this file and duration.",
+            "Play this song, pause where you want the music to begin, then save that position."
+                + " Your saved start is private and takes priority over chapter recognition.",
             14,
             MUTED,
             false));
@@ -137,7 +138,13 @@ final class PureSongPanel extends MusicSurface {
             : pure.start(track, track.duration * 1000);
     body.addView(
         text(
-            marker > 0 ? "Saved start: " + marker / 1000 + " seconds" : "No confirmed start",
+            marker > 0
+                ? (smart.intros().has(QueuePolicy.identity(track.url))
+                        ? "Saved start: "
+                        : "Recognized chapter intro: ")
+                    + marker / 1000
+                    + " seconds"
+                : "No intro recognized · full song",
             14,
             LIME,
             true));
@@ -146,7 +153,7 @@ final class PureSongPanel extends MusicSurface {
         "Use current position as music start",
         () -> {
           if (!current())
-            throw new IllegalStateException("Play this file before choosing its start.");
+            throw new IllegalStateException("Play this song before choosing its start.");
           pure.mark(track, listener.position(), listener.duration());
           listener.changed();
           show();
@@ -159,10 +166,10 @@ final class PureSongPanel extends MusicSurface {
           show();
         });
     action(
-        "Skip confirmed intro now",
+        "Skip recognized or saved intro now",
         () -> {
           if (!current() || listener.inRoom())
-            throw new IllegalStateException("Play this file outside a shared room first.");
+            throw new IllegalStateException("Play this song outside a shared room first.");
           long start = pure.start(track, listener.duration());
           if (start <= listener.position())
             throw new IllegalStateException("No confirmed intro ahead of this position.");
@@ -172,7 +179,7 @@ final class PureSongPanel extends MusicSurface {
         "Play full version",
         () -> {
           if (!current() || listener.inRoom())
-            throw new IllegalStateException("Play this file outside a shared room first.");
+            throw new IllegalStateException("Play this song outside a shared room first.");
           listener.transport("full");
         });
   }

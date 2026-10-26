@@ -7,14 +7,14 @@ import org.json.*;
 /** A release feed contains metadata only. Downloads always need a user tap. */
 final class AppRelease {
   static final String NOTES =
-      "• Faster page switching with reusable pages and preserved scroll positions.\n"
-          + "• Short, smooth slide transitions that respect disabled system animations.\n"
-          + "• Interest and radio ranking run in the background.\n"
-          + "• Fewer repeated private-data decryptions and no writes when reading empty"
-          + " collections.\n"
-          + "• Rapid tab taps stay responsive, with fresh content after music or settings"
-          + " changes.\n"
-          + "• Existing playback, connected YouTube music and saved library are preserved.";
+      "• Search browse and song suggestions return correctly after switching tabs.\n"
+          + "• Faster, cached artwork with shared requests, size-aware covers and fallback"
+          + " loading.\n"
+          + "• Soft violet highlights replace the green accent throughout the app.\n"
+          + "• Dedicated YouTube Music song search, music-video fallback and more results.\n"
+          + "• Intro recognition from clearly labelled opening chapters, plus private saved"
+          + " starts.\n"
+          + "• Search work stays separate from Home refreshes and older requests are cancelled.";
   final int code;
   final String version, summary, url;
   String sha256 = "";

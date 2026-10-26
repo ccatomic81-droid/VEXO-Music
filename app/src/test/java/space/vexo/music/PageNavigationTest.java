@@ -38,6 +38,37 @@ public class PageNavigationTest {
   }
 
   @Test
+  public void returningToSearchRestoresBrowseAndResumesTypedMatches() throws Exception {
+    try (ActivityController<MainActivity> c =
+        Robolectric.buildActivity(MainActivity.class).setup()) {
+      MainActivity a = c.get();
+      SearchSuggestionsTest.Work work = new SearchSuggestionsTest.Work();
+      new DiscoveryUiTest().fakeSources(a, work);
+      go(a, "Search");
+      View page = (View) field(a, "content");
+      View browse = find.text(page, "Browse categories");
+      assertTrue(browse.isShown());
+      go(a, "Home");
+      go(a, "Search");
+      assertSame(page, field(a, "content"));
+      assertTrue(find.text(page, "Browse categories").isShown());
+      EditText input = (EditText) field(a, "searchField");
+      input.setText("sky");
+      go(a, "Settings");
+      go(a, "Search");
+      assertSame(input, field(a, "searchField"));
+      assertEquals("sky", input.getText().toString());
+      assertTrue(find.text(page, "Suggestions").isShown());
+      Shadows.shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(400));
+      work.runNext();
+      Shadows.shadowOf(Looper.getMainLooper()).idle();
+      assertTrue(find.description(page, "Play Skyline after dark").isShown());
+      new DiscoveryUiTest()
+          .capture(a.findViewById(android.R.id.content), 320, 640, "restored-search-violet-320");
+    }
+  }
+
+  @Test
   public void revisitingPagesReusesViewsAndNavigationAndKeepsScroll() throws Exception {
     try (ActivityController<MainActivity> c =
         Robolectric.buildActivity(MainActivity.class).setup()) {
