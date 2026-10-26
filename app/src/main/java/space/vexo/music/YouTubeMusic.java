@@ -72,8 +72,18 @@ final class YouTubeMusic {
                 "fields",
                 "nextPageToken,items(id,snippet(title,channelTitle,categoryId,liveBroadcastContent,thumbnails),contentDetails(duration))");
     if (!next.isEmpty()) url.addQueryParameter("pageToken", next);
+    return request(token, url.build());
+  }
+
+  private JSONObject request(String token, HttpUrl url) throws IOException {
+    if (cancelled || Thread.currentThread().isInterrupted()) throw new IOException("Cancelled");
+    if (!url.isHttps()
+        || !url.host().equals("www.googleapis.com")
+        || !Arrays.asList(
+                "/youtube/v3/videos", "/youtube/v3/playlists", "/youtube/v3/playlistItems")
+            .contains(url.encodedPath())) throw new IOException("YouTube request is unavailable.");
     Request request =
-        new Request.Builder().url(url.build()).header("Authorization", "Bearer " + token).build();
+        new Request.Builder().url(url).header("Authorization", "Bearer " + token).build();
     active = HTTP.newCall(request);
     if (cancelled) active.cancel();
     try (Response response = active.execute()) {
@@ -96,6 +106,89 @@ final class YouTubeMusic {
     } finally {
       active = null;
     }
+  }
+
+  interface ResourceFetcher {
+    JSONObject get(String token, HttpUrl url) throws IOException;
+  }
+
+  private static HttpUrl.Builder endpoint(String name) {
+    return Objects.requireNonNull(HttpUrl.parse("https://www.googleapis.com/youtube/v3/" + name))
+        .newBuilder();
+  }
+
+  List<Track> playlistMusic(String token) throws IOException {
+    return playlistMusic(token, this::request);
+  }
+
+  List<Track> playlistMusic(String token, ResourceFetcher source) throws IOException {
+    if (token == null || token.isEmpty() || token.length() > 16384)
+      throw new IOException(error(401));
+    if (cancelled || Thread.currentThread().isInterrupted()) throw new IOException("Cancelled");
+    JSONObject lists =
+        source.get(
+            token,
+            endpoint("playlists")
+                .addQueryParameter("part", "id")
+                .addQueryParameter("mine", "true")
+                .addQueryParameter("maxResults", "3")
+                .addQueryParameter("fields", "items(id)")
+                .build());
+    JSONArray items = lists.optJSONArray("items");
+    Set<String> ids = new LinkedHashSet<>(), playlists = new HashSet<>();
+    if (items != null)
+      for (int i = 0; i < Math.min(3, items.length()); i++) {
+        if (cancelled || Thread.currentThread().isInterrupted()) throw new IOException("Cancelled");
+        JSONObject item = items.optJSONObject(i);
+        String id = item == null ? "" : item.optString("id");
+        if (!id.matches("[A-Za-z0-9_-]{10,100}") || !playlists.add(id)) continue;
+        JSONObject contents =
+            source.get(
+                token,
+                endpoint("playlistItems")
+                    .addQueryParameter("part", "contentDetails")
+                    .addQueryParameter("playlistId", id)
+                    .addQueryParameter("maxResults", "50")
+                    .addQueryParameter("fields", "items(contentDetails(videoId))")
+                    .build());
+        JSONArray songs = contents.optJSONArray("items");
+        if (songs != null)
+          for (int j = 0; j < Math.min(50, songs.length()); j++) {
+            JSONObject song = songs.optJSONObject(j);
+            JSONObject details = song == null ? null : song.optJSONObject("contentDetails");
+            String video = details == null ? "" : details.optString("videoId");
+            if (video.matches("[A-Za-z0-9_-]{11}")) ids.add(video);
+          }
+      }
+    List<String> videos = new ArrayList<>(ids);
+    LinkedHashMap<String, Track> out = new LinkedHashMap<>();
+    for (int i = 0; i < videos.size(); i += 50) {
+      if (cancelled || Thread.currentThread().isInterrupted()) throw new IOException("Cancelled");
+      JSONObject data =
+          source.get(
+              token,
+              endpoint("videos")
+                  .addQueryParameter("part", "snippet,contentDetails")
+                  .addQueryParameter(
+                      "id", String.join(",", videos.subList(i, Math.min(i + 50, videos.size()))))
+                  .addQueryParameter(
+                      "fields",
+                      "items(id,snippet(title,channelTitle,categoryId,liveBroadcastContent,thumbnails),contentDetails(duration))")
+                  .build());
+      for (Track song : parse(data)) if (out.size() < 100) out.putIfAbsent(song.url, song);
+    }
+    return new ArrayList<>(out.values());
+  }
+
+  private static boolean musicMetadata(JSONObject snippet) {
+    if ("10".equals(snippet.optString("categoryId"))) return true;
+    String channel = snippet.optString("channelTitle").toLowerCase(Locale.ROOT);
+    String title = RadioPolicy.normalize(snippet.optString("title"));
+    return channel.endsWith(" - topic")
+        || channel.endsWith("vevo")
+        || title.contains("official audio")
+        || title.contains("official music video")
+        || title.contains("lyric video");
   }
 
   static String error(int code) {
@@ -130,7 +223,7 @@ final class YouTubeMusic {
     }
     if (reasons.contains("accessNotConfigured") || reasons.contains("SERVICE_DISABLED"))
       return "YouTube connection needs developer setup. Enable YouTube Data API v3 in the VEXO"
-                 + " Google project, then try again.";
+          + " Google project, then try again.";
     if (reasons.contains("quotaExceeded")
         || reasons.contains("dailyLimitExceeded")
         || reasons.contains("rateLimitExceeded"))
@@ -138,10 +231,10 @@ final class YouTubeMusic {
     if (reasons.contains("insufficientPermissions")
         || reasons.contains("ACCESS_TOKEN_SCOPE_INSUFFICIENT"))
       return "Your Google permission needs updating. Connect YouTube again and allow read-only"
-                 + " access.";
+          + " access.";
     if (reasons.contains("youtubeSignupRequired"))
       return "Your Google account needs a YouTube channel. Open YouTube to finish setup, then"
-                 + " reconnect.";
+          + " reconnect.";
     return error(code);
   }
 
@@ -158,7 +251,7 @@ final class YouTubeMusic {
       if (!id.matches("[A-Za-z0-9_-]{11}")
           || snippet == null
           || details == null
-          || !"10".equals(snippet.optString("categoryId"))
+          || !musicMetadata(snippet)
           || !"none".equals(snippet.optString("liveBroadcastContent", "none"))) continue;
       long duration;
       try {

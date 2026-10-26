@@ -7,6 +7,34 @@ import org.junit.Test;
 
 public class RadioCatalogueTest {
   @Test
+  public void oneDistinctInterestSeedBroadensTheStationWithIndependentFailureFallback()
+      throws Exception {
+    List<String> related = new ArrayList<>();
+    Track interest = RadioPolicyTest.song("interest", "Taste seed", "Loved");
+    RadioCatalogue catalogue =
+        new RadioCatalogue(
+            new RadioCatalogue.Source() {
+              public List<Track> related(Track seed) {
+                related.add(seed.artist);
+                return Arrays.asList(
+                    RadioPolicyTest.song(seed.artist, "Next " + seed.artist, seed.artist));
+              }
+
+              public List<Track> search(String query) {
+                return Collections.emptyList();
+              }
+            });
+    List<Track> result =
+        catalogue.load(
+            RadioPolicyTest.SEED,
+            RadioPolicyTest.SEED,
+            Arrays.asList(
+                RadioPolicyTest.SEED, interest, RadioPolicyTest.song("unused", "Unused", "Other")));
+    assertEquals(Arrays.asList("Anchor", "Loved"), related);
+    assertEquals(2, result.size());
+  }
+
+  @Test
   public void keepsOriginalSeedAndFallsBackWhenRelatedRequestsFail() throws Exception {
     List<String> requests = new ArrayList<>();
     RadioCatalogue catalogue =

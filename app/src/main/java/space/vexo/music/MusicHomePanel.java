@@ -23,6 +23,7 @@ import org.json.JSONObject;
 
 final class MusicHomePanel extends MusicSurface {
   private long avatarVersion;
+  private LinearLayout personalSlot;
   private TextView greeting;
   private final Map<String, LinearLayout> mixCards;
   private FrameLayout profileAvatar;
@@ -53,7 +54,6 @@ final class MusicHomePanel extends MusicSurface {
     void search();
 
     default void smart() {}
-
   }
 
   void personalize() {
@@ -275,6 +275,8 @@ final class MusicHomePanel extends MusicSurface {
     horizontalScrollView.addView(linearLayoutRow4);
     this.body.addView(horizontalScrollView);
     gap(this.body, 16);
+    personalSlot = column();
+    if (!str3.equals("Playlists")) body.addView(personalSlot);
     Map<String, List<View>> linkedHashMap = new LinkedHashMap<>();
     int childCount = this.body.getChildCount();
     List<Track> listTracks = libraryStore.tracks("favourites");
@@ -606,20 +608,63 @@ final class MusicHomePanel extends MusicSurface {
     return true;
   }
 
+  void personal(
+      MusicInterests interests,
+      List<Track> songs,
+      boolean loading,
+      boolean failed,
+      Runnable refresh,
+      Runnable tune,
+      YouTubeConnection.Player play,
+      Runnable radio) {
+    if (personalSlot == null) return;
+    personalSlot.removeAllViews();
+    personalSlot.setVisibility(View.VISIBLE);
+    MusicSurface part = new MusicSurface(getContext());
+    part.section("Made for you", loading ? "Updating…" : "Refresh", refresh);
+    part.body.addView(part.text(interests.description(), 12, Visuals.MUTED, false));
+    part.gap(part.body, 12);
+    if (songs.isEmpty()) {
+      part.body.addView(
+          part.text(
+              loading
+                  ? "Finding music around your interests…"
+                  : "Save favourite songs or choose artists and genres to shape your music.",
+              14,
+              Visuals.TEXT,
+              false));
+      part.gap(part.body, 10);
+      part.body.addView(part.action("Choose your music interests", false, tune));
+    } else {
+      LinearLayout cards = part.shelf();
+      for (int i = 0; i < Math.min(12, songs.size()); i++) {
+        final int position = i;
+        songCard(cards, songs.get(i), () -> play.play(songs, position));
+      }
+      part.gap(part.body, 12);
+      part.body.addView(part.action("Start your radio", true, radio));
+      if (failed) {
+        part.gap(part.body, 8);
+        part.body.addView(
+            part.text(
+                "Showing saved music. Refresh to try discovery again.", 12, Visuals.MUTED, false));
+      }
+    }
+    part.gap(part.body, 24);
+    while (part.body.getChildCount() > 0) {
+      View child = part.body.getChildAt(0);
+      part.body.removeViewAt(0);
+      personalSlot.addView(child);
+    }
+  }
+
   void youtube(YouTubeTaste.Snapshot snapshot, Runnable manage, YouTubeConnection.Player play) {
     if (!snapshot.connected) return;
     section("Your YouTube taste", "Manage", manage);
-    body.addView(text("VEXO picks based on your liked YouTube music", 12, Visuals.MUTED, false));
+    body.addView(
+        text("Connected YouTube music helps shape your Home and radio", 12, Visuals.MUTED, false));
     gap(body, 12);
-    if (snapshot.picks.isEmpty()) {
-      body.addView(action("View liked music & refresh picks", false, manage));
-    } else {
-      LinearLayout cards = shelf();
-      for (int i = 0; i < snapshot.picks.size(); i++) {
-        final int position = i;
-        songCard(cards, snapshot.picks.get(i), () -> play.play(snapshot.picks, position));
-      }
-    }
+    body.addView(action("Manage connected music & refresh", false, manage));
     gap(body, 24);
   }
 

@@ -19,13 +19,33 @@ final class YouTubeTaste {
   static final class Snapshot {
     final boolean connected;
     final long at;
-    final List<Track> likes, picks;
+    final List<Track> likes, picks, playlistSongs;
+    final boolean playlistEnabled;
 
     Snapshot(boolean connected, long at, List<Track> likes, List<Track> picks) {
+      this(connected, at, likes, picks, Collections.emptyList(), false);
+    }
+
+    Snapshot(
+        boolean connected,
+        long at,
+        List<Track> likes,
+        List<Track> picks,
+        List<Track> playlistSongs,
+        boolean playlistEnabled) {
       this.connected = connected;
       this.at = at;
       this.likes = Collections.unmodifiableList(new ArrayList<>(likes));
       this.picks = Collections.unmodifiableList(new ArrayList<>(picks));
+      this.playlistSongs = Collections.unmodifiableList(new ArrayList<>(playlistSongs));
+      this.playlistEnabled = playlistEnabled;
+    }
+
+    List<Track> sources() {
+      java.util.LinkedHashMap<String, Track> all = new java.util.LinkedHashMap<>();
+      for (Track t : likes) all.put(t.url, t);
+      if (playlistEnabled) for (Track t : playlistSongs) all.putIfAbsent(t.url, t);
+      return new ArrayList<>(all.values());
     }
 
     static Snapshot empty() {
@@ -51,7 +71,9 @@ final class YouTubeTaste {
           true,
           at,
           tracks(data.optJSONArray("likes"), 100),
-          tracks(data.optJSONArray("picks"), 10));
+          tracks(data.optJSONArray("picks"), 10),
+          tracks(data.optJSONArray("playlistSongs"), 100),
+          data.optBoolean("playlistEnabled", false));
     } catch (IllegalStateException unavailable) {
       throw unavailable;
     } catch (Exception invalid) {
@@ -73,10 +95,17 @@ final class YouTubeTaste {
   }
 
   void save(List<Track> likes, List<Track> picks, long now) {
+    save(likes, picks, Collections.emptyList(), false, now);
+  }
+
+  void save(
+      List<Track> likes, List<Track> picks, List<Track> playlists, boolean enabled, long now) {
     try {
       JSONObject data =
           new JSONObject()
               .put("at", now)
+              .put("playlistSongs", json(enabled ? playlists : Collections.emptyList(), 100))
+              .put("playlistEnabled", enabled)
               .put("likes", json(likes, 100))
               .put("picks", json(picks, 10));
       prefs.edit().putString("snapshot", data.toString()).apply();

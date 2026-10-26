@@ -42,8 +42,8 @@ public final class RadioTuner extends LinearLayout {
     addView(group);
     TextView privacy = new TextView(c);
     privacy.setText(
-        "Uses related results, your favourites and listening history on this device. No"
-            + " music-account login needed.");
+        "Uses related songs, your VEXO interests and optional connected YouTube likes. "
+            + "Hidden songs stay excluded. Tuning never restarts the current song.");
     privacy.setTextColor(MUTED);
     privacy.setTextSize(12);
     privacy.setPadding(0, dp(16), 0, dp(4));

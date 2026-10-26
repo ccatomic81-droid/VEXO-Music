@@ -17,6 +17,10 @@ public final class RadioCatalogue {
   }
 
   public List<Track> load(Track anchor, Track current) throws Exception {
+    return load(anchor, current, Collections.emptyList());
+  }
+
+  public List<Track> load(Track anchor, Track current, List<Track> interests) throws Exception {
     LinkedHashMap<String, Track> pool = new LinkedHashMap<>();
     Exception failure = null;
     for (Track seed :
@@ -38,6 +42,19 @@ public final class RadioCatalogue {
       add(pool, source.search(query + " songs"));
     } catch (Exception e) {
       failure = e;
+    }
+    // A single additional taste seed broadens sparse stations without unbounded requests.
+    for (Track taste : interests) {
+      if (Thread.currentThread().isInterrupted()) throw new InterruptedException();
+      if (!RadioPolicy.music(taste)
+          || RadioPolicy.artist(taste).equals(RadioPolicy.artist(anchor))
+          || RadioPolicy.artist(taste).equals(RadioPolicy.artist(current))) continue;
+      try {
+        add(pool, source.related(taste));
+      } catch (Exception e) {
+        failure = e;
+      }
+      break;
     }
     if (pool.isEmpty() && failure != null) throw failure;
     return new ArrayList<>(pool.values());

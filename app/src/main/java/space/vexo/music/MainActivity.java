@@ -114,6 +114,13 @@ public final class MainActivity extends ComponentActivity {
   private MusicPreview musicPreview;
   private MixCatalogue mixCatalogue;
   private MusicHomePanel homePanel;
+  private MusicInterests personalInterests;
+  private List<Track> personalSongs = new ArrayList<>();
+  private Future<?> personalTask;
+  private int personalGeneration;
+  private String personalKey = "";
+  private long personalAt;
+  private boolean personalLoading, personalFailed;
   private org.json.JSONObject pendingAiPlan;
   private final ThreadPoolExecutor mixIo = (ThreadPoolExecutor) Executors.newFixedThreadPool(2);
   private final Set<String> prefetchingMixes = new HashSet<>();
@@ -219,7 +226,7 @@ public final class MainActivity extends ComponentActivity {
     super.onCreate(state);
     profile = new UserProfile(this);
     account = new AccountAuth(this);
-    youtube = new YouTubeConnection(this, state, this::render, this::play);
+    youtube = new YouTubeConnection(this, state, this::youtubeChanged, this::play);
     store = new LibraryStore(this);
     searchHistory = new SearchHistory(this);
     suggestions =
@@ -391,7 +398,10 @@ public final class MainActivity extends ComponentActivity {
     if (notificationPrompt != null) notificationPrompt.resume();
     main.removeCallbacks(tick);
     main.post(tick);
-    if (homePanel != null) homePanel.personalize();
+    if (homePanel != null) {
+      homePanel.personalize();
+      loadPersonal(false);
+    }
     if (!clockRegistered) {
       IntentFilter filter = new IntentFilter(Intent.ACTION_TIME_TICK);
       filter.addAction(Intent.ACTION_TIME_CHANGED);
@@ -448,6 +458,7 @@ public final class MainActivity extends ComponentActivity {
 
   @Override
   protected void onDestroy() {
+    invalidatePersonal();
     if (youtube != null) youtube.close();
     if (googleCancellation != null) googleCancellation.cancel();
     if (notificationPrompt != null) notificationPrompt.close();
@@ -885,6 +896,14 @@ public final class MainActivity extends ComponentActivity {
             });
     homePanel = panel;
     try {
+      personalInterests = MusicInterests.read(this);
+      if (!personalKey.isEmpty() && !personalKey.equals(personalInterests.signature))
+        invalidatePersonal();
+      if (!homeFilter.equals("Playlists")
+          && !new SmartStore(this).preferences().optBoolean("focus")) {
+        drawPersonal();
+        main.post(() -> loadPersonal(false));
+      }
       if (!homeFilter.equals("Playlists")
           && !new SmartStore(this).preferences().optBoolean("focus"))
         panel.youtube(new YouTubeTaste(this).read(), () -> youtube.show(), this::play);
@@ -893,6 +912,111 @@ public final class MainActivity extends ComponentActivity {
     }
     content.addView(panel, new LinearLayout.LayoutParams(-1, 0, 1));
     main.postDelayed(this::prefetchHomeMixes, 600);
+  }
+
+  private void youtubeChanged() {
+    invalidatePersonal();
+    radioChanged();
+    render();
+  }
+
+  private void invalidatePersonal() {
+    personalGeneration++;
+    if (personalTask != null) personalTask.cancel(true);
+    personalTask = null;
+    personalLoading = false;
+    personalKey = "";
+    personalAt = 0;
+    personalSongs = new ArrayList<>();
+  }
+
+  private void drawPersonal() {
+    if (homePanel == null || personalInterests == null) return;
+    List<Track> visible = personalSongs;
+    if (visible.isEmpty()) {
+      List<Track> saved = new ArrayList<>(personalInterests.cached);
+      saved.addAll(personalInterests.favourites);
+      visible = personalInterests.variety(saved, 12);
+    }
+    final List<Track> songs = visible;
+    homePanel.personal(
+        personalInterests,
+        songs,
+        personalLoading,
+        personalFailed,
+        () -> loadPersonal(true),
+        () -> showSmart(null),
+        this::play,
+        () -> {
+          Track seed =
+              controller != null && controller.getCurrentMediaItem() != null
+                  ? Track.from(controller.getCurrentMediaItem())
+                  : songs.isEmpty() ? null : songs.get(0);
+          if (seed != null && RadioPolicy.music(seed)) startRadio(seed);
+          else message("Play or save a song to start your radio.");
+        });
+  }
+
+  private void loadPersonal(boolean force) {
+    if (destroyed || !tab.equals("Home") || homePanel == null) return;
+    final MusicInterests interests;
+    try {
+      if (new SmartStore(this).preferences().optBoolean("focus")) return;
+      interests = MusicInterests.read(this);
+    } catch (IllegalStateException unavailable) {
+      return;
+    }
+    boolean same = personalKey.equals(interests.signature);
+    if (!force
+        && same
+        && (personalLoading || System.currentTimeMillis() - personalAt < 30 * 60_000L)) return;
+    if (personalTask != null) personalTask.cancel(true);
+    int request = ++personalGeneration;
+    personalInterests = interests;
+    personalKey = interests.signature;
+    personalLoading = true;
+    personalFailed = false;
+    drawPersonal();
+    personalTask =
+        io.submit(
+            () -> {
+              try {
+                List<Track> found =
+                    PersonalDiscovery.load(
+                        interests,
+                        new PersonalDiscovery.Source() {
+                          public List<Track> related(Track song) throws Exception {
+                            return OnlineMusic.relatedPreview(song);
+                          }
+
+                          public List<Track> search(String query) throws Exception {
+                            return OnlineMusic.preview(
+                                query, RegionPolicy.current(MainActivity.this));
+                          }
+                        });
+                main.post(
+                    () -> {
+                      if (destroyed || request != personalGeneration) return;
+                      try {
+                        if (!interests.signature.equals(MusicInterests.read(this).signature)) {
+                          invalidatePersonal();
+                          loadPersonal(false);
+                          return;
+                        }
+                      } catch (IllegalStateException unavailable) {
+                        invalidatePersonal();
+                        return;
+                      }
+                      personalSongs = found;
+                      personalLoading = false;
+                      personalAt = System.currentTimeMillis();
+                      personalFailed = found.isEmpty() && !interests.seeds.isEmpty();
+                      drawPersonal();
+                    });
+              } catch (InterruptedException cancelled) {
+                Thread.currentThread().interrupt();
+              }
+            });
   }
 
   private void prefetchHomeMixes() {
@@ -1032,6 +1156,32 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private void browseSearch(LinearLayout parent) {
+    try {
+      MusicInterests interests = MusicInterests.read(this);
+      if (!interests.seeds.isEmpty()) {
+        parent.addView(text("Your artists", 17, TEXT, true));
+        HorizontalScrollView scroll = new HorizontalScrollView(this);
+        scroll.setHorizontalScrollBarEnabled(false);
+        LinearLayout artists = row();
+        for (Track seed : interests.seeds.subList(0, Math.min(4, interests.seeds.size()))) {
+          TextView artist =
+              button(
+                  seed.artist,
+                  () -> {
+                    searchField.setText(seed.artist);
+                    search();
+                  });
+          artist.setContentDescription("Search your artist " + seed.artist);
+          LinearLayout.LayoutParams layout = new LinearLayout.LayoutParams(-2, -2);
+          layout.setMargins(0, dp(10), dp(8), dp(16));
+          artists.addView(artist, layout);
+        }
+        scroll.addView(artists);
+        parent.addView(scroll);
+      }
+    } catch (IllegalStateException unavailable) {
+      /* Search still works without private taste. */
+    }
     parent.addView(
         new SearchBrowsePanel(
             this,
@@ -1358,6 +1508,11 @@ public final class MainActivity extends ComponentActivity {
       return MusicPreview.combine(term, Collections.emptyList(), previewSongs, 6);
     List<Track> cached = new ArrayList<>(store.tracks("history"));
     cached.addAll(store.tracks("favourites"));
+    try {
+      cached.addAll(MusicInterests.read(this).imported);
+    } catch (IllegalStateException unavailable) {
+      /* Keep existing search usable. */
+    }
     cached.addAll(OfflineLibrary.get(this).saved());
     if (homeFeed != null && homeFeed.country.equals(RegionPolicy.current(this)))
       cached.addAll(homeFeed.tracks);
@@ -2271,6 +2426,17 @@ public final class MainActivity extends ComponentActivity {
         && mix.id.equals("regional")
         && homeFeed != null
         && homeFeed.country.equals(country)) songs = MixCatalogue.songs(homeFeed.tracks);
+    if (isMix) {
+      try {
+        songs =
+            MusicInterests.read(this)
+                .rank(
+                    SmartPolicy.rank(songs, new SmartStore(this), store.tracks("history"), false),
+                    false);
+      } catch (IllegalStateException unavailable) {
+        /* Keep catalogue mixes usable. */
+      }
+    }
     List<Track> collection = new ArrayList<>(songs);
     boolean editable = activeCollection.startsWith("playlist:");
     PlaylistPanel panel =
@@ -2453,6 +2619,7 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private void refreshApp() {
+    invalidatePersonal();
     if (destroyed) return;
     discoveryEpoch++;
     mixIo.getQueue().clear();
@@ -2707,12 +2874,14 @@ public final class MainActivity extends ComponentActivity {
                             for (Track t : OnlineMusic.search(variant).tracks)
                               pool.putIfAbsent(t.url, t);
                           }
-                        List<Track> picks =
+                        List<Track> smartPicks =
                             SmartPolicy.rank(
                                 new ArrayList<>(pool.values()),
                                 smart,
                                 store.tracks("history"),
                                 newArtists);
+                        List<Track> picks =
+                            MusicInterests.read(MainActivity.this).rank(smartPicks, newArtists);
                         picks.removeIf(
                             t ->
                                 excluded.stream()
@@ -3838,6 +4007,7 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private void radioChanged() {
+    invalidatePersonal();
     if (controller != null)
       controller.sendCustomCommand(
           new SessionCommand(PlaybackService.AUTOPLAY_CHANGED, Bundle.EMPTY), Bundle.EMPTY);

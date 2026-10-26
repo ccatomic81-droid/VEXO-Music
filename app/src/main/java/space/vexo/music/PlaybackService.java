@@ -82,6 +82,8 @@ public final class PlaybackService extends MediaSessionService {
       int limit) {
     try {
       SmartStore smart = new SmartStore(this);
+      MusicInterests interests = MusicInterests.read(this);
+      favourites = interests.favourites;
       java.util.Set<String> excluded = new java.util.HashSet<>(hidden);
       excluded.addAll(SmartPolicy.blocked(smart, System.currentTimeMillis()));
       candidates = new java.util.ArrayList<>(candidates);
@@ -95,7 +97,9 @@ public final class PlaybackService extends MediaSessionService {
           }
       }
       java.util.List<Track> ranked =
-          SmartPolicy.rank(candidates, smart, history, mode == RadioPolicy.Mode.DISCOVER);
+          interests.rank(
+              SmartPolicy.rank(candidates, smart, history, mode == RadioPolicy.Mode.DISCOVER),
+              mode == RadioPolicy.Mode.DISCOVER);
       return RadioPolicy.select(
           anchor, seed, ranked, queue, history, favourites, excluded, mode, limit, 0);
     } catch (IllegalStateException unavailable) {
@@ -128,6 +132,14 @@ public final class PlaybackService extends MediaSessionService {
       return new java.util.ArrayList<>(merged.values());
     } catch (Exception unavailable) {
       return existing;
+    }
+  }
+
+  private java.util.List<Track> interestSeeds() {
+    try {
+      return MusicInterests.read(this).seeds;
+    } catch (IllegalStateException unavailable) {
+      return java.util.Collections.emptyList();
     }
   }
 
@@ -278,14 +290,15 @@ public final class PlaybackService extends MediaSessionService {
                   new RadioCatalogue(
                           new RadioCatalogue.Source() {
                             public java.util.List<Track> related(Track t) throws Exception {
-                              return OnlineMusic.related(t);
+                              return OnlineMusic.relatedPreview(t);
                             }
 
                             public java.util.List<Track> search(String query) throws Exception {
-                              return OnlineMusic.search(query).tracks;
+                              return OnlineMusic.preview(
+                                  query, RegionPolicy.current(PlaybackService.this));
                             }
                           })
-                      .load(anchor, seed);
+                      .load(anchor, seed, interestSeeds());
               return tuneCandidates(candidates);
             },
             radioWorker,

@@ -41,6 +41,7 @@ final class YouTubeConnection implements AutoCloseable {
   private Future<?> task;
   private YouTubeMusic api;
   private String status = "";
+  private Boolean includePlaylists;
 
   YouTubeConnection(ComponentActivity activity, Bundle state, Runnable changed, Player player) {
     this.activity = activity;
@@ -98,7 +99,7 @@ final class YouTubeConnection implements AutoCloseable {
     panel.gap(panel.body, 12);
     panel.body.addView(
         panel.text(
-            "Use your liked YouTube music as a starting point for VEXO recommendations. "
+            "Use connected YouTube music to shape Home, discovery, related songs and radio. "
                 + "This is optional and separate from your VEXO account.",
             14,
             Visuals.MUTED,
@@ -107,9 +108,11 @@ final class YouTubeConnection implements AutoCloseable {
     panel.body.addView(
         panel.text(
             "Google shares read-only access to your YouTube account. VEXO reads up to 200 liked"
-                + " videos and keeps up to 100 music tracks on this phone for 28 days. It does not"
-                + " read your watch history or change your YouTube account. YouTube’s exact Home"
-                + " feed is not available here.",
+                + " videos and keeps up to 100 liked music tracks. If you enable playlists below,"
+                + " it also checks up to 50 videos from each of 3 playlists you own and keeps up to"
+                + " 100 music tracks. Imported metadata stays encrypted on this phone for 28 days."
+                + " It does not read your watch history or change your YouTube account. YouTube’s"
+                + " exact Home feed is not available here.",
             13,
             Visuals.MUTED,
             false));
@@ -136,6 +139,17 @@ final class YouTubeConnection implements AutoCloseable {
       panel.body.addView(message);
       panel.gap(panel.body, 14);
     }
+    if (includePlaylists == null) includePlaylists = snapshot.playlistEnabled;
+    android.widget.Switch playlists = new android.widget.Switch(activity);
+    playlists.setText("Include music from my YouTube playlists");
+    playlists.setTextColor(Visuals.TEXT);
+    playlists.setTextSize(14);
+    playlists.setMinHeight(panel.dp(56));
+    playlists.setChecked(includePlaylists);
+    playlists.setEnabled(!busy);
+    playlists.setOnCheckedChangeListener((v, enabled) -> includePlaylists = enabled);
+    panel.body.addView(playlists);
+    panel.gap(panel.body, 12);
     TextView connect =
         panel.action(
             busy ? "Connecting…" : snapshot.connected ? "Refresh from YouTube" : "Connect YouTube",
@@ -158,18 +172,21 @@ final class YouTubeConnection implements AutoCloseable {
       panel.body.addView(
           panel.text(
               snapshot.likes.size()
-                  + " liked music tracks · updated "
+                  + " liked tracks · "
+                  + snapshot.playlistSongs.size()
+                  + " playlist tracks · updated "
                   + android.text.format.DateFormat.getDateFormat(activity)
                       .format(new java.util.Date(snapshot.at)),
               12,
               Visuals.MUTED,
               false));
-      if (snapshot.likes.isEmpty()) {
+      if (snapshot.sources().isEmpty()) {
         panel.gap(panel.body, 10);
         panel.body.addView(
             panel.text(
-                "No music tracks were found in the liked videos checked. "
-                    + "Like music on YouTube, then refresh here.",
+                "No matching music was found in this limited sample. Check that this Google "
+                    + "account/channel has liked music, or enable playlist music and refresh. "
+                    + "Home and radio can still learn from your VEXO favourites and interests.",
                 14,
                 Visuals.MUTED,
                 false));
@@ -178,7 +195,7 @@ final class YouTubeConnection implements AutoCloseable {
         panel.section("VEXO picks for you", null, null);
         panel.body.addView(
             panel.text(
-                "Suggested by VEXO using your liked YouTube music.", 12, Visuals.MUTED, false));
+                "Suggested by VEXO using your connected YouTube music.", 12, Visuals.MUTED, false));
         panel.gap(panel.body, 10);
         if (snapshot.picks.isEmpty())
           panel.body.addView(
@@ -192,6 +209,11 @@ final class YouTubeConnection implements AutoCloseable {
         panel.gap(panel.body, 18);
         panel.section("Liked on YouTube", null, null);
         songs(panel, snapshot.likes, 100);
+        if (!snapshot.playlistSongs.isEmpty()) {
+          panel.gap(panel.body, 18);
+          panel.section("Music from your YouTube playlists", null, null);
+          songs(panel, snapshot.playlistSongs, 100);
+        }
       }
     }
     panel.gap(panel.body, 18);
@@ -299,22 +321,44 @@ final class YouTubeConnection implements AutoCloseable {
     draw();
     api = new YouTubeMusic();
     YouTubeMusic client = api;
+    final boolean playlistsAllowed = Boolean.TRUE.equals(includePlaylists);
     task =
         io.submit(
             () -> {
               try {
                 List<Track> likes = client.likes(token);
-                List<Track> picks = YouTubeMusic.picks(likes, OnlineMusic::relatedPreview);
+                List<Track> playlistSongs = Collections.emptyList();
+                boolean playlistFailed = false;
+                if (playlistsAllowed) {
+                  try {
+                    playlistSongs = client.playlistMusic(token);
+                  } catch (java.io.IOException unavailable) {
+                    playlistFailed = true;
+                  }
+                }
+                List<Track> sources = new java.util.ArrayList<>(likes);
+                sources.addAll(playlistSongs);
+                List<Track> picks = YouTubeMusic.picks(sources, OnlineMusic::relatedPreview);
+                final List<Track> importedPlaylists = playlistSongs;
+                final boolean partial = playlistFailed;
                 activity.runOnUiThread(
                     () -> {
                       if (!current(request)) return;
                       try {
-                        taste.save(likes, picks, System.currentTimeMillis());
+                        taste.save(
+                            likes,
+                            picks,
+                            importedPlaylists,
+                            playlistsAllowed,
+                            System.currentTimeMillis());
                         changed.run();
                         finish(
-                            likes.isEmpty()
-                                ? "Connected. No liked music was found in this sample."
-                                : "Connected · your liked music is ready.");
+                            partial
+                                ? "Connected. Liked music imported; playlist music couldn’t load."
+                                      + " Refresh to retry."
+                                : sources.isEmpty()
+                                    ? "Connected. No matching music was found in this sample."
+                                    : "Connected · your music now helps shape Home and radio.");
                       } catch (IllegalStateException unavailable) {
                         finish(
                             "Couldn’t save private music data. Your previous data has been kept.");

@@ -35,7 +35,7 @@ public final class RadioPolicy {
 
   public static String artist(Track track) {
     return normalize(track.artist)
-        .replaceAll("(?: topic| official| vevo| official channel)$", "")
+        .replaceAll("(?: topic| official| ?vevo| official channel)$", "")
         .trim();
   }
 
