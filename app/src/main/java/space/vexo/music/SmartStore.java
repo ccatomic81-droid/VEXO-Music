@@ -334,6 +334,12 @@ final class SmartStore {
       JSONObject songs = taste();
       String previous = songs.toString();
       TastePolicy.record(songs, track, milliseconds, manualSkip, failed, now);
+      try {
+        JSONArray next = SessionTaste.record(session(), track, milliseconds, manualSkip, now);
+        write("session", new JSONObject().put("events", next));
+      } catch (JSONException e) {
+        throw new IllegalArgumentException(e);
+      }
       if (previous.equals(songs.toString())) return;
       try {
         write("taste", new JSONObject().put("songs", songs));
@@ -343,10 +349,18 @@ final class SmartStore {
     }
   }
 
+  JSONArray session() {
+    synchronized (LOCK) {
+      JSONArray events = read("session").optJSONArray("events");
+      return events == null ? new JSONArray() : events;
+    }
+  }
+
   void resetTaste() {
     synchronized (LOCK) {
       preference("learning_cleared_at", System.currentTimeMillis());
       write("taste", new JSONObject());
+      write("session", new JSONObject());
     }
   }
 

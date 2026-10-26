@@ -27,6 +27,7 @@ public final class PlaybackService extends MediaSessionService {
   private final java.util.concurrent.ExecutorService radioWorker =
       java.util.concurrent.Executors.newFixedThreadPool(2);
   public static final String FAIR_QUEUE = "space.vexo.music.FAIR_QUEUE";
+  public static final String MANUAL_QUEUE = "space.vexo.music.MANUAL_QUEUE";
   public static final String START_RADIO = "space.vexo.music.START_RADIO";
   public static final String HIDE_RADIO = "space.vexo.music.HIDE_RADIO";
   private AutoplayManager autoplay;
@@ -83,7 +84,11 @@ public final class PlaybackService extends MediaSessionService {
     try {
       SmartStore smart = new SmartStore(this);
       favourites = new java.util.ArrayList<>(favourites);
-      favourites.addAll(new YouTubeTaste(this).read().sources());
+      try {
+        favourites.addAll(new YouTubeTaste(this).read().sources());
+      } catch (IllegalStateException unavailableImport) {
+        // Optional YouTube taste cannot disable local radio feedback.
+      }
       java.util.Set<String> excluded = new java.util.HashSet<>(hidden);
       excluded.addAll(SmartPolicy.blocked(smart, System.currentTimeMillis()));
       candidates = new java.util.ArrayList<>(candidates);
@@ -96,8 +101,10 @@ public final class PlaybackService extends MediaSessionService {
             if (!artist.isEmpty()) candidates.removeIf(t -> RadioPolicy.artist(t).contains(artist));
           }
       }
+      int recentWindow = smart.preferences().optInt("repeat_hours", 24) == 0
+          ? 0 : Math.min(20, history.size());
       return RadioPolicy.select(
-          anchor, seed, candidates, queue, history, favourites, excluded, mode, limit, 0);
+          anchor, seed, candidates, queue, history, favourites, excluded, mode, limit, recentWindow);
     } catch (IllegalStateException unavailable) {
       return RadioPolicy.select(
           anchor, seed, candidates, queue, history, favourites, hidden, mode, limit);
@@ -215,7 +222,7 @@ public final class PlaybackService extends MediaSessionService {
     QueueStore.Snapshot restored = new QueueStore(this).read();
     if (!restored.tracks.isEmpty()) {
       java.util.List<MediaItem> items = new java.util.ArrayList<>();
-      for (Track t : restored.tracks) items.add(t.mediaItem());
+      for (Track t : restored.tracks) items.add(t.mediaItem(t.recommended));
       player.setMediaItems(items, restored.index, restored.position);
       player.setPlayWhenReady(false);
     }
@@ -269,7 +276,7 @@ public final class PlaybackService extends MediaSessionService {
                         timeline.getFirstWindowIndex(shuffle),
                         at -> timeline.getNextWindowIndex(at, Player.REPEAT_MODE_OFF, shuffle));
                 java.util.List<MediaItem> items = new java.util.ArrayList<>();
-                for (Track t : songs) items.add(t.mediaItem());
+                for (Track t : songs) items.add(t.mediaItem(true));
                 player.addMediaItems(items);
                 if (shuffle)
                   player.setShuffleOrder(
@@ -352,12 +359,14 @@ public final class PlaybackService extends MediaSessionService {
         new ListeningTracker(
             player,
             (track, ms, skipped, failed) -> {
-              try {
-                new SmartStore(this)
-                    .listened(track, ms, skipped, failed, System.currentTimeMillis());
-              } catch (IllegalStateException unavailable) {
-                /* No plaintext preference fallback. */
-              }
+              long completedAt = System.currentTimeMillis();
+              radioWorker.execute(() -> {
+                try {
+                  new SmartStore(this).listened(track, ms, skipped, failed, completedAt);
+                } catch (IllegalStateException unavailable) {
+                  /* No plaintext preference fallback. */
+                }
+              });
             });
     player.addListener(
         new Player.Listener() {
@@ -495,6 +504,7 @@ public final class PlaybackService extends MediaSessionService {
                                 .add(new SessionCommand(ROOM_FOLLOW, Bundle.EMPTY))
                                 .add(new SessionCommand(ROOM_LEAVE, Bundle.EMPTY))
                                 .add(new SessionCommand(FAIR_QUEUE, Bundle.EMPTY))
+                                .add(new SessionCommand(MANUAL_QUEUE, Bundle.EMPTY))
                                 .add(new SessionCommand(START_RADIO, Bundle.EMPTY))
                                 .add(new SessionCommand(HIDE_RADIO, Bundle.EMPTY))
                                 .build())
@@ -526,6 +536,32 @@ public final class PlaybackService extends MediaSessionService {
                         return Futures.immediateFuture(
                             new SessionResult(
                                 androidx.media3.session.SessionError.ERROR_BAD_VALUE));
+                      }
+                    }
+                    if (command.customAction.equals(MANUAL_QUEUE)) {
+                      try {
+                        String url = args.getString("expected", "");
+                        java.util.function.Consumer<int[]> shuffleOrder = order ->
+                            player.setShuffleOrder(new androidx.media3.exoplayer.source.ShuffleOrder
+                                .DefaultShuffleOrder(order, System.nanoTime()));
+                        if (!url.isEmpty()) {
+                          int index = args.getInt("index", -1);
+                          if (index < 0 || index >= player.getMediaItemCount()
+                              || !url.equals(player.getMediaItemAt(index).mediaId))
+                            throw new IllegalArgumentException("Queue changed");
+                          ManualQueue.promote(player, index, shuffleOrder);
+                        } else {
+                          Track song = Track.from(new org.json.JSONObject(args.getString("track", "")));
+                          if (!song.url.startsWith("https://") && !song.url.startsWith("content://"))
+                            throw new IllegalArgumentException("Invalid song");
+                          if (!ManualQueue.add(player, song, args.getBoolean("next"), shuffleOrder))
+                            throw new IllegalArgumentException("Queue full");
+                        }
+                        saveQueue();
+                        return Futures.immediateFuture(new SessionResult(SessionResult.RESULT_SUCCESS));
+                      } catch (Exception invalid) {
+                        return Futures.immediateFuture(new SessionResult(
+                            androidx.media3.session.SessionError.ERROR_BAD_VALUE));
                       }
                     }
                     if (command.customAction.equals(START_RADIO)
@@ -672,7 +708,7 @@ public final class PlaybackService extends MediaSessionService {
     if (remote != null) remote.close();
     if (recovery != null) recovery.close();
     if (autoplay != null) autoplay.close();
-    radioWorker.shutdownNow();
+    radioWorker.shutdown();
     saveQueue();
     handler.removeCallbacksAndMessages(null);
     OfflineLibrary.get(this).cancel();

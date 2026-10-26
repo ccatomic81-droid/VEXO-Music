@@ -72,10 +72,10 @@ final class ListeningTracker implements Player.Listener {
       listened = 0;
       failed = false;
       discard = false;
+      manual = false;
     }
     if (current == null && item != null) current = Track.from(item);
     playing = player.isPlaying();
-    manual = false;
     repeat = false;
   }
 
