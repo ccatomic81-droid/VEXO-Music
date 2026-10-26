@@ -1638,7 +1638,9 @@ public final class MainActivity extends ComponentActivity {
       searchCategoryBack.setVisibility(keyboardOpen ? View.GONE : View.VISIBLE);
     if (tab.equals("Search") && status != null)
       status.setVisibility(
-          keyboardOpen || online && query.trim().isEmpty() && searchCategory == null
+          keyboardOpen
+                  || suggestionsVisible
+                  || online && query.trim().isEmpty() && searchCategory == null
               ? View.GONE
               : View.VISIBLE);
   }
@@ -1712,6 +1714,7 @@ public final class MainActivity extends ComponentActivity {
     if (suggestionBody == null) return;
     suggestionsVisible = true;
     suggestionScroll.setVisibility(View.VISIBLE);
+    updateSearchChrome();
     for (int i = 2; i < content.getChildCount(); i++)
       content.getChildAt(i).setVisibility(View.GONE);
     suggestionBody.removeAllViews();
