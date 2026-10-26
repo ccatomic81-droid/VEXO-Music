@@ -83,7 +83,9 @@ public final class MainActivity extends ComponentActivity {
       };
   private MediaController controller;
   private ListenableFuture<MediaController> controllerFuture;
-  private LinearLayout root, content, mini, nav;
+  private FrameLayout root;
+  private LinearLayout content, mini, nav, floatingDock;
+  private final Map<View, Integer> dockPadding = new IdentityHashMap<>();
   private TextView miniTitle, miniArtist;
   private ImageView miniArt;
   private Icon miniPlay;
@@ -257,7 +259,7 @@ public final class MainActivity extends ComponentActivity {
       profileDraft = state.getString("profile_draft", profile.name());
     }
     if ("space.vexo.music.OPEN_UPDATES".equals(getIntent().getAction())) tab = "Settings";
-    root = column();
+    root = new FrameLayout(this);
     androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
     getWindow().setNavigationBarColor(Color.TRANSPARENT);
     getWindow().setStatusBarColor(Color.TRANSPARENT);
@@ -282,7 +284,23 @@ public final class MainActivity extends ComponentActivity {
         });
     androidx.core.view.ViewCompat.requestApplyInsets(root);
     content = column();
-    root.addView(content, new LinearLayout.LayoutParams(-1, 0, 1));
+    root.addView(content, new FrameLayout.LayoutParams(-1, -1));
+    floatingDock = column();
+    floatingDock.setClipChildren(false);
+    FrameLayout.LayoutParams dockLayout = new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM);
+    root.addView(floatingDock, dockLayout);
+    floatingDock.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> updateDockSpace());
+    content.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> updateDockSpace());
+    content.setOnHierarchyChangeListener(
+        new ViewGroup.OnHierarchyChangeListener() {
+          public void onChildViewAdded(View parent, View child) {
+            updateDockSpace();
+          }
+
+          public void onChildViewRemoved(View parent, View child) {
+            dockPadding.remove(child);
+          }
+        });
     buildMini();
     buildNav();
     render();
@@ -512,12 +530,38 @@ public final class MainActivity extends ComponentActivity {
     nav = row();
     nav.setPadding(dp(10), dp(2), dp(10), dp(4));
     nav.setMinimumHeight(dp(64));
-    // Let the page backdrop continue between and around the navigation items.
-    nav.setBackgroundColor(Color.TRANSPARENT);
-    nav.setElevation(0);
+    // Only the pill has a surface; the surrounding overlay stays transparent.
+    Glass.apply(nav, 30, false);
+    nav.setElevation(dp(6));
     LinearLayout.LayoutParams navLayout = new LinearLayout.LayoutParams(-1, -2);
     navLayout.setMargins(dp(16), 0, dp(16), dp(8));
-    root.addView(nav, navLayout);
+    floatingDock.addView(nav, navLayout);
+  }
+
+  // Keep the last row reachable while allowing the page to scroll behind the floating pill.
+  private void updateDockSpace() {
+    if (content == null || floatingDock == null || nav == null) return;
+    int space = nav.getVisibility() == View.VISIBLE ? floatingDock.getHeight() : 0;
+    View last = null;
+    for (int i = 0; i < content.getChildCount(); i++) {
+      View child = content.getChildAt(i);
+      if (child.getVisibility() != View.GONE) last = child;
+    }
+    boolean scrolls = last instanceof ScrollView || last instanceof RecyclerView;
+    int contentSpace = scrolls ? 0 : space;
+    if (content.getPaddingBottom() != contentSpace) content.setPadding(0, 0, 0, contentSpace);
+    if (scrolls) {
+      int original = dockPadding.computeIfAbsent(last, View::getPaddingBottom);
+      int bottom = original + space;
+      if (last.getPaddingBottom() != bottom)
+        last.setPadding(
+            last.getPaddingLeft(), last.getPaddingTop(), last.getPaddingRight(), bottom);
+      ((ViewGroup) last).setClipToPadding(false);
+    }
+  }
+
+  static boolean showMini(MediaItem item, int state) {
+    return item != null && (state == Player.STATE_READY || state == Player.STATE_BUFFERING);
   }
 
   private void refreshNav() {
@@ -564,17 +608,12 @@ public final class MainActivity extends ComponentActivity {
 
   private void buildMini() {
     mini = column();
-    android.graphics.drawable.GradientDrawable background =
-        new android.graphics.drawable.GradientDrawable();
-    background.setColor(PANEL);
-    background.setCornerRadius(dp(18));
-    background.setStroke(dp(1), 0xff303e39);
     Glass.apply(mini, 20, false);
     mini.setPadding(dp(8), dp(8), dp(4), dp(5));
     mini.setMinimumHeight(dp(66));
     LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-1, -2);
     p.setMargins(dp(20), dp(8), dp(20), dp(8));
-    root.addView(mini, p);
+    floatingDock.addView(mini, p);
     mini.setVisibility(View.GONE);
     LinearLayout line = row();
     mini.addView(line, new LinearLayout.LayoutParams(-1, -2));
@@ -634,6 +673,7 @@ public final class MainActivity extends ComponentActivity {
     suggestionBody = null;
     if (profilePanel != null) profileDraft = profilePanel.draft();
     profilePanel = null;
+    dockPadding.clear();
     content.removeAllViews();
     listAdapter = null;
     searchField = null;
@@ -647,6 +687,7 @@ public final class MainActivity extends ComponentActivity {
       return;
     }
     nav.setVisibility(View.VISIBLE);
+    updatePlayback();
     if (!activeCollection.isEmpty() || !activeMix.isEmpty()) {
       renderCollection();
       return;
@@ -844,7 +885,8 @@ public final class MainActivity extends ComponentActivity {
             });
     homePanel = panel;
     try {
-      if (!homeFilter.equals("Playlists") && !new SmartStore(this).preferences().optBoolean("focus"))
+      if (!homeFilter.equals("Playlists")
+          && !new SmartStore(this).preferences().optBoolean("focus"))
         panel.youtube(new YouTubeTaste(this).read(), () -> youtube.show(), this::play);
     } catch (IllegalStateException unavailable) {
       // A disconnected or unavailable optional source must never block Home.
@@ -3586,7 +3628,10 @@ public final class MainActivity extends ComponentActivity {
     refreshQueue();
     MediaItem item = controller.getCurrentMediaItem();
     mini.setVisibility(
-        item == null || !profile.complete() || profileEditing ? View.GONE : View.VISIBLE);
+        showMini(item, controller.getPlaybackState()) && profile.complete() && !profileEditing
+            ? View.VISIBLE
+            : View.GONE);
+    updateDockSpace();
     if (item == null) {
       if (playerDialog != null) playerDialog.dismiss();
       return;

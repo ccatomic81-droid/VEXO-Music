@@ -43,6 +43,29 @@ public class YouTubeTasteTest {
   }
 
   @Test
+  public void apiFailuresExplainDeveloperSetupQuotaAndPermissionWithoutLeakingBody()
+      throws Exception {
+    assertTrue(
+        YouTubeMusic.error(403, "{\"error\":{\"errors\":[{\"reason\":\"accessNotConfigured\"}]}}")
+            .contains("Enable YouTube Data API"));
+    assertTrue(
+        YouTubeMusic.error(403, "{\"error\":{\"details\":[{\"reason\":\"SERVICE_DISABLED\"}]}}")
+            .contains("developer setup"));
+    assertTrue(
+        YouTubeMusic.error(403, "{\"error\":{\"errors\":[{\"reason\":\"quotaExceeded\"}]}}")
+            .contains("limit"));
+    assertTrue(
+        YouTubeMusic.error(
+                403, "{\"error\":{\"errors\":[{\"reason\":\"insufficientPermissions\"}]}}")
+            .contains("permission needs updating"));
+    assertTrue(
+        YouTubeMusic.error(403, "{\"error\":{\"errors\":[{\"reason\":\"youtubeSignupRequired\"}]}}")
+            .contains("YouTube channel"));
+    assertEquals(YouTubeMusic.error(403), YouTubeMusic.error(403, "private response token"));
+    assertEquals(YouTubeMusic.error(401), YouTubeMusic.error(401, "private response token"));
+  }
+
+  @Test
   public void importsOnlyFiniteMusicAndValidIdsWithTrustedArtwork() throws Exception {
     JSONObject live = item("bcdefghijkl", "10", "PT3M");
     live.getJSONObject("snippet").put("liveBroadcastContent", "live");

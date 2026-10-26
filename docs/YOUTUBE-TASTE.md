@@ -39,3 +39,9 @@ The bottom tab container is transparent with no elevation. The page backdrop con
 - https://developer.android.com/identity/authorization
 - https://developers.google.com/youtube/data/reference/rest/v3/videos/list
 - https://developers.google.com/youtube/data/reference/rest/v3/errors
+
+## 0.17.1 follow-up
+
+The navigation is now a floating glass pill over a full-height page, with bottom scroll padding to keep the last row reachable. The mini-player above it shows only a current READY or BUFFERING item (including paused READY playback), not idle restored or ended queues.
+
+API errors are read within a 16 KiB limit and mapped from allowlisted reasons to fixed messages: disabled API, quota, missing scope, and missing YouTube channel. Raw provider error bodies are never displayed. Google’s unverified-app interstitial is controlled by Google; it cannot be hidden or fixed by changing Android UI. The optional connection screen explains this before consent. Google Cloud console could not be reached from the development environment during this follow-up; enablement and OAuth verification remain unverified external work.

@@ -4,7 +4,6 @@ import static org.junit.Assert.*;
 
 import android.app.Dialog;
 import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.view.*;
 import java.util.*;
 import org.junit.*;
@@ -26,19 +25,23 @@ public class YouTubeNavigationUiTest {
   }
 
   @Test
-  public void navigationHasNoPlateOrSystemScrimAndYouTubeIsOptional() throws Exception {
+  public void floatingPillHasTransparentSurroundingsAndYouTubeIsOptional() throws Exception {
     try (ActivityController<MainActivity> activity =
         Robolectric.buildActivity(MainActivity.class).setup()) {
       MainActivity a = activity.get();
       View root = a.findViewById(android.R.id.content);
       View nav = (View) find.description(root, "Settings tab").getParent();
-      assertEquals(Color.TRANSPARENT, ((ColorDrawable) nav.getBackground()).getColor());
-      assertEquals(0f, nav.getElevation(), .001f);
+      assertTrue(nav.getBackground() instanceof Glass);
+      assertTrue(nav.getElevation() > 0);
+      View dock = (View) nav.getParent();
+      assertNull(dock.getBackground());
+      assertTrue(dock.getParent() instanceof android.widget.FrameLayout);
+      assertEquals(View.GONE, find.description(root, "Open now playing").getVisibility());
       assertEquals(Color.TRANSPARENT, a.getWindow().getNavigationBarColor());
       assertFalse(a.getWindow().isNavigationBarContrastEnforced());
       assertFalse(new YouTubeTaste(a).read().connected);
       assertNull(find.text(root, "Your YouTube taste"));
-      new DiscoveryUiTest().capture(root, 320, 640, "navigation-transparent-320");
+      new DiscoveryUiTest().capture(root, 320, 640, "navigation-floating-320");
       find.description(root, "Settings tab").performClick();
       ((View) find.text(root, "YouTube taste").getParent().getParent()).performClick();
       Dialog dialog = ShadowDialog.getLatestDialog();
@@ -46,6 +49,36 @@ public class YouTubeNavigationUiTest {
       captureDialog(dialog.getWindow().getDecorView());
       find.text(dialog.getWindow().getDecorView(), "Close").performClick();
       assertFalse(new YouTubeTaste(a).read().connected);
+    }
+  }
+
+  @Test
+  public void miniShowsOnlyCurrentActivePlaybackIncludingPauseAndBuffering() {
+    androidx.media3.common.MediaItem song =
+        YouTubeTasteTest.song("abcdefghijk", "Song", "Artist").mediaItem();
+    assertFalse(MainActivity.showMini(null, androidx.media3.common.Player.STATE_READY));
+    assertFalse(MainActivity.showMini(song, androidx.media3.common.Player.STATE_IDLE));
+    assertFalse(MainActivity.showMini(song, androidx.media3.common.Player.STATE_ENDED));
+    assertTrue(MainActivity.showMini(song, androidx.media3.common.Player.STATE_BUFFERING));
+    assertTrue(MainActivity.showMini(song, androidx.media3.common.Player.STATE_READY));
+  }
+
+  @Test
+  public void pageExtendsBehindPillAndLastRowGetsSpace() throws Exception {
+    try (ActivityController<MainActivity> activity =
+        Robolectric.buildActivity(MainActivity.class).setup()) {
+      View root = activity.get().findViewById(android.R.id.content);
+      new DiscoveryUiTest().capture(root, 320, 640, "floating-dock-content-320");
+      View nav = (View) find.description(root, "Home tab").getParent();
+      android.view.ViewGroup dock = (android.view.ViewGroup) nav.getParent();
+      android.view.ViewGroup backdrop = (android.view.ViewGroup) dock.getParent();
+      android.view.ViewGroup content = (android.view.ViewGroup) backdrop.getChildAt(0);
+      assertEquals(backdrop.getHeight(), content.getHeight());
+      View page = content.getChildAt(content.getChildCount() - 1);
+      assertTrue(page instanceof android.widget.ScrollView);
+      assertTrue(page.getPaddingBottom() >= dock.getHeight());
+      assertTrue(nav.getLeft() > 0);
+      assertTrue(nav.getRight() < backdrop.getWidth());
     }
   }
 
@@ -104,7 +137,7 @@ public class YouTubeNavigationUiTest {
     try (ActivityController<MainActivity> activity =
         Robolectric.buildActivity(MainActivity.class).setup()) {
       View root = activity.get().findViewById(android.R.id.content);
-      new DiscoveryUiTest().capture(root, 320, 640, "navigation-transparent-api26");
+      new DiscoveryUiTest().capture(root, 320, 640, "navigation-floating-api26");
       assertNotNull(find.description(root, "Home tab"));
       find.description(root, "Settings tab").performClick();
       assertNotNull(find.text(root, "YouTube taste"));

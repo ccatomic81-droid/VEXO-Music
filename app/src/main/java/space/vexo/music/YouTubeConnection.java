@@ -85,7 +85,7 @@ final class YouTubeConnection implements AutoCloseable {
       dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
       dialog
           .getWindow()
-          .setLayout(-1, (int) (activity.getResources().getDisplayMetrics().heightPixels * .9f));
+          .setLayout(-1, (int) (activity.getResources().getDisplayMetrics().heightPixels * .82f));
     }
   }
 
@@ -111,6 +111,15 @@ final class YouTubeConnection implements AutoCloseable {
                 + " read your watch history or change your YouTube account. YouTube’s exact Home"
                 + " feed is not available here.",
             13,
+            Visuals.MUTED,
+            false));
+    panel.gap(panel.body, 12);
+    panel.body.addView(
+        panel.text(
+            "Google may show an unverified-app warning until VEXO’s YouTube permission is verified."
+                + " You can cancel and keep using VEXO. This warning cannot be removed inside the"
+                + " app.",
+            12,
             Visuals.MUTED,
             false));
     panel.gap(panel.body, 18);

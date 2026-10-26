@@ -77,8 +77,11 @@ final class YouTubeMusic {
     active = HTTP.newCall(request);
     if (cancelled) active.cancel();
     try (Response response = active.execute()) {
-      if (!response.isSuccessful()) throw new IOException(error(response.code()));
       ResponseBody body = response.body();
+      if (!response.isSuccessful()) {
+        String detail = response.peekBody(16384).string();
+        throw new IOException(error(response.code(), detail));
+      }
       if (body == null || body.contentLength() > 1024 * 1024)
         throw new IOException("YouTube returned an incomplete response. Try again later.");
       // Bound unknown-length responses too; never copy arbitrary API error bodies into the UI.
@@ -99,9 +102,47 @@ final class YouTubeMusic {
     if (code == 401) return "Your Google permission expired. Connect YouTube again.";
     if (code == 403)
       return "YouTube access isn’t available yet. The app’s Google API or permission setup may need"
-                 + " attention.";
+          + " attention.";
     if (code == 429) return "YouTube is busy. Please try again later.";
     return "Couldn’t reach YouTube. Check your connection and try again.";
+  }
+
+  static String error(int code, String body) {
+    if (code != 403) return error(code);
+    Set<String> reasons = new HashSet<>();
+    try {
+      JSONObject error = new JSONObject(body).optJSONObject("error");
+      if (error != null) {
+        JSONArray errors = error.optJSONArray("errors");
+        if (errors != null)
+          for (int i = 0; i < Math.min(errors.length(), 20); i++) {
+            JSONObject entry = errors.optJSONObject(i);
+            if (entry != null) reasons.add(entry.optString("reason"));
+          }
+        JSONArray details = error.optJSONArray("details");
+        if (details != null)
+          for (int i = 0; i < Math.min(details.length(), 20); i++) {
+            JSONObject entry = details.optJSONObject(i);
+            if (entry != null) reasons.add(entry.optString("reason"));
+          }
+      }
+    } catch (JSONException ignored) {
+    }
+    if (reasons.contains("accessNotConfigured") || reasons.contains("SERVICE_DISABLED"))
+      return "YouTube connection needs developer setup. Enable YouTube Data API v3 in the VEXO"
+                 + " Google project, then try again.";
+    if (reasons.contains("quotaExceeded")
+        || reasons.contains("dailyLimitExceeded")
+        || reasons.contains("rateLimitExceeded"))
+      return "YouTube’s request limit has been reached. Please try again later.";
+    if (reasons.contains("insufficientPermissions")
+        || reasons.contains("ACCESS_TOKEN_SCOPE_INSUFFICIENT"))
+      return "Your Google permission needs updating. Connect YouTube again and allow read-only"
+                 + " access.";
+    if (reasons.contains("youtubeSignupRequired"))
+      return "Your Google account needs a YouTube channel. Open YouTube to finish setup, then"
+                 + " reconnect.";
+    return error(code);
   }
 
   static List<Track> parse(JSONObject data) {
