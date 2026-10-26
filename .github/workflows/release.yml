@@ -1,13 +1,13 @@
-name: Publish verified VEXO Music 0.19.2
+name: Publish verified VEXO Music 0.19.3
 on:
   push:
     branches: [main]
-    paths: ['release/public-0.19.2.json']
+    paths: ['release/public-0.19.3.json']
   workflow_dispatch:
 permissions:
   contents: read
 concurrency:
-  group: vexo-release-0.19.2
+  group: vexo-release-0.19.3
   cancel-in-progress: false
 jobs:
   release:
@@ -19,7 +19,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
-      RELEASE_TAG: vexo-v0.19.2
+      RELEASE_TAG: vexo-v0.19.3
     steps:
       - uses: actions/checkout@v4
         with:
@@ -39,23 +39,23 @@ jobs:
           mkdir -p dist verify
           python3 - <<'PY'
           import json, pathlib, re, os
-          m=json.loads(pathlib.Path('release/public-0.19.2.json').read_text())
-          assert m['versionName']=='0.19.2' and m['versionCode']==27
+          m=json.loads(pathlib.Path('release/public-0.19.3.json').read_text())
+          assert m['versionName']=='0.19.3' and m['versionCode']==28
           assert m['applicationId']=='space.vexo.music.radio'
-          assert m['downloadUrl']=='https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.19.2.apk'
+          assert m['downloadUrl']=='https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.19.3.apk'
           assert re.fullmatch('[a-f0-9]{64}',m['sha256']) and re.fullmatch('[a-f0-9]{40}',m['sourceCommit'])
           assert m['sourceUrl']=='https://github.com/ccatomic81-droid/VEXO-Music/archive/'+m['sourceCommit']+'.zip'
-          pathlib.Path('dist/SHA256SUMS.txt').write_text(m['sha256']+'  VEXO-Music-0.19.2.apk\n')
+          pathlib.Path('dist/SHA256SUMS.txt').write_text(m['sha256']+'  VEXO-Music-0.19.3.apk\n')
           with open(os.environ['GITHUB_ENV'],'a') as f: f.write('SOURCE_COMMIT='+m['sourceCommit']+'\n')
           PY
-          curl --fail --location --retry 3 --max-time 120 --user-agent 'okhttp/4.12.0' 'https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.19.2.apk' --output dist/VEXO-Music-0.19.2.apk
+          curl --fail --location --retry 3 --max-time 120 --user-agent 'okhttp/4.12.0' 'https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.19.3.apk' --output dist/VEXO-Music-0.19.3.apk
           (cd dist && sha256sum --check SHA256SUMS.txt)
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs dist/VEXO-Music-0.19.2.apk > dist/signature.txt
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs dist/VEXO-Music-0.19.3.apk > dist/signature.txt
           grep -qi 'Signer #1 certificate SHA-256 digest: 0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3' dist/signature.txt
-          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging dist/VEXO-Music-0.19.2.apk > dist/badging.txt
-          grep "package: name='space.vexo.music.radio' versionCode='27' versionName='0.19.2'" dist/badging.txt
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging dist/VEXO-Music-0.19.3.apk > dist/badging.txt
+          grep "package: name='space.vexo.music.radio' versionCode='28' versionName='0.19.3'" dist/badging.txt
           if grep -q 'application-debuggable' dist/badging.txt; then exit 1; fi
-          cp release/public-0.19.2.json dist/release-info.json
+          cp release/public-0.19.3.json dist/release-info.json
       - name: Create and verify draft before public release
         shell: bash
         run: |
@@ -67,9 +67,9 @@ jobs:
           assert r['targetCommitish']==os.environ['SOURCE_COMMIT'], 'Refusing changed release target'
           PY
           else
-            gh release create "$RELEASE_TAG" dist/VEXO-Music-0.19.2.apk dist/SHA256SUMS.txt dist/release-info.json --target "$SOURCE_COMMIT" --title 'VEXO Music 0.19.2' --notes-file release/notes-0.19.2.md --draft
+            gh release create "$RELEASE_TAG" dist/VEXO-Music-0.19.3.apk dist/SHA256SUMS.txt dist/release-info.json --target "$SOURCE_COMMIT" --title 'VEXO Music 0.19.3' --notes-file release/notes-0.19.3.md --draft
           fi
-          gh release download "$RELEASE_TAG" --dir verify --pattern VEXO-Music-0.19.2.apk --pattern SHA256SUMS.txt --pattern release-info.json
+          gh release download "$RELEASE_TAG" --dir verify --pattern VEXO-Music-0.19.3.apk --pattern SHA256SUMS.txt --pattern release-info.json
           cmp dist/SHA256SUMS.txt verify/SHA256SUMS.txt
           cmp dist/release-info.json verify/release-info.json
           (cd verify && sha256sum --check SHA256SUMS.txt)
@@ -78,8 +78,8 @@ jobs:
           python3 - <<'PY'
           import json,os
           r=json.load(open('verify/published.json'))
-          assert not r['isDraft'] and r['tagName']=='vexo-v0.19.2'
-          assert {a['name'] for a in r['assets']}=={'VEXO-Music-0.19.2.apk','SHA256SUMS.txt','release-info.json'}
-          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f: f.write('Published verified [VEXO Music 0.19.2]('+r['url']+').\n')
+          assert not r['isDraft'] and r['tagName']=='vexo-v0.19.3'
+          assert {a['name'] for a in r['assets']}=={'VEXO-Music-0.19.3.apk','SHA256SUMS.txt','release-info.json'}
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f: f.write('Published verified [VEXO Music 0.19.3]('+r['url']+').\n')
           print(r['url'])
           PY

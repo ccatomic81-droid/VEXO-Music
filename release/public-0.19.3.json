@@ -1,0 +1,14 @@
+{
+  "applicationId": "space.vexo.music.radio",
+  "versionCode": 28,
+  "versionName": "0.19.3",
+  "summary": "• Music-only recommendations: removed general YouTube video suggestions.\n• Playing music no longer saves news and unrelated videos into radio.\n• Search stays on the YouTube Music Songs catalogue.\n• Filters news, vlogs and gameplay from saved recommendation candidates.\n• Update over your existing app to keep your music, accounts and settings.",
+  "downloadUrl": "https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.19.3.apk",
+  "size": 9082849,
+  "sha256": "e18bd9b6f319fec5012fca254aa659f12cb98922cddd3a4e8426b607b7a5e27e",
+  "certificateSha256": "0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3",
+  "sourceCommit": "4b5f13ced8d48bc171a126d301b191613e1a0284",
+  "sourceUrl": "https://github.com/ccatomic81-droid/VEXO-Music/archive/4b5f13ced8d48bc171a126d301b191613e1a0284.zip",
+  "signedPayload": "eyJmb3JtYXQiOiJ2ZXhvLXJlbGVhc2UtdjEiLCJhcHBsaWNhdGlvbklkIjoic3BhY2UudmV4by5tdXNpYy5yYWRpbyIsInZlcnNpb25Db2RlIjoyOCwidmVyc2lvbk5hbWUiOiIwLjE5LjMiLCJzdW1tYXJ5Ijoi4oCiIE11c2ljLW9ubHkgcmVjb21tZW5kYXRpb25zOiByZW1vdmVkIGdlbmVyYWwgWW91VHViZSB2aWRlbyBzdWdnZXN0aW9ucy5cbuKAoiBQbGF5aW5nIG11c2ljIG5vIGxvbmdlciBzYXZlcyBuZXdzIGFuZCB1bnJlbGF0ZWQgdmlkZW9zIGludG8gcmFkaW8uXG7igKIgU2VhcmNoIHN0YXlzIG9uIHRoZSBZb3VUdWJlIE11c2ljIFNvbmdzIGNhdGFsb2d1ZS5cbuKAoiBGaWx0ZXJzIG5ld3MsIHZsb2dzIGFuZCBnYW1lcGxheSBmcm9tIHNhdmVkIHJlY29tbWVuZGF0aW9uIGNhbmRpZGF0ZXMuXG7igKIgVXBkYXRlIG92ZXIgeW91ciBleGlzdGluZyBhcHAgdG8ga2VlcCB5b3VyIG11c2ljLCBhY2NvdW50cyBhbmQgc2V0dGluZ3MuIiwiZG93bmxvYWRVcmwiOiJodHRwczovL3ZleG8tbXVzaWMtdXBkYXRlcy5rYXZpbmR1a2F2aXNoa2E3ODUud29ya2Vycy5kZXYvcmVsZWFzZXMvVkVYTy1NdXNpYy0wLjE5LjMuYXBrIiwic2l6ZSI6OTA4Mjg0OSwic2hhMjU2IjoiZTE4YmQ5YjZmMzE5ZmVjNTAxMmZjYTI1NGFhNjU5ZjEyY2I5ODkyMmNkZGQzYTRlODQyNmI2MDdiN2E1ZTI3ZSIsImNlcnRpZmljYXRlU2hhMjU2IjoiMGIzMWM1MDkwNDU2NzM4OWI3MjNlMjNhZDYwNDNiMmQyZmM2NjM1YzMwZGZkYjNlZDVlZjNmOWJhOTcyN2VmMyIsInNvdXJjZUNvbW1pdCI6IjRiNWYxM2NlZDhkNDhiYzE3MWExMjZkMzAxYjE5MTYxM2UxYTAyODQifQ==",
+  "releaseSignature": "ZviwvsXsLymRFednUT3+jtCT9NZkAhQtu7BRv9436tHKhJwylDfHuoSUOuaX12nLoIaMWp0xv4408enyayhs20MldUXaRaAR2ybnPOfTCvzuUwR+qN/hdUnUfCwEBIQsvbfzGKtYDPePJ5QErj0q3EYlwJsPA4Id3SDJ9OA7/hMiaMT2M5U4U7YpWYjPgSLQYc/2YcBrKGhODRrvxmy1grMgn00gin7w40PqHOO952C+p+uLCW2//+/Ax5jJmbFqguuSpUSj+Cej3lI/mjHtC9FKBFFYOUhh7Mwgv2IAG27c/LTW+4/CClFLHCKXM6OHNW7DOghbrWyTz0+EOKff3Q=="
+}
