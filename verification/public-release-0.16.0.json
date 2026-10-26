@@ -19,5 +19,10 @@
     "RELEASES"
   ],
   "campaignSent": false,
-  "physicalAndroidDevicesTested": false
+  "physicalAndroidDevicesTested": false,
+  "githubRelease": "https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.16.0",
+  "githubReleaseWorkflow": 40255122747,
+  "githubReleaseWorkflowConclusion": "success",
+  "mergedSourceCiRun": 40254658582,
+  "mergedSourceCiConclusion": "success"
 }
