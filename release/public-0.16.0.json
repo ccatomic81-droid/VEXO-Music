@@ -1,0 +1,14 @@
+{
+  "applicationId": "space.vexo.music.radio",
+  "versionCode": 20,
+  "versionName": "0.16.0",
+  "summary": "• One-time invitation to enable notifications after startup; Enable or Not now.\n• Aurora Home, aligned playlists, floating navigation and rounded mini-player covers.\n• Optional Google/email accounts and manual online favourites/playlist sync.\n• Optional release alerts in Settings.\n• Playback, crossfade, Smart Experience, cloud MindRadio and FairPlay are preserved.\n• Install as an update to keep your music and preferences.",
+  "downloadUrl": "https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.16.0.apk",
+  "size": 8804042,
+  "sha256": "fe3d109f41039a2b1eb1c108e507173121c334b74af26684e3ceb9a3a418232d",
+  "certificateSha256": "0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3",
+  "sourceCommit": "97a4b6a95451842232a91ff2cc7f55d0b4a036da",
+  "sourceUrl": "https://github.com/ccatomic81-droid/VEXO-Music/archive/97a4b6a95451842232a91ff2cc7f55d0b4a036da.zip",
+  "signedPayload": "eyJmb3JtYXQiOiJ2ZXhvLXJlbGVhc2UtdjEiLCJhcHBsaWNhdGlvbklkIjoic3BhY2UudmV4by5tdXNpYy5yYWRpbyIsInZlcnNpb25Db2RlIjoyMCwidmVyc2lvbk5hbWUiOiIwLjE2LjAiLCJzdW1tYXJ5Ijoi4oCiIE9uZS10aW1lIGludml0YXRpb24gdG8gZW5hYmxlIG5vdGlmaWNhdGlvbnMgYWZ0ZXIgc3RhcnR1cDsgRW5hYmxlIG9yIE5vdCBub3cuXG7igKIgQXVyb3JhIEhvbWUsIGFsaWduZWQgcGxheWxpc3RzLCBmbG9hdGluZyBuYXZpZ2F0aW9uIGFuZCByb3VuZGVkIG1pbmktcGxheWVyIGNvdmVycy5cbuKAoiBPcHRpb25hbCBHb29nbGUvZW1haWwgYWNjb3VudHMgYW5kIG1hbnVhbCBvbmxpbmUgZmF2b3VyaXRlcy9wbGF5bGlzdCBzeW5jLlxu4oCiIE9wdGlvbmFsIHJlbGVhc2UgYWxlcnRzIGluIFNldHRpbmdzLlxu4oCiIFBsYXliYWNrLCBjcm9zc2ZhZGUsIFNtYXJ0IEV4cGVyaWVuY2UsIGNsb3VkIE1pbmRSYWRpbyBhbmQgRmFpclBsYXkgYXJlIHByZXNlcnZlZC5cbuKAoiBJbnN0YWxsIGFzIGFuIHVwZGF0ZSB0byBrZWVwIHlvdXIgbXVzaWMgYW5kIHByZWZlcmVuY2VzLiIsImRvd25sb2FkVXJsIjoiaHR0cHM6Ly92ZXhvLW11c2ljLXVwZGF0ZXMua2F2aW5kdWthdmlzaGthNzg1LndvcmtlcnMuZGV2L3JlbGVhc2VzL1ZFWE8tTXVzaWMtMC4xNi4wLmFwayIsInNpemUiOjg4MDQwNDIsInNoYTI1NiI6ImZlM2QxMDlmNDEwMzlhMmIxZWIxYzEwOGU1MDcxNzMxMjFjMzM0Yjc0YWYyNjY4NGUzY2ViOWEzYTQxODIzMmQiLCJjZXJ0aWZpY2F0ZVNoYTI1NiI6IjBiMzFjNTA5MDQ1NjczODliNzIzZTIzYWQ2MDQzYjJkMmZjNjYzNWMzMGRmZGIzZWQ1ZWYzZjliYTk3MjdlZjMiLCJzb3VyY2VDb21taXQiOiI5N2E0YjZhOTU0NTE4NDIyMzJhOTFmZjJjYzdmNTVkMGI0YTAzNmRhIn0=",
+  "releaseSignature": "JvbEz5nqUEFMlXYMzvPV7nju+cmmPYjE8TzPCa6a2kJOqcK0sokXdK+OPVp6maZyjFnGON5DoIUh9t5pfxF5JZYIG6NoIy5eDHOfyvNsfXr6iqhU481sOa6ac04ANygSQG8mzDkgNQkQg6TD80GX4kLaynj6IumT0qi2wCsAgDMgmufbdO/JPDiS3rDoln+FkcPnmV/Ph0dk3keG9e6j43dOiXryM0YD2ZWizmaj6soeKTOT1+NLAyPselk+fCGX6GN1hg4wcRU6UqweMbyae3tMdfRpx8Ch834W83PG+QuTVLOHF8WU59S+aCoBJ+gIixANqaa6jy2xho3RFX5adw=="
+}

@@ -2,7 +2,7 @@
 
 Developer: **Kavindu Kavishka**.
 
-The 0.16 release restores the latest Aurora UI, optional Google/email accounts, manual favourites/playlist sync and optional release alerts, with a one-time first-visit notification invitation. The source project has been recovered and is being verified before public promotion. See [recovery and verification](docs/RECOVERY-0.16.md).
+The 0.16 release restores the latest Aurora UI, optional Google/email accounts, manual favourites/playlist sync and optional release alerts, with a one-time first-visit notification invitation. The recovered source and verified, originally signed production APK are published. [Download VEXO Music 0.16.0](https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.16.0.apk) or open [the public release](https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.16.0). See [recovery and verification](docs/RECOVERY-0.16.md).
 
 Search now shows real song names, artwork and artists while typing, with direct play controls. Home has quick collection tiles, horizontally scrolling music cards, regional picks and VEXO mood mixes. Full playlist pages support Play all, a one-shot shuffled queue, adding songs, renaming and deleting a playlist, and removing individual tracks.
 
@@ -90,7 +90,7 @@ Auto-save is enabled by default and attempts to save the full audio of a played 
 
 ## Install or update VEXO Music
 
-Install `VEXO-Music-0.9.0.apk`. It appears as **VEXO Music**, package `space.vexo.music.radio`, version code 11.
+Install `VEXO-Music-0.16.0.apk`. It appears as **VEXO Music**, package `space.vexo.music.radio`, version code 20.
 
 The earlier delivery workspace and its signing key were reset. The v0.4.x line uses its backed-up development signing certificate and a separate app ID so it can coexist with v0.3.0. **Keep the old app installed to preserve its favourites, playlists and offline audio. That private app data does not automatically transfer to this build.** This APK is not an in-place update to v0.3.0.
 

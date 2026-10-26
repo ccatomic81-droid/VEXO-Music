@@ -1,0 +1,49 @@
+{
+  "version": "0.16.0",
+  "versionCode": 20,
+  "applicationId": "space.vexo.music.radio",
+  "sourceCommit": "97a4b6a95451842232a91ff2cc7f55d0b4a036da",
+  "ciRun": 40254103914,
+  "ciConclusion": "success",
+  "sha256": "fe3d109f41039a2b1eb1c108e507173121c334b74af26684e3ceb9a3a418232d",
+  "size": 8804042,
+  "original_certificate_verified": true,
+  "certificateSha256": "0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3",
+  "signed_apk_non_signature_entries_match_final_host_unsigned_apk": true,
+  "debuggable": false,
+  "zipalign16KiB": "passed",
+  "android_tests": {
+    "total": 146,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 6
+  },
+  "final_targeted_tests": {
+    "total": 12,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "lint_debug_and_release": {
+    "status": "passed",
+    "errors": 0,
+    "warnings": "Existing warnings and Firebase Auth Kotlin metadata parser warning; no lint errors"
+  },
+  "service_tests": {
+    "total": 21,
+    "failures": 0
+  },
+  "resolved_dependency_advisory_check": {
+    "packages": 120,
+    "knownFindings": 0,
+    "scope": "OSV advisory snapshot; not a full security audit"
+  },
+  "native_layouts": "Home/account rendered at 320dp and compared with saved 0.15 renders",
+  "physical_android_devices_tested": false,
+  "remaining_device_acceptance": [
+    "Native Google chooser success",
+    "Actual FCM delivery",
+    "Two-phone live sync acceptance"
+  ],
+  "push_or_email_campaign_sent": false
+}

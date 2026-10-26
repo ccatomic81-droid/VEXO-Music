@@ -1,0 +1,23 @@
+{
+  "versionName": "0.16.0",
+  "versionCode": 20,
+  "applicationId": "space.vexo.music.radio",
+  "sha256": "fe3d109f41039a2b1eb1c108e507173121c334b74af26684e3ceb9a3a418232d",
+  "bytes": 8804042,
+  "sourceCommit": "97a4b6a95451842232a91ff2cc7f55d0b4a036da",
+  "sourcePullRequest": 10,
+  "mergeCommit": "8e44e3674b5f29cc548d9ebadd1ec4f0af9a588c",
+  "stableFeed": "https://vexo-music-updates.kavindukavishka785.workers.dev/stable.json",
+  "manifestExactMatch": true,
+  "publicApkDownloadedAndSha256Matched": true,
+  "headVerified": true,
+  "range206Verified": true,
+  "previousReleasePreserved": true,
+  "writeRouteStatus": 405,
+  "temporaryPublisherRemoved": true,
+  "workerBindings": [
+    "RELEASES"
+  ],
+  "campaignSent": false,
+  "physicalAndroidDevicesTested": false
+}
