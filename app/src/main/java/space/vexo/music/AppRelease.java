@@ -8,6 +8,8 @@ import org.json.*;
 final class AppRelease {
   static final String NOTES =
       "• Clear bottom navigation without the dark background plate.\n"
+          + "• Start radio keeps the current song and playback position.\n"
+          + "• YouTube Music radio recommendations with automatic fallbacks.\n"
           + "• Optional YouTube taste in Settings: connect with Google’s read-only permission.\n"
           + "• VEXO picks based on your liked YouTube music, with refresh and disconnect controls.\n"
           + "• Imported music details stay encrypted on this phone and expire after 28 days.\n"

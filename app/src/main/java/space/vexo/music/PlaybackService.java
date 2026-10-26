@@ -51,12 +51,9 @@ public final class PlaybackService extends MediaSessionService {
     autoplay.suspend();
     radioStore.anchor(seed);
     getSharedPreferences("settings", 0).edit().putBoolean("autoplay", true).apply();
-    player.setRepeatMode(Player.REPEAT_MODE_OFF);
-    player.setShuffleModeEnabled(false);
-    player.setMediaItem(seed.mediaItem());
+    SongRadio.activate(player, seed);
     autoplay.newQueue();
-    player.prepare();
-    player.play();
+    autoplay.check();
   }
 
   private void hideFromRadio(Track track) {

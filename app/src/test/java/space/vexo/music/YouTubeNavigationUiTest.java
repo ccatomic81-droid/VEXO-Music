@@ -43,11 +43,27 @@ public class YouTubeNavigationUiTest {
       ((View) find.text(root, "YouTube taste").getParent().getParent()).performClick();
       Dialog dialog = ShadowDialog.getLatestDialog();
       assertNotNull(find.text(dialog.getWindow().getDecorView(), "Connect YouTube"));
-      new DiscoveryUiTest()
-          .capture(dialog.getWindow().getDecorView(), 320, 640, "youtube-consent-320");
+      captureDialog(dialog.getWindow().getDecorView());
       find.text(dialog.getWindow().getDecorView(), "Close").performClick();
       assertFalse(new YouTubeTaste(a).read().connected);
     }
+  }
+
+  private void captureDialog(View root) throws Exception {
+    root.measure(
+        View.MeasureSpec.makeMeasureSpec(320, View.MeasureSpec.EXACTLY),
+        View.MeasureSpec.makeMeasureSpec(640, View.MeasureSpec.EXACTLY));
+    root.layout(0, 0, 320, 640);
+    android.graphics.Bitmap image =
+        android.graphics.Bitmap.createBitmap(320, 640, android.graphics.Bitmap.Config.ARGB_8888);
+    root.draw(new android.graphics.Canvas(image));
+    java.io.File folder = new java.io.File("build/ui-checks");
+    folder.mkdirs();
+    try (java.io.FileOutputStream out =
+        new java.io.FileOutputStream(new java.io.File(folder, "youtube-consent-320.png"))) {
+      image.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, out);
+    }
+    image.recycle();
   }
 
   @Test

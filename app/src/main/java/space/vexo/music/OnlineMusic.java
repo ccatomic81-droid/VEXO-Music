@@ -51,8 +51,25 @@ public final class OnlineMusic {
       List<Track> hit = relatedCache.get(seed.url);
       if (hit != null && !hit.isEmpty()) return new ArrayList<>(hit);
     }
-    StreamInfo info = StreamInfo.getInfo(ServiceList.YouTube, seed.url);
-    List<Track> songs = convert(info.getRelatedItems());
+    List<Track> songs = new ArrayList<>();
+    try {
+      songs = MusicRadio.load(seed);
+    } catch (Exception unavailable) {
+      if (Thread.currentThread().isInterrupted()) throw new InterruptedException();
+    }
+    if (songs.size() < 3) {
+      try {
+        StreamInfo info = StreamInfo.getInfo(ServiceList.YouTube, seed.url);
+        LinkedHashMap<String, Track> merged = new LinkedHashMap<>();
+        for (Track song : songs) merged.put(QueuePolicy.identity(song.url), song);
+        for (Track song : convert(info.getRelatedItems()))
+          merged.putIfAbsent(QueuePolicy.identity(song.url), song);
+        songs = new ArrayList<>(merged.values());
+      } catch (Exception unavailable) {
+        if (Thread.currentThread().isInterrupted()) throw new InterruptedException();
+        if (songs.isEmpty()) throw unavailable;
+      }
+    }
     if (songs.isEmpty()) songs = search(seed.artist + " music").tracks;
     rememberRelated(seed.url, songs);
     return songs;

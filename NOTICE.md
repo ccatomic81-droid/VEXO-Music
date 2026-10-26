@@ -17,3 +17,10 @@ No YMusic application source, logo or name has been copied into this app. The vi
 
 Apache License 2.0: https://www.apache.org/licenses/LICENSE-2.0
 NewPipe Extractor licence: https://github.com/TeamNewPipe/NewPipeExtractor/blob/v0.26.5/LICENSE
+
+# Music catalogue research (0.17)
+
+The YouTube Music radio adapter was informed by the public queue/parsing architecture in
+[Metrolist](https://github.com/MetrolistGroup/Metrolist) (GPL-3.0) and the music transport
+in NewPipeExtractor (GPL-3.0). VEXO retains its existing GPL source distribution.
+See `docs/MUSIC-RADIO-0.17.md` for the scope and implementation references.
