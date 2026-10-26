@@ -138,6 +138,11 @@ public final class MainActivity extends ComponentActivity {
   private boolean updateChecking;
 
   private Dialog playerDialog, queueDialog;
+  private NotificationPermissionPrompt notificationPrompt;
+  private final ActivityResultLauncher<String> notificationPermission =
+      registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> {
+        if (granted) message("Notifications enabled");
+      });
   private QueuePanel queuePanel;
   private NowPlayingPanel playerPanel;
   private List<Integer> queueViewIndices = new ArrayList<>();
@@ -216,6 +221,10 @@ public final class MainActivity extends ComponentActivity {
             (term, country) -> OnlineMusic.preview(categoryQuery(term), country));
     mixCatalogue = new MixCatalogue(this);
     updates = new UpdateChecker(this);
+    notificationPrompt = new NotificationPermissionPrompt(this,
+        () -> profile.complete() && !profileEditing
+            && (updateDialog == null || !updateDialog.isShowing()),
+        () -> notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS));
     getSharedPreferences("playback_state", 0)
         .registerOnSharedPreferenceChangeListener(playbackStateChanged);
     homeFeed = RegionalFeed.cached(this, RegionPolicy.current(this));
@@ -342,6 +351,7 @@ public final class MainActivity extends ComponentActivity {
   @Override
   protected void onResume() {
     super.onResume();
+    if (notificationPrompt != null) notificationPrompt.resume();
     main.removeCallbacks(tick);
     main.post(tick);
     if (homePanel != null) homePanel.personalize();
@@ -366,7 +376,14 @@ public final class MainActivity extends ComponentActivity {
   }
 
   @Override
+  public void onWindowFocusChanged(boolean hasFocus) {
+    super.onWindowFocusChanged(hasFocus);
+    if (hasFocus && notificationPrompt != null) notificationPrompt.schedule();
+  }
+
+  @Override
   protected void onPause() {
+    if (notificationPrompt != null) notificationPrompt.pause();
     stopClock();
     main.removeCallbacks(tick);
     super.onPause();
@@ -393,6 +410,7 @@ public final class MainActivity extends ComponentActivity {
 
   @Override
   protected void onDestroy() {
+    if (notificationPrompt != null) notificationPrompt.close();
     destroyed = true;
     stopClock();
     discoveryEpoch++;
@@ -577,6 +595,7 @@ public final class MainActivity extends ComponentActivity {
 
   private void render() {
     if (destroyed) return;
+    if (notificationPrompt != null) notificationPrompt.schedule();
     suggestions.cancel();
     musicPreview.cancel();
     searchTitleView = null;
