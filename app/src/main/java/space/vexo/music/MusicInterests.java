@@ -262,10 +262,8 @@ final class MusicInterests {
   }
 
   String description() {
-    return youtube && !imported.isEmpty()
-        ? "Based on your connected YouTube music and VEXO interests"
-        : youtube
-            ? "YouTube connected · building your taste from music you enjoy in VEXO"
-            : "Based on your favourites, playlists and listening in VEXO";
+    return !SessionTaste.seeds(session, System.currentTimeMillis()).isEmpty()
+        ? "Based on your recent listening and favourites in VEXO"
+        : "Based on your favourites, playlists and listening in VEXO";
   }
 }
