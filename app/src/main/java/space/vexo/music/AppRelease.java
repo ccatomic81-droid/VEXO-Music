@@ -7,11 +7,10 @@ import org.json.*;
 /** A release feed contains metadata only. Downloads always need a user tap. */
 final class AppRelease {
   static final String NOTES =
-      "• Full-height YouTube and settings panels remove unused top and bottom space.\n"
-          + "• A fixed YouTube header keeps Close reachable while scrolling long music lists.\n"
-          + "• System bars, display cutouts and the keyboard get one safe-area inset.\n"
-          + "• Spotify green with black, white and neutral grey replaces the violet theme.\n"
-          + "• Existing music, YouTube connection, artwork caching and playlists are preserved.";
+      "• New white music-note and sound-wave logo on a black background.\n"
+          + "• Adaptive launcher, round and themed icon support.\n"
+          + "• Matching notification icon, including music playback.\n"
+          + "• Your music, connected accounts, playlists and settings are preserved.";
   final int code;
   final String version, summary, url;
   String sha256 = "";

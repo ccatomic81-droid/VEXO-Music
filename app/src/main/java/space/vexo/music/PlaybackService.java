@@ -199,6 +199,10 @@ public final class PlaybackService extends MediaSessionService {
   @Override
   public void onCreate() {
     super.onCreate();
+    androidx.media3.session.DefaultMediaNotificationProvider notifications =
+        new androidx.media3.session.DefaultMediaNotificationProvider.Builder(this).build();
+    notifications.setSmallIcon(R.drawable.ic_notification);
+    setMediaNotificationProvider(notifications);
     radioStore = new RadioStore(this);
     OfflineLibrary offline = OfflineLibrary.get(this);
     player = new CrossfadePlayer(this, offline.playbackFactory());

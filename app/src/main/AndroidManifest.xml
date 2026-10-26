@@ -8,7 +8,7 @@
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
-    <application android:name=".VexoApplication" android:allowBackup="false" android:dataExtractionRules="@xml/data_extraction_rules" android:label="VEXO Music" android:icon="@drawable/ic_launcher" android:theme="@style/AppTheme" android:supportsRtl="true" android:usesCleartextTraffic="false">
+    <application android:name=".VexoApplication" android:allowBackup="false" android:dataExtractionRules="@xml/data_extraction_rules" android:label="VEXO Music" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher" android:theme="@style/AppTheme" android:supportsRtl="true" android:usesCleartextTraffic="false">
         <meta-data android:name="firebase_messaging_auto_init_enabled" android:value="false" />
         <meta-data android:name="firebase_analytics_collection_enabled" android:value="false" />
         <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_notification" />
