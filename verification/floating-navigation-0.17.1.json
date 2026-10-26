@@ -1,0 +1,19 @@
+{
+  "version": "0.17.1",
+  "versionCode": 22,
+  "sourceCommit": "3c1121667cc5438fdf013a9de93291ad793640cf",
+  "apkSha256": "da592491c857b7ea5b4bb42f89490cb0250751c0ea38727b254770ec7a39ecad",
+  "size": 8799846,
+  "certificateSha256": "0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3",
+  "debuggable": false,
+  "ciRun": "https://github.com/ccatomic81-droid/VEXO-Music/actions/runs/40277928738",
+  "androidTests": {
+    "total": 161,
+    "passed": 154,
+    "skipped": 7,
+    "failed": 0
+  },
+  "lint": "passed",
+  "googleConnection": "Not verified on a device. Google Cloud console unavailable in this environment. Current public Firebase-key probe is API_KEY_SERVICE_BLOCKED; that key restriction does not establish OAuth API enablement. Owner must check YouTube API and OAuth verification.",
+  "distribution": "Signed update APK delivered directly; public stable feed remains 0.17.0."
+}
