@@ -65,6 +65,11 @@ public class YouTubeNavigationUiTest {
       View root = a.findViewById(android.R.id.content);
       assertNotNull(find.text(root, "Your YouTube taste"));
       assertNotNull(find.text(root, "New suggestion"));
+      java.lang.reflect.Field source = MainActivity.class.getDeclaredField("youtube");
+      source.setAccessible(true);
+      ((YouTubeConnection) source.get(a)).cancel();
+      assertTrue(new YouTubeTaste(a).read().connected);
+      assertEquals(like.url, new YouTubeTaste(a).read().likes.get(0).url);
       find.text(root, "Manage").performClick();
       Dialog dialog = ShadowDialog.getLatestDialog();
       assertNotNull(find.text(dialog.getWindow().getDecorView(), "Liked on YouTube"));

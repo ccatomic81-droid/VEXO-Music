@@ -261,9 +261,9 @@ public final class MainActivity extends ComponentActivity {
     androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
     getWindow().setNavigationBarColor(Color.TRANSPARENT);
     getWindow().setStatusBarColor(Color.TRANSPARENT);
-    if (Build.VERSION.SDK_INT >= 29) getWindow().setNavigationBarContrastEnforced(false);
     root.setBackground(Glass.backdrop());
     setContentView(root);
+    if (Build.VERSION.SDK_INT >= 29) getWindow().setNavigationBarContrastEnforced(false);
     androidx.core.view.WindowCompat.getInsetsController(getWindow(), root)
         .setAppearanceLightNavigationBars(false);
     androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(
