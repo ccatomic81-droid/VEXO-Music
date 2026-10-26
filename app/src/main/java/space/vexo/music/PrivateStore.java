@@ -33,10 +33,15 @@ final class PrivateStore {
   }
 
   private JSONObject unseal(String sealed) throws Exception {
-    JSONObject envelope = new JSONObject(codec.decode(sealed));
+    String raw =
+        codec instanceof SmartStore.DeviceCodec ? VaultReadCache.get(vault, name, sealed) : null;
+    JSONObject envelope = new JSONObject(raw == null ? codec.decode(sealed) : raw);
     if (!name.equals(envelope.getString("collection")))
       throw new SecurityException("Wrong collection");
-    return envelope.getJSONObject("data");
+    JSONObject data = envelope.getJSONObject("data");
+    if (raw == null && codec instanceof SmartStore.DeviceCodec)
+      VaultReadCache.put(vault, name, sealed, envelope.toString());
+    return data;
   }
 
   private void write(JSONObject value) throws Exception {
@@ -69,6 +74,7 @@ final class PrivateStore {
       }
     }
     JSONObject original = new JSONObject();
+    if (legacy.getAll().isEmpty()) return original;
     try {
       for (Map.Entry<String, ?> e : legacy.getAll().entrySet()) {
         Object v = e.getValue();

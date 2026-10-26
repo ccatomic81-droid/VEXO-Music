@@ -82,8 +82,8 @@ public final class PlaybackService extends MediaSessionService {
       int limit) {
     try {
       SmartStore smart = new SmartStore(this);
-      MusicInterests interests = MusicInterests.read(this);
-      favourites = interests.favourites;
+      favourites = new java.util.ArrayList<>(favourites);
+      favourites.addAll(new YouTubeTaste(this).read().sources());
       java.util.Set<String> excluded = new java.util.HashSet<>(hidden);
       excluded.addAll(SmartPolicy.blocked(smart, System.currentTimeMillis()));
       candidates = new java.util.ArrayList<>(candidates);
@@ -96,12 +96,8 @@ public final class PlaybackService extends MediaSessionService {
             if (!artist.isEmpty()) candidates.removeIf(t -> RadioPolicy.artist(t).contains(artist));
           }
       }
-      java.util.List<Track> ranked =
-          interests.rank(
-              SmartPolicy.rank(candidates, smart, history, mode == RadioPolicy.Mode.DISCOVER),
-              mode == RadioPolicy.Mode.DISCOVER);
       return RadioPolicy.select(
-          anchor, seed, ranked, queue, history, favourites, excluded, mode, limit, 0);
+          anchor, seed, candidates, queue, history, favourites, excluded, mode, limit, 0);
     } catch (IllegalStateException unavailable) {
       return RadioPolicy.select(
           anchor, seed, candidates, queue, history, favourites, hidden, mode, limit);
@@ -299,7 +295,16 @@ public final class PlaybackService extends MediaSessionService {
                             }
                           })
                       .load(anchor, seed, interestSeeds());
-              return tuneCandidates(candidates);
+              candidates = tuneCandidates(candidates);
+              try {
+                SmartStore smart = new SmartStore(this);
+                MusicInterests interests = MusicInterests.read(this);
+                boolean discover = radioStore.mode() == RadioPolicy.Mode.DISCOVER;
+                return interests.rank(
+                    SmartPolicy.rank(candidates, smart, interests.history, discover), discover);
+              } catch (IllegalStateException unavailable) {
+                return candidates;
+              }
             },
             radioWorker,
             handler::post,

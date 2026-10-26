@@ -15,6 +15,7 @@ final class MusicInterests {
   final boolean youtube;
   final String signature;
   private final Map<String, Integer> artists = new HashMap<>();
+  private final Map<String, Integer> bonuses = new HashMap<>();
   private final JSONObject feedback;
 
   private MusicInterests(
@@ -154,15 +155,20 @@ final class MusicInterests {
   }
 
   int bonus(Track t) {
+    Integer cached = bonuses.get(t.url);
+    if (cached != null) return cached;
     int result = artists.getOrDefault(RadioPolicy.artist(t), 0);
     String text = RadioPolicy.normalize(t.title + " " + t.artist);
     for (String token : RadioPolicy.normalize(preferences.optString("artists")).split(" +"))
       if (token.length() > 2 && text.contains(token)) result += 10;
     JSONObject choice = feedback.optJSONObject(RadioPolicy.songKey(t));
     String value = choice == null ? "" : choice.optString("value");
-    return result
-        + (value.equals("less") ? -80 : value.equals("more") ? 40 : 0)
-        + TastePolicy.bonus(t, learned, System.currentTimeMillis());
+    int score =
+        result
+            + (value.equals("less") ? -80 : value.equals("more") ? 40 : 0)
+            + TastePolicy.bonus(t, learned, System.currentTimeMillis());
+    if (bonuses.size() < 512) bonuses.put(t.url, score);
+    return score;
   }
 
   List<Track> rank(List<Track> input, boolean discover) {

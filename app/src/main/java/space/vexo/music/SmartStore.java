@@ -80,10 +80,14 @@ final class SmartStore {
     try {
       String sealed = prefs.getString("vault:" + bucket, "");
       if (sealed.isEmpty()) return new JSONObject();
-      JSONObject envelope = new JSONObject(codec.decode(sealed));
+      String raw = codec instanceof DeviceCodec ? VaultReadCache.get(prefs, bucket, sealed) : null;
+      JSONObject envelope = new JSONObject(raw == null ? codec.decode(sealed) : raw);
       if (!bucket.equals(envelope.getString("bucket")))
         throw new java.security.GeneralSecurityException("Wrong vault bucket");
-      return envelope.getJSONObject("data");
+      JSONObject data = envelope.getJSONObject("data");
+      if (raw == null && codec instanceof DeviceCodec)
+        VaultReadCache.put(prefs, bucket, sealed, envelope.toString());
+      return data;
     } catch (Exception e) {
       throw new IllegalStateException(
           "Private music data is unavailable. Existing data was kept. Restart the app and try"

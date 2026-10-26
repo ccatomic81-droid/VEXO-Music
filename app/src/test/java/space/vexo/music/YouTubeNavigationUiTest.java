@@ -72,7 +72,8 @@ public class YouTubeNavigationUiTest {
       View nav = (View) find.description(root, "Home tab").getParent();
       android.view.ViewGroup dock = (android.view.ViewGroup) nav.getParent();
       android.view.ViewGroup backdrop = (android.view.ViewGroup) dock.getParent();
-      android.view.ViewGroup content = (android.view.ViewGroup) backdrop.getChildAt(0);
+      android.view.ViewGroup host = (android.view.ViewGroup) backdrop.getChildAt(0);
+      android.view.ViewGroup content = (android.view.ViewGroup) host.getChildAt(0);
       assertEquals(backdrop.getHeight(), content.getHeight());
       View page = content.getChildAt(content.getChildCount() - 1);
       assertTrue(page instanceof android.widget.ScrollView);
@@ -113,7 +114,7 @@ public class YouTubeNavigationUiTest {
       MainActivity a = activity.get();
       View root = a.findViewById(android.R.id.content);
       assertNotNull(find.text(root, "Your YouTube taste"));
-      assertNotNull(find.text(root, "New suggestion"));
+      assertEquals(pick.url, new YouTubeTaste(a).read().picks.get(0).url);
       java.lang.reflect.Field source = MainActivity.class.getDeclaredField("youtube");
       source.setAccessible(true);
       ((YouTubeConnection) source.get(a)).cancel();

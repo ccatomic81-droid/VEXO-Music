@@ -83,7 +83,10 @@ public final class MainActivity extends ComponentActivity {
       };
   private MediaController controller;
   private ListenableFuture<MediaController> controllerFuture;
-  private FrameLayout root;
+  private FrameLayout root, pageHost;
+  private final Map<String, TabPage> tabPages = new LinkedHashMap<>();
+  private String renderedTab = "";
+  private boolean navigationBuild;
   private LinearLayout content, mini, nav, floatingDock;
   private final Map<View, Integer> dockPadding = new IdentityHashMap<>();
   private TextView miniTitle, miniArtist;
@@ -105,6 +108,8 @@ public final class MainActivity extends ComponentActivity {
       () -> {
         if (destroyed) return;
         if (tab.equals("Library") && shelf.equals("Offline")) render();
+        invalidateTab("Library");
+        invalidateTab("Settings");
         if (offlineSummary != null) offlineSummary.setText(offlineDescription());
         updatePlayback();
       };
@@ -291,23 +296,16 @@ public final class MainActivity extends ComponentActivity {
         });
     androidx.core.view.ViewCompat.requestApplyInsets(root);
     content = column();
-    root.addView(content, new FrameLayout.LayoutParams(-1, -1));
+    pageHost = new FrameLayout(this);
+    pageHost.setClipChildren(true);
+    root.addView(pageHost, new FrameLayout.LayoutParams(-1, -1));
+    pageHost.addView(content, new FrameLayout.LayoutParams(-1, -1));
     floatingDock = column();
     floatingDock.setClipChildren(false);
     FrameLayout.LayoutParams dockLayout = new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM);
     root.addView(floatingDock, dockLayout);
     floatingDock.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> updateDockSpace());
-    content.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> updateDockSpace());
-    content.setOnHierarchyChangeListener(
-        new ViewGroup.OnHierarchyChangeListener() {
-          public void onChildViewAdded(View parent, View child) {
-            updateDockSpace();
-          }
-
-          public void onChildViewRemoved(View parent, View child) {
-            dockPadding.remove(child);
-          }
-        });
+    configurePage(content);
     buildMini();
     buildNav();
     render();
@@ -369,8 +367,7 @@ public final class MainActivity extends ComponentActivity {
                   return;
                 }
                 if (!tab.equals("Home")) {
-                  tab = "Home";
-                  render();
+                  navigate("Home");
                 } else {
                   setEnabled(false);
                   getOnBackPressedDispatcher().onBackPressed();
@@ -463,6 +460,9 @@ public final class MainActivity extends ComponentActivity {
     if (googleCancellation != null) googleCancellation.cancel();
     if (notificationPrompt != null) notificationPrompt.close();
     destroyed = true;
+    if (pageHost != null)
+      for (int i = 0; i < pageHost.getChildCount(); i++) pageHost.getChildAt(i).animate().cancel();
+    tabPages.clear();
     stopClock();
     discoveryEpoch++;
     if (homeTask != null) homeTask.cancel(true);
@@ -576,9 +576,21 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private void refreshNav() {
-    nav.removeAllViews();
     String[] labels = {"Home", "Search", "Library", "Settings", "Smart"};
     String[] names = {"home", "search", "library", "settings", "smart"};
+    if (nav.getChildCount() == labels.length) {
+      for (int j = 0; j < labels.length; j++) {
+        LinearLayout item = (LinearLayout) nav.getChildAt(j);
+        boolean selected = labels[j].equals(tab);
+        Icon glyph = (Icon) item.getChildAt(0);
+        glyph.set(names[j], selected ? BG : MUTED);
+        glyph.setBackground(selected ? round(LIME, dp(22)) : null);
+        TextView caption = (TextView) item.getChildAt(1);
+        caption.setTextColor(selected ? LIME : MUTED);
+        item.setSelected(selected);
+      }
+      return;
+    }
     for (int j = 0; j < labels.length; j++) {
       String label = labels[j];
       boolean selected = label.equals(tab);
@@ -602,19 +614,142 @@ public final class MainActivity extends ComponentActivity {
       item.setContentDescription(label.equals("Smart") ? "Smart Experience tab" : label + " tab");
       item.setOnClickListener(
           v -> {
-            if (searchField != null) query = searchField.getText().toString();
-            tab = label;
-            activeCollection = "";
-            activeMix = "";
-            mixGeneration++;
-            mixLoading = false;
-            if (!label.equals("Search")) addingToPlaylist = "";
-            ((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE))
-                .hideSoftInputFromWindow(root.getWindowToken(), 0);
-            render();
+            navigate(label);
           });
       nav.addView(item, new LinearLayout.LayoutParams(0, -2, 1));
     }
+  }
+
+  private void configurePage(LinearLayout page) {
+    page.addOnLayoutChangeListener(
+        (v, l, t, r, b, ol, ot, or, ob) -> {
+          if (page == content) updateDockSpace();
+        });
+    page.setOnHierarchyChangeListener(
+        new ViewGroup.OnHierarchyChangeListener() {
+          public void onChildViewAdded(View parent, View child) {
+            if (page == content) updateDockSpace();
+          }
+
+          public void onChildViewRemoved(View parent, View child) {
+            dockPadding.remove(child);
+          }
+        });
+  }
+
+  private final class TabPage {
+    final LinearLayout page = content;
+    final MusicHomePanel home = homePanel;
+    final EditText search = searchField;
+    final TrackList adapter = listAdapter;
+    final TextView state = status, offline = offlineSummary;
+    final View searchTitle = searchTitleView,
+        sources = searchSources,
+        languages = searchLanguages,
+        category = searchCategoryBack;
+    final ScrollView scroll = suggestionScroll;
+    final LinearLayout suggestions = suggestionBody;
+    final boolean showingSuggestions = suggestionsVisible;
+
+    void restore() {
+      content = page;
+      homePanel = home;
+      searchField = search;
+      listAdapter = adapter;
+      status = state;
+      offlineSummary = offline;
+      searchTitleView = searchTitle;
+      searchSources = sources;
+      searchLanguages = languages;
+      searchCategoryBack = category;
+      suggestionScroll = scroll;
+      suggestionBody = suggestions;
+      suggestionsVisible = showingSuggestions;
+      profilePanel = null;
+    }
+  }
+
+  private void discardInactivePages() {
+    if (pageHost == null) return;
+    Iterator<Map.Entry<String, TabPage>> entries = tabPages.entrySet().iterator();
+    while (entries.hasNext()) {
+      TabPage page = entries.next().getValue();
+      if (page.page != content) {
+        page.page.animate().cancel();
+        for (int i = 0; i < page.page.getChildCount(); i++)
+          dockPadding.remove(page.page.getChildAt(i));
+        pageHost.removeView(page.page);
+        entries.remove();
+      }
+    }
+  }
+
+  private void invalidateTab(String name) {
+    TabPage page = tabPages.get(name);
+    if (page != null && page.page != content) {
+      tabPages.remove(name);
+      page.page.animate().cancel();
+      for (int i = 0; i < page.page.getChildCount(); i++)
+        dockPadding.remove(page.page.getChildAt(i));
+      pageHost.removeView(page.page);
+    }
+  }
+
+  private void navigate(String target) {
+    if (destroyed || target.equals(tab) && !renderedTab.isEmpty()) return;
+    String previous = tab;
+    if (searchField != null) query = searchField.getText().toString();
+    suggestions.cancel();
+    musicPreview.cancel();
+    if (tab.equals("Search")) {
+      hideSuggestions();
+      if (searchField != null) searchField.clearFocus();
+    }
+    boolean keep = !renderedTab.isEmpty();
+    if (keep) tabPages.put(renderedTab, new TabPage());
+    content.animate().cancel();
+    content.setTranslationX(0);
+    content.setAlpha(1);
+    content.setVisibility(View.GONE);
+    if (!keep) pageHost.removeView(content);
+    tab = target;
+    activeCollection = "";
+    activeMix = "";
+    mixGeneration++;
+    mixLoading = false;
+    if (!target.equals("Search")) addingToPlaylist = "";
+    ((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE))
+        .hideSoftInputFromWindow(root.getWindowToken(), 0);
+    TabPage saved = tabPages.get(target);
+    if (saved != null) {
+      saved.restore();
+      renderedTab = target;
+      content.setVisibility(View.VISIBLE);
+      refreshNav();
+      updatePlayback();
+      updateSearchChrome();
+      updateDockSpace();
+      if (homePanel != null) {
+        homePanel.personalize();
+        loadPersonal(false);
+      }
+    } else {
+      content = column();
+      configurePage(content);
+      pageHost.addView(content, new FrameLayout.LayoutParams(-1, -1));
+      navigationBuild = true;
+      try {
+        render();
+      } finally {
+        navigationBuild = false;
+      }
+    }
+    PageMotion.enter(
+        content,
+        Arrays.asList("Home", "Search", "Library", "Settings", "Smart").indexOf(target)
+                >= Arrays.asList("Home", "Search", "Library", "Settings", "Smart").indexOf(previous)
+            ? 1
+            : -1);
   }
 
   private void buildMini() {
@@ -672,6 +807,15 @@ public final class MainActivity extends ComponentActivity {
   private void render() {
     if (destroyed) return;
     if (notificationPrompt != null) notificationPrompt.schedule();
+    content.animate().cancel();
+    content.setTranslationX(0);
+    content.setAlpha(1);
+    content.setVisibility(View.VISIBLE);
+    if (!navigationBuild) {
+      discardInactivePages();
+      tabPages.clear();
+    }
+    renderedTab = "";
     suggestions.cancel();
     musicPreview.cancel();
     searchTitleView = null;
@@ -684,7 +828,6 @@ public final class MainActivity extends ComponentActivity {
     suggestionBody = null;
     if (profilePanel != null) profileDraft = profilePanel.draft();
     profilePanel = null;
-    dockPadding.clear();
     content.removeAllViews();
     listAdapter = null;
     searchField = null;
@@ -719,6 +862,8 @@ public final class MainActivity extends ComponentActivity {
       default:
         renderHome();
     }
+    renderedTab = tab;
+    updateDockSpace();
   }
 
   private void openProfile() {
@@ -799,6 +944,7 @@ public final class MainActivity extends ComponentActivity {
     homeError = "";
     int generation = ++homeGeneration;
     if (tab.equals("Home")) render();
+    else invalidateTab("Home");
     homeTask =
         io.submit(
             () -> {
@@ -811,6 +957,7 @@ public final class MainActivity extends ComponentActivity {
                       homeFeed = found;
                       homeLoading = false;
                       if (tab.equals("Home")) render();
+                      else invalidateTab("Home");
                     });
               } catch (Exception error) {
                 if (!Thread.currentThread().isInterrupted())
@@ -821,6 +968,7 @@ public final class MainActivity extends ComponentActivity {
                       homeLoading = false;
                       homeError = "Couldn’t refresh this region. Check your connection and retry.";
                       if (tab.equals("Home")) render();
+                      else invalidateTab("Home");
                     });
               }
             });
@@ -896,10 +1044,6 @@ public final class MainActivity extends ComponentActivity {
             });
     homePanel = panel;
     try {
-      MusicInterests currentInterests = MusicInterests.read(this);
-      if (!personalKey.isEmpty() && !personalKey.equals(currentInterests.signature))
-        invalidatePersonal();
-      personalInterests = currentInterests;
       if (!homeFilter.equals("Playlists")
           && !new SmartStore(this).preferences().optBoolean("focus")) {
         drawPersonal();
@@ -965,22 +1109,9 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private void loadPersonal(boolean force) {
-    if (destroyed || !tab.equals("Home") || homePanel == null) return;
-    final MusicInterests interests;
-    try {
-      if (new SmartStore(this).preferences().optBoolean("focus")) return;
-      interests = MusicInterests.read(this);
-    } catch (IllegalStateException unavailable) {
-      return;
-    }
-    boolean same = personalKey.equals(interests.signature);
-    if (!force
-        && same
-        && (personalLoading || System.currentTimeMillis() - personalAt < 30 * 60_000L)) return;
+    if (destroyed || !tab.equals("Home") || homePanel == null || personalLoading && !force) return;
     if (personalTask != null) personalTask.cancel(true);
     int request = ++personalGeneration;
-    personalInterests = interests;
-    personalKey = interests.signature;
     personalLoading = true;
     personalFailed = false;
     drawPersonal();
@@ -988,6 +1119,35 @@ public final class MainActivity extends ComponentActivity {
         io.submit(
             () -> {
               try {
+                MusicInterests interests = MusicInterests.read(this);
+                if (interests.preferences.optBoolean("focus")) {
+                  main.post(
+                      () -> {
+                        if (!destroyed && request == personalGeneration) personalLoading = false;
+                      });
+                  return;
+                }
+                boolean fresh =
+                    !force
+                        && personalKey.equals(interests.signature)
+                        && System.currentTimeMillis() - personalAt < 30 * 60_000L;
+                if (fresh) {
+                  main.post(
+                      () -> {
+                        if (destroyed || request != personalGeneration) return;
+                        personalInterests = interests;
+                        personalLoading = false;
+                        drawPersonal();
+                      });
+                  return;
+                }
+                main.post(
+                    () -> {
+                      if (destroyed || request != personalGeneration) return;
+                      personalInterests = interests;
+                      personalSongs = new ArrayList<>();
+                      drawPersonal();
+                    });
                 List<Track> found =
                     PersonalDiscovery.load(
                         interests,
@@ -1001,19 +1161,18 @@ public final class MainActivity extends ComponentActivity {
                                 query, RegionPolicy.current(MainActivity.this));
                           }
                         });
+                // Recheck the source on the worker, never on the drawing/input thread.
+                boolean current = interests.signature.equals(MusicInterests.read(this).signature);
                 main.post(
                     () -> {
                       if (destroyed || request != personalGeneration) return;
-                      try {
-                        if (!interests.signature.equals(MusicInterests.read(this).signature)) {
-                          invalidatePersonal();
-                          loadPersonal(false);
-                          return;
-                        }
-                      } catch (IllegalStateException unavailable) {
+                      if (!current) {
                         invalidatePersonal();
+                        loadPersonal(false);
                         return;
                       }
+                      personalInterests = interests;
+                      personalKey = interests.signature;
                       personalSongs = found;
                       personalLoading = false;
                       personalAt = System.currentTimeMillis();
@@ -1022,6 +1181,15 @@ public final class MainActivity extends ComponentActivity {
                     });
               } catch (InterruptedException cancelled) {
                 Thread.currentThread().interrupt();
+              } catch (IllegalStateException unavailable) {
+                main.post(
+                    () -> {
+                      if (!destroyed && request == personalGeneration) {
+                        personalLoading = false;
+                        personalFailed = true;
+                        drawPersonal();
+                      }
+                    });
               }
             });
   }
@@ -1068,6 +1236,7 @@ public final class MainActivity extends ComponentActivity {
                   prefetchingMixes.remove(key);
                   if (!unavailable) mixCatalogue.save(mix, country, found);
                   if (homePanel != null && !unavailable) homePanel.updateMix(mix, found);
+                  else if (!unavailable) invalidateTab("Home");
                   if (activeMix.equals(mix.id)) {
                     mixLoading = false;
                     mixError =
@@ -1164,8 +1333,8 @@ public final class MainActivity extends ComponentActivity {
 
   private void browseSearch(LinearLayout parent) {
     try {
-      MusicInterests interests = MusicInterests.read(this);
-      if (!interests.seeds.isEmpty()) {
+      MusicInterests interests = personalInterests;
+      if (interests != null && !interests.seeds.isEmpty()) {
         parent.addView(text("Your artists", 17, TEXT, true));
         HorizontalScrollView scroll = new HorizontalScrollView(this);
         scroll.setHorizontalScrollBarEnabled(false);
@@ -1740,6 +1909,7 @@ public final class MainActivity extends ComponentActivity {
                     results = tracks;
                     searching = false;
                     if (tab.equals("Search")) render();
+                    else invalidateTab("Search");
                   });
             } else {
               OnlineMusic.Results found = OnlineMusic.search(request);
@@ -1761,6 +1931,7 @@ public final class MainActivity extends ComponentActivity {
                     results = new ArrayList<>(delivered.tracks);
                     searching = false;
                     if (tab.equals("Search")) render();
+                    else invalidateTab("Search");
                   });
             }
           } catch (Exception e) {
@@ -1768,6 +1939,7 @@ public final class MainActivity extends ComponentActivity {
                 () -> {
                   if (destroyed || generation != searchGeneration) return;
                   searching = false;
+                  invalidateTab("Search");
                   if (tab.equals("Search")) {
                     render();
                     if (status != null)
@@ -2006,6 +2178,7 @@ public final class MainActivity extends ComponentActivity {
               () -> {
                 if (destroyed || generation != scanGeneration) return;
                 local = new ArrayList<>(found.values());
+                invalidateTab("Library");
                 if (tab.equals("Library") && shelf.equals("Phone")
                     || tab.equals("Search") && !online) render();
               });
@@ -2433,13 +2606,12 @@ public final class MainActivity extends ComponentActivity {
         && mix.id.equals("regional")
         && homeFeed != null
         && homeFeed.country.equals(country)) songs = MixCatalogue.songs(homeFeed.tracks);
-    if (isMix) {
+    if (isMix && personalInterests != null) {
       try {
         songs =
-            MusicInterests.read(this)
-                .rank(
-                    SmartPolicy.rank(songs, new SmartStore(this), store.tracks("history"), false),
-                    false);
+            personalInterests.rank(
+                SmartPolicy.rank(songs, new SmartStore(this), store.tracks("history"), false),
+                false);
       } catch (IllegalStateException unavailable) {
         /* Keep catalogue mixes usable. */
       }
@@ -4014,6 +4186,7 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private void radioChanged() {
+    discardInactivePages();
     invalidatePersonal();
     if (controller != null)
       controller.sendCustomCommand(

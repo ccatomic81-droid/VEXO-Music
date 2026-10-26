@@ -142,15 +142,14 @@ final class SmartPolicy {
     }
     JSONObject taste = prefs.optBoolean("learn_listening", true) ? store.taste() : new JSONObject();
     long now = System.currentTimeMillis();
-    result.sort(
-        (a, b) ->
-            Integer.compare(
-                score(b, feedback, known, prefs, discovery)
-                    + TastePolicy.bonus(b, taste, now)
-                    + PureSong.audioBonus(b, prefs),
-                score(a, feedback, known, prefs, discovery)
-                    + TastePolicy.bonus(a, taste, now)
-                    + PureSong.audioBonus(a, prefs)));
+    Map<String, Integer> scores = new HashMap<>();
+    for (Track t : result)
+      scores.put(
+          t.url,
+          score(t, feedback, known, prefs, discovery)
+              + TastePolicy.bonus(t, taste, now)
+              + PureSong.audioBonus(t, prefs));
+    result.sort((a, b) -> Integer.compare(scores.get(b.url), scores.get(a.url)));
     return result;
   }
 

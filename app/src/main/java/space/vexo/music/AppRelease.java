@@ -7,16 +7,14 @@ import org.json.*;
 /** A release feed contains metadata only. Downloads always need a user tap. */
 final class AppRelease {
   static final String NOTES =
-      "• Made for you: music shaped by connected YouTube music and your VEXO interests.\n"
-          + "• Personal radio uses related songs, favourite artists and optional listening"
-          + " learning.\n"
-          + "• Optional YouTube playlist music import, with clear consent and disconnect"
-          + " controls.\n"
-          + "• Better music matching, artist variety and duplicate filtering.\n"
-          + "• Imported music stays encrypted on this phone and expires after 28 days.\n"
-          + "• Starting radio keeps your current song and playback position.\n"
-          + "• Google’s verification warning remains until Google approves VEXO.\n"
-          + "• These are VEXO recommendations; YouTube’s private Home feed is not imported.";
+      "• Faster page switching with reusable pages and preserved scroll positions.\n"
+          + "• Short, smooth slide transitions that respect disabled system animations.\n"
+          + "• Interest and radio ranking run in the background.\n"
+          + "• Fewer repeated private-data decryptions and no writes when reading empty"
+          + " collections.\n"
+          + "• Rapid tab taps stay responsive, with fresh content after music or settings"
+          + " changes.\n"
+          + "• Existing playback, connected YouTube music and saved library are preserved.";
   final int code;
   final String version, summary, url;
   String sha256 = "";
