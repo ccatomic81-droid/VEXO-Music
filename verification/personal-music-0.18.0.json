@@ -1,0 +1,27 @@
+{
+  "version": "0.18.0",
+  "versionCode": 23,
+  "applicationId": "space.vexo.music.radio",
+  "sourceCommit": "cb585af17622ca3cfdf6fdc9b6fee4c959884b7a",
+  "ciRun": "https://github.com/ccatomic81-droid/VEXO-Music/actions/runs/40290844383",
+  "apkSha256": "77bdd018684361899f63a0355ed4db9da18390da718a3f537415daaabc423ff5",
+  "size": 8816230,
+  "certificateSha256": "0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3",
+  "debuggable": false,
+  "androidTests": {
+    "tests": 170,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 7
+  },
+  "lint": "passed",
+  "securityAndServices": "CI passed",
+  "localServiceTests": 14,
+  "distribution": "Signed APK delivered directly; stable public update feed was not changed.",
+  "limitations": [
+    "Real Google account authorization/import and audio listening require device verification.",
+    "Google OAuth verification is still required to remove the provider warning.",
+    "No access to the private YouTube Home recommendations feed.",
+    "Privacy policy, scope justification and demo need to cover optional playlist imports and app-wide recommendations."
+  ]
+}
