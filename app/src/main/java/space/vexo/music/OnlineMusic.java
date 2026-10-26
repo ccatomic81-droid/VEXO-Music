@@ -1,7 +1,10 @@
 package space.vexo.music;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import okhttp3.OkHttpClient;
 import okhttp3.RequestBody;
@@ -117,7 +120,7 @@ public final class OnlineMusic {
                 call.url().host().contains("suggestqueries")
                     ? SUGGESTIONS_HTTP
                     : Boolean.TRUE.equals(PREVIEW.get()) ? PREVIEW_HTTP : HTTP;
-            try (okhttp3.Response r = client.newCall(call).execute()) {
+            try (okhttp3.Response r = executeInterruptibly(client.newCall(call))) {
               if (r.code() == 429)
                 throw new ReCaptchaException(
                     "YouTube is temporarily limiting requests. Try again later.", request.url());
@@ -131,6 +134,43 @@ public final class OnlineMusic {
           }
         });
     initialized = true;
+  }
+
+  /** Cancelling an older search also cancels its socket instead of occupying the next worker. */
+  static okhttp3.Response executeInterruptibly(okhttp3.Call call) throws IOException {
+    CompletableFuture<okhttp3.Response> result = new CompletableFuture<>();
+    call.enqueue(
+        new okhttp3.Callback() {
+          public void onFailure(okhttp3.Call request, IOException error) {
+            result.completeExceptionally(error);
+          }
+
+          public void onResponse(okhttp3.Call request, okhttp3.Response response) {
+            try {
+              // Keep cancellation active until the metadata body has arrived, too.
+              if (response.body() != null) response.body().source().request(Long.MAX_VALUE);
+              if (!result.complete(response)) response.close();
+            } catch (IOException error) {
+              response.close();
+              result.completeExceptionally(error);
+            }
+          }
+        });
+    try {
+      return result.get();
+    } catch (InterruptedException stopped) {
+      boolean cancelled = result.cancel(false);
+      call.cancel();
+      if (!cancelled && !result.isCompletedExceptionally()) {
+        okhttp3.Response response = result.getNow(null);
+        if (response != null) response.close();
+      }
+      Thread.currentThread().interrupt();
+      throw new InterruptedIOException("Music request was cancelled");
+    } catch (ExecutionException failed) {
+      if (failed.getCause() instanceof IOException) throw (IOException) failed.getCause();
+      throw new IOException("Music request failed", failed.getCause());
+    }
   }
 
   public static final class Results {
