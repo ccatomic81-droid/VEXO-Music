@@ -167,7 +167,10 @@ public class DiscoveryUiTest {
       ViewCompat.dispatchApplyWindowInsets(appRoot, keyboard);
       capture(root, 320, 568, "search-with-keyboard-space");
       assertEquals(View.GONE, text(root, "Search music").getVisibility());
-      View song = find(root, "Play Sky lights");
+      Field page = MainActivity.class.getDeclaredField("content");
+      page.setAccessible(true);
+      View song = find((View) page.get(activity), "Play Sky lights");
+      assertTrue(song.isShown());
       int[] xy = new int[2];
       song.getLocationOnScreen(xy);
       assertTrue("A playable match must fit above the keyboard", xy[1] + song.getHeight() <= 318);
