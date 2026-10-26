@@ -546,10 +546,10 @@ public final class MainActivity extends ComponentActivity {
     nav.setPadding(dp(10), dp(2), dp(10), dp(4));
     nav.setMinimumHeight(dp(64));
     // Only the pill has a surface; the surrounding overlay stays transparent.
-    Glass.apply(nav, 30, false);
-    nav.setElevation(dp(6));
+    nav.setBackgroundColor(BG);
+    nav.setElevation(0);
     LinearLayout.LayoutParams navLayout = new LinearLayout.LayoutParams(-1, -2);
-    navLayout.setMargins(dp(16), 0, dp(16), dp(8));
+    navLayout.setMargins(0, 0, 0, 0);
     floatingDock.addView(nav, navLayout);
   }
 
@@ -587,8 +587,8 @@ public final class MainActivity extends ComponentActivity {
         LinearLayout item = (LinearLayout) nav.getChildAt(j);
         boolean selected = labels[j].equals(tab);
         Icon glyph = (Icon) item.getChildAt(0);
-        glyph.set(names[j], selected ? BG : MUTED);
-        glyph.setBackground(selected ? round(LIME, dp(22)) : null);
+        glyph.set(names[j], selected ? LIME : MUTED);
+        glyph.setBackground(null);
         TextView caption = (TextView) item.getChildAt(1);
         caption.setTextColor(selected ? LIME : MUTED);
         item.setSelected(selected);
@@ -600,10 +600,10 @@ public final class MainActivity extends ComponentActivity {
       boolean selected = label.equals(tab);
       LinearLayout item = column();
       item.setGravity(Gravity.CENTER);
-      Icon i = new Icon(this, names[j], selected ? BG : MUTED);
+      Icon i = new Icon(this, names[j], selected ? LIME : MUTED);
       i.setGlyphSize(24);
       item.addView(i, new LinearLayout.LayoutParams(dp(48), dp(40)));
-      if (selected) i.setBackground(round(LIME, dp(22)));
+
       i.setContentDescription(label);
       i.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
       TextView caption = text(label, 10, selected ? LIME : MUTED, selected);
@@ -1426,7 +1426,7 @@ public final class MainActivity extends ComponentActivity {
     h.setPadding(dp(20), dp(8), dp(20), dp(8));
     LinearLayout titleRow = row();
     TextView title =
-        text(searchCategory == null ? "Search music" : searchCategory.name, 24, TEXT, true);
+        text(searchCategory == null ? "Search" : searchCategory.name, 28, TEXT, true);
     title.setMaxLines(2);
     titleRow.addView(title, new LinearLayout.LayoutParams(0, -2, 1));
     if (online) {
@@ -1465,7 +1465,7 @@ public final class MainActivity extends ComponentActivity {
       gap(h, 8);
     }
     LinearLayout box = row();
-    box.setBackground(round(PANEL, dp(16)));
+    box.setBackground(round(PANEL, dp(28)));
     box.setPadding(dp(8), 0, dp(4), 0);
     Icon find = icon("search", LIME, this::search);
     find.setGlyphSize(22);
@@ -1477,7 +1477,7 @@ public final class MainActivity extends ComponentActivity {
     searchField.setSingleLine();
     searchField.setHint(
         searchCategory == null
-            ? "Songs, artists, or YouTube link"
+            ? "What do you want to listen to?"
             : "Search in " + searchCategory.name);
     searchField.setBackgroundColor(Color.TRANSPARENT);
     searchField.setImeOptions(EditorInfo.IME_ACTION_SEARCH);

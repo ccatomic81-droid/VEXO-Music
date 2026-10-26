@@ -181,7 +181,7 @@ public class RecoveredAccountsAndSyncTest {
       MainActivity a = controller.get();
       View root = a.findViewById(android.R.id.content);
       ui.capture(root, "recovered-home-320", 640);
-      assertNotNull(ui.text(root, "Curated for your day"));
+      assertNotNull(ui.text(root, "Mixes for your mood"));
       ui.description(root, "Settings tab").performClick();
       ((View) ui.text(root, "VEXO account").getParent().getParent()).performClick();
       Dialog dialog = ShadowDialog.getLatestDialog();

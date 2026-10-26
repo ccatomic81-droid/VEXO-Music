@@ -46,12 +46,12 @@ public class PageNavigationTest {
       new DiscoveryUiTest().fakeSources(a, work);
       go(a, "Search");
       View page = (View) field(a, "content");
-      View browse = find.text(page, "Browse categories");
+      View browse = find.text(page, "Browse all");
       assertTrue(browse.isShown());
       go(a, "Home");
       go(a, "Search");
       assertSame(page, field(a, "content"));
-      assertTrue(find.text(page, "Browse categories").isShown());
+      assertTrue(find.text(page, "Browse all").isShown());
       EditText input = (EditText) field(a, "searchField");
       input.setText("sky");
       go(a, "Settings");

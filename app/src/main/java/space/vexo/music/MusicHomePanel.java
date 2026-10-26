@@ -136,12 +136,19 @@ final class MusicHomePanel extends MusicSurface {
             listener.profile();
           }
         });
-    linearLayoutRow.addView(
-        this.profileAvatar, new LinearLayout.LayoutParams(dp(48.0f), dp(48.0f)));
-    TextView textViewText = text("VEXO MUSIC", 12, Visuals.TEXT, true);
-    textViewText.setLetterSpacing(0.12f);
-    textViewText.setPadding(dp(12.0f), 0, 0, 0);
-    linearLayoutRow.addView(textViewText, new LinearLayout.LayoutParams(0, -2, 1.0f));
+    LinearLayout heading = column();
+    TextView brand = text("VEXO MUSIC", 10, Visuals.MUTED, true);
+    brand.setLetterSpacing(.12f);
+    heading.addView(brand);
+    gap(heading, 6);
+    this.greeting = text("", 26, Visuals.TEXT, true);
+    this.greeting.setMaxLines(3);
+    this.greeting.setEllipsize(TextUtils.TruncateAt.END);
+    heading.addView(this.greeting);
+    linearLayoutRow.addView(heading, new LinearLayout.LayoutParams(0, -2, 1));
+    LinearLayout.LayoutParams avatarParams = new LinearLayout.LayoutParams(dp(48), dp(48));
+    avatarParams.leftMargin = dp(12);
+    linearLayoutRow.addView(this.profileAvatar, avatarParams);
     String str4 = RegionPolicy.name(str) + " ▾";
     Objects.requireNonNull(listener);
     TextView textViewAction =
@@ -171,22 +178,8 @@ final class MusicHomePanel extends MusicSurface {
           }
         });
     linearLayoutRow.addView(icon, new LinearLayout.LayoutParams(dp(48.0f), dp(48.0f)));
-    Visuals.Icon icon2 = new Visuals.Icon(context, "search", Visuals.TEXT);
-    icon2.setGlyphSize(22.0f);
-    icon2.setContentDescription("Search music from Home");
-    icon2.setBackground(Visuals.round(Visuals.PANEL, dp(24.0f)));
-    icon2.setOnClickListener(
-        new View.OnClickListener() {
-          @Override // android.view.View.OnClickListener
-          public final void onClick(View view) {
-            listener.search();
-          }
-        });
-    LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(dp(48.0f), dp(48.0f));
-    layoutParams.leftMargin = dp(4.0f);
-    linearLayoutRow.addView(icon2, layoutParams);
     this.body.addView(linearLayoutRow);
-    gap(this.body, 22);
+    gap(this.body, 16);
     try {
       zEnabled = new PureSong(new SmartStore(context)).enabled();
     } catch (IllegalStateException unused) {
@@ -231,18 +224,7 @@ final class MusicHomePanel extends MusicSurface {
     layoutParams2.rightMargin = dp(10.0f);
     linearLayoutRow2.addView(textViewAction, layoutParams2);
     linearLayoutRow2.addView(linearLayoutRow3);
-    LinearLayout linearLayoutColumn = column();
-    linearLayoutColumn.setPadding(0, 0, 0, 0);
-    TextView textViewText3 = text("", 30, Visuals.TEXT, true);
-    this.greeting = textViewText3;
-    textViewText3.setMaxLines(3);
-    this.greeting.setEllipsize(TextUtils.TruncateAt.END);
-    linearLayoutColumn.addView(this.greeting);
-    gap(linearLayoutColumn, 8);
-    linearLayoutColumn.addView(text("Find your next favourite sound.", 14, Visuals.MUTED, false));
-    this.body.addView(linearLayoutColumn, new LinearLayout.LayoutParams(-1, -2));
-    gap(this.body, 12);
-    this.body.addView(linearLayoutRow2);
+    linearLayoutRow2.addView(icon, new LinearLayout.LayoutParams(dp(48), dp(48)));
     personalize();
     gap(this.body, 18);
     HorizontalScrollView horizontalScrollView = new HorizontalScrollView(context);
@@ -274,6 +256,8 @@ final class MusicHomePanel extends MusicSurface {
     String str7 = str5;
     horizontalScrollView.addView(linearLayoutRow4);
     this.body.addView(horizontalScrollView);
+    gap(this.body, 12);
+    this.body.addView(linearLayoutRow2);
     gap(this.body, 16);
     personalSlot = column();
     if (!str3.equals("Playlists")) body.addView(personalSlot);
@@ -337,40 +321,6 @@ final class MusicHomePanel extends MusicSurface {
     gap(this.body, 26);
     capture(linkedHashMap, "Shortcuts", childCount);
     int childCount2 = this.body.getChildCount();
-    section("Curated for your day", null, null);
-    Object obj2 = "Shortcuts";
-    LinearLayout linearLayoutShelf = shelf();
-    List<MixCatalogue.Mix> listMixes = MixCatalogue.mixes(str);
-    int i3 = 0;
-    while (i3 < Math.min(3, listMixes.size())) {
-      final MixCatalogue.Mix mix = listMixes.get(i3 == 1 ? 3 : i3 == 2 ? 5 : 0);
-      List<Track> listCached = mixCatalogue2.cached(mix, str);
-      if (listCached.isEmpty()
-          && i3 == 0
-          && regionalFeed != null
-          && str.equals(regionalFeed.country)) {
-        listCached = regionalFeed.tracks;
-      }
-      List<MixCatalogue.Mix> list = listMixes;
-      int i4 = i3;
-      feature(
-          linearLayoutShelf,
-          mix,
-          listCached,
-          i4,
-          new Runnable() {
-            @Override // java.lang.Runnable
-            public final void run() {
-              listener.mix(mix);
-            }
-          });
-      i3 = i4 + 1;
-      listMixes = list;
-      obj2 = obj2;
-    }
-    Object obj3 = obj2;
-    char c = 24;
-    gap(this.body, 24);
     section("Mixes for your mood", null, null);
     LinearLayout linearLayoutShelf2 = shelf();
     for (final MixCatalogue.Mix mix2 : MixCatalogue.mixes(str)) {
@@ -397,7 +347,7 @@ final class MusicHomePanel extends MusicSurface {
           mix2.id,
           (LinearLayout) linearLayoutShelf2.getChildAt(linearLayoutShelf2.getChildCount() - 1));
       mixCatalogue2 = mixCatalogue;
-      c = 24;
+
     }
     gap(this.body, 26);
     capture(linkedHashMap, "Mood mixes", childCount2);
@@ -808,10 +758,10 @@ final class MusicHomePanel extends MusicSurface {
       int i,
       final Runnable runnable) {
     LinearLayout linearLayoutRow = row();
-    Glass.apply(linearLayoutRow, 18.0f, false);
+    linearLayoutRow.setBackground(Visuals.round(Visuals.PANEL, dp(8)));
     linearLayoutRow.setPadding(dp(8.0f), dp(10.0f), dp(8.0f), dp(10.0f));
-    linearLayoutRow.setMinimumHeight(dp(64.0f));
-    FrameLayout frameLayoutCover = cover(str, list, 36, i);
+    linearLayoutRow.setMinimumHeight(dp(68.0f));
+    FrameLayout frameLayoutCover = cover(str, list, 44, i);
     if (list.isEmpty()) {
       frameLayoutCover.removeAllViews();
       Context context = getContext();
@@ -846,9 +796,10 @@ final class MusicHomePanel extends MusicSurface {
     FrameLayout frameLayoutCover =
         cover(track.title, Collections.singletonList(track), shelfCardSize(), -12165769);
     Visuals.Icon icon = new Visuals.Icon(getContext(), "play", Visuals.BG);
-    icon.setBackground(Visuals.round(Visuals.LIME, dp(24.0f)));
+    icon.setGlyphSize(18);
+    icon.setBackground(Visuals.round(Visuals.LIME, dp(18)));
     FrameLayout.LayoutParams layoutParams =
-        new FrameLayout.LayoutParams(dp(48.0f), dp(48.0f), 8388693);
+        new FrameLayout.LayoutParams(dp(36.0f), dp(36.0f), 8388693);
     layoutParams.setMargins(0, 0, dp(8.0f), dp(8.0f));
     frameLayoutCover.addView(icon, layoutParams);
     icon.setContentDescription("Play " + track.title);

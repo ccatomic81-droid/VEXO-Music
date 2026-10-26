@@ -29,7 +29,7 @@ final class SearchBrowsePanel extends LinearLayout {
     if (!recent.isEmpty()) {
       LinearLayout heading = row();
       heading.addView(text("Recent searches", 17, TEXT, true), new LayoutParams(0, -2, 1));
-      TextView clear = text("Clear", 12, MUTED, true);
+      TextView clear = text("Clear all", 12, MUTED, true);
       clear.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
       clear.setPadding(dp(12), 0, 0, 0);
       clear.setMinHeight(dp(48));
@@ -38,33 +38,34 @@ final class SearchBrowsePanel extends LinearLayout {
       clear.setOnClickListener(v -> listener.clear());
       heading.addView(clear);
       addView(heading);
-      HorizontalScrollView strip = new HorizontalScrollView(context);
-      strip.setHorizontalScrollBarEnabled(false);
-      LinearLayout entries = row();
-      for (String term : recent.subList(0, Math.min(3, recent.size()))) {
+      LinearLayout entries = new LinearLayout(context);
+      entries.setOrientation(VERTICAL);
+      for (String term : recent.subList(0, Math.min(4, recent.size()))) {
         LinearLayout entry = row();
-        entry.setBackground(round(PANEL, dp(12)));
+        Icon history = new Icon(context, "timer", MUTED);
+        history.setGlyphSize(20);
+        entry.addView(history, new LayoutParams(dp(44), dp(48)));
         entry.setMinimumHeight(dp(48));
         TextView query = text(term, 14, TEXT, false);
         query.setSingleLine();
         query.setEllipsize(TextUtils.TruncateAt.END);
-        query.setMaxWidth(dp(160));
+
         query.setMinHeight(dp(48));
         query.setGravity(Gravity.CENTER_VERTICAL);
         query.setPadding(dp(14), dp(8), 0, dp(8));
         query.setContentDescription("Search for " + term);
         query.setOnClickListener(v -> listener.recent(term));
-        entry.addView(query);
+        entry.addView(query, new LayoutParams(0, -2, 1));
         Icon remove = new Icon(context, "close", MUTED);
         remove.setGlyphSize(18);
         remove.setContentDescription("Remove recent search " + term);
         remove.setOnClickListener(v -> listener.remove(term));
         entry.addView(remove, new LayoutParams(dp(48), dp(48)));
-        LayoutParams params = new LayoutParams(-2, -2);
+        LayoutParams params = new LayoutParams(-1, -2);
         params.rightMargin = dp(8);
         entries.addView(entry, params);
       }
-      if (recent.size() > 3) {
+      if (recent.size() > 4) {
         TextView all = text("See all", 12, LIME, true);
         all.setMinHeight(dp(48));
         all.setMinWidth(dp(72));
@@ -73,11 +74,10 @@ final class SearchBrowsePanel extends LinearLayout {
         all.setOnClickListener(v -> listener.allRecent());
         entries.addView(all);
       }
-      strip.addView(entries);
-      addView(strip, new LayoutParams(-1, -2));
+      addView(entries, new LayoutParams(-1, -2));
       gap(20);
     }
-    addView(text("Browse categories", 20, TEXT, true));
+    addView(text("Browse all", 20, TEXT, true));
     gap(16);
     for (String group : new String[] {"Genres", "Moods & activities", "Regional"}) {
       TextView title = text(group, 12, MUTED, true);
@@ -98,9 +98,9 @@ final class SearchBrowsePanel extends LinearLayout {
             TextView card = text(category.name, 16, TEXT, true);
             card.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
             card.setPadding(dp(14), dp(16), dp(14), dp(16));
-            card.setMinHeight(dp(80));
+            card.setMinHeight(dp(92));
             card.setMaxLines(3);
-            card.setBackground(round(category.color, dp(16)));
+            card.setBackground(round(category.color, dp(10)));
             card.setContentDescription("Browse " + category.name + " music");
             card.setOnClickListener(v -> listener.category(category));
             line.addView(card, params);
