@@ -1,0 +1,36 @@
+{
+  "version": "0.19.2",
+  "versionCode": 27,
+  "sourceCommit": "7f7ba85efb224753f0aa198cf94d0b92ce9913e8",
+  "apkSha256": "7b35be3ddaa0b74260f8c630e3bdc8001670d411d862ce560eb877333e0d32e4",
+  "size": 9066465,
+  "certificateSha256": "0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3",
+  "debuggable": false,
+  "ciRun": "https://github.com/ccatomic81-droid/VEXO-Music/actions/runs/40313330797",
+  "androidTests": {
+    "tests": 191,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 8
+  },
+  "liveTests": {
+    "tests": 5,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "publicFeed": "https://vexo-music-updates.kavindukavishka785.workers.dev/stable.json",
+  "publicApk": "https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.19.2.apk",
+  "publicApkReadbackChecksumVerified": true,
+  "publicFeedSignatureVerified": true,
+  "resumableDownloadVerified": true,
+  "publishingRouteRemoved": true,
+  "temporaryPublishBindingsRemoved": true,
+  "temporaryTokenDeleted": true,
+  "githubRelease": "https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.19.2",
+  "githubReleaseWorkflow": "https://github.com/ccatomic81-droid/VEXO-Music/actions/runs/40314653041",
+  "githubReleasePublished": true,
+  "logo": "Vector rendition of owner-supplied music-note and sound-wave logo, inspected with square/circle launcher masks and at notification size.",
+  "physicalDeviceAcceptancePerformed": false,
+  "verifiedAt": "2026-10-26T11:25:19.662711+00:00"
+}
