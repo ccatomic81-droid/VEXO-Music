@@ -7,10 +7,11 @@ import org.json.*;
 /** A release feed contains metadata only. Downloads always need a user tap. */
 final class AppRelease {
   static final String NOTES =
-      "• New white music-note and sound-wave logo on a black background.\n"
-          + "• Adaptive launcher, round and themed icon support.\n"
-          + "• Matching notification icon, including music playback.\n"
-          + "• Your music, connected accounts, playlists and settings are preserved.";
+      "• Simpler Home with your greeting, profile and compact collection cards.\n"
+          + "• Cleaner Search with vertical recent searches and a rounded search field.\n"
+          + "• Clearer navigation with all five destinations retained.\n"
+          + "• MindRadio, Pure Song, Smart Experience, crossfade and offline music remain.\n"
+          + "• Update over your existing VEXO app to keep your music and settings.";
   final int code;
   final String version, summary, url;
   String sha256 = "";
