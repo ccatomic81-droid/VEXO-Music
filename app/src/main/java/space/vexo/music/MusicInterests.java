@@ -13,7 +13,8 @@ final class MusicInterests {
   private final Set<String> seedHidden;
   final JSONObject preferences, learned;
   final boolean youtube;
-  final String signature;
+  private JSONArray session = new JSONArray();
+  String signature;
   private final Map<String, Integer> artists = new HashMap<>();
   private final Map<String, Integer> bonuses = new HashMap<>();
   private final JSONObject feedback;
@@ -56,7 +57,7 @@ final class MusicInterests {
         diverse.add(t);
         if (diverse.size() == 6) break;
       }
-    seeds = Collections.unmodifiableList(diverse);
+    seeds = diverse;
     signature =
         yt.at
             + ":"
@@ -100,13 +101,37 @@ final class MusicInterests {
             explicit,
             library.tracks("history"),
             playlists,
-            new YouTubeTaste(context).read(),
+            optionalYouTube(context),
             smart.preferences(),
             smart.taste(),
             choices,
             blocked,
             SmartPolicy.blocked(smart, System.currentTimeMillis()));
+    if (!result.preferences.optBoolean("pause_history")
+        && result.preferences.optBoolean("learn_listening", true)) {
+      result.session = smart.session();
+      result.signature += ":session:" + result.session;
+      result.bonuses.clear();
+      List<Track> sessionSeeds = SessionTaste.seeds(result.session, System.currentTimeMillis());
+      sessionSeeds.removeIf(t -> result.seedBlocked(t) || result.bonus(t) < 0);
+      // Session evidence can lead discovery without discarding explicit favourites.
+      List<Track> combined = new ArrayList<>(sessionSeeds);
+      for (Track seed : result.seeds)
+        if (combined.stream().noneMatch(t -> RadioPolicy.artist(t).equals(RadioPolicy.artist(seed))))
+          combined.add(seed);
+      result.seeds.clear();
+      result.seeds.addAll(combined.subList(0, Math.min(6, combined.size())));
+    }
     return result;
+  }
+
+  private static YouTubeTaste.Snapshot optionalYouTube(Context context) {
+    try {
+      return new YouTubeTaste(context).read();
+    } catch (IllegalStateException unavailable) {
+      // A broken optional import must not disable VEXO's own library/taste.
+      return YouTubeTaste.Snapshot.empty();
+    }
   }
 
   static MusicInterests of(
@@ -166,7 +191,8 @@ final class MusicInterests {
     int score =
         result
             + (value.equals("less") ? -80 : value.equals("more") ? 40 : 0)
-            + TastePolicy.bonus(t, learned, System.currentTimeMillis());
+            + TastePolicy.bonus(t, learned, System.currentTimeMillis())
+            + SessionTaste.bonus(t, session, System.currentTimeMillis());
     if (bonuses.size() < 512) bonuses.put(t.url, score);
     return score;
   }
@@ -236,10 +262,8 @@ final class MusicInterests {
   }
 
   String description() {
-    return youtube && !imported.isEmpty()
-        ? "Based on your connected YouTube music and VEXO interests"
-        : youtube
-            ? "YouTube connected · building your taste from music you enjoy in VEXO"
-            : "Based on your favourites, playlists and listening in VEXO";
+    return !SessionTaste.seeds(session, System.currentTimeMillis()).isEmpty()
+        ? "Based on your recent listening and favourites in VEXO"
+        : "Based on your favourites, playlists and listening in VEXO";
   }
 }

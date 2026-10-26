@@ -7,7 +7,9 @@ import org.json.*;
 /** A release feed contains metadata only. Downloads always need a user tap. */
 final class AppRelease {
   static final String NOTES =
-      "• Simpler Home with your greeting, profile and compact collection cards.\n"
+      "• Session-aware music discovery with optional YouTube imports.\n"
+          + "• Manual queue priority, recommendation labels and shuffle-safe Play next.\n"
+          + "• Simpler Home with your greeting, profile and compact collection cards.\n"
           + "• Cleaner Search with vertical recent searches and a rounded search field.\n"
           + "• Clearer navigation with all five destinations retained.\n"
           + "• MindRadio, Pure Song, Smart Experience, crossfade and offline music remain.\n"

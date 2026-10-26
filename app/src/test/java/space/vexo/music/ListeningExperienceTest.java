@@ -194,6 +194,26 @@ public class ListeningExperienceTest {
   }
 
   @Test
+  public void aClockPulseBeforeTheTransitionDoesNotLoseTheManualSkip() {
+    Fake f = new Fake();
+    MediaItem a = song("one", "A").mediaItem(), b = song("two", "B").mediaItem();
+    f.item = a;
+    List<Boolean> skips = new ArrayList<>();
+    ListeningTracker tracker = new ListeningTracker(f.player,
+        (t, ms, skip, error) -> skips.add(skip));
+    ShadowSystemClock.advanceBy(Duration.ofSeconds(4));
+    tracker.onEvents(f.player, null);
+    tracker.onPositionDiscontinuity(position(a, 0, 4000), position(b, 1, 0),
+        Player.DISCONTINUITY_REASON_SEEK);
+    tracker.onEvents(f.player, null);
+    f.item = b;
+    tracker.onMediaItemTransition(b, Player.MEDIA_ITEM_TRANSITION_REASON_SEEK);
+    tracker.onEvents(f.player, null);
+    assertEquals(Collections.singletonList(true), skips);
+    tracker.close();
+  }
+
+  @Test
   public void privacyChangeDropsTheInFlightSampleUntilTheNextTrack() {
     Fake f = new Fake();
     f.item = song("old", "A").mediaItem();
