@@ -49,7 +49,7 @@ public final class RegionalFeed {
     if (songs.isEmpty()) throw new java.io.IOException("No regional music results");
     return new RegionalFeed(
         country,
-        "Regional YouTube search · not a ranked chart",
+        "YouTube Music · regional song picks · not a ranked chart",
         false,
         System.currentTimeMillis(),
         songs);

@@ -7,12 +7,13 @@ import org.json.*;
 /** A release feed contains metadata only. Downloads always need a user tap. */
 final class AppRelease {
   static final String NOTES =
-      "• Aurora Home with purple/lime styling, aligned cards and rounded mini-player artwork.\n"
-          + "• A one-time invitation to enable notifications. Choose Enable or Not now.\n"
-          + "• Optional Google/email sign-in and manual online favourites/playlist sync.\n"
-          + "• Notification and release-alert controls in Settings.\n"
-          + "• Smart Experience, MindRadio, FairPlay, playback, crossfade and saved music are"
-          + " retained.\n"
+      "• Clear bottom navigation without the dark background plate.\n"
+          + "• Start radio keeps the current song and playback position.\n"
+          + "• YouTube Music radio recommendations with automatic fallbacks.\n"
+          + "• Optional YouTube taste in Settings: connect with Google’s read-only permission.\n"
+          + "• VEXO picks based on your liked YouTube music, with refresh and disconnect controls.\n"
+          + "• Imported music details stay encrypted on this phone and expire after 28 days.\n"
+          + "• These are VEXO suggestions; YouTube’s personal Home feed is not available here.\n"
           + "• Install as an update to keep your music library and preferences.";
   final int code;
   final String version, summary, url;

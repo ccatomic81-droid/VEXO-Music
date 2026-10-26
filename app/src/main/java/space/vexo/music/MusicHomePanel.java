@@ -53,6 +53,7 @@ final class MusicHomePanel extends MusicSurface {
     void search();
 
     default void smart() {}
+
   }
 
   void personalize() {
@@ -603,6 +604,23 @@ final class MusicHomePanel extends MusicSurface {
   static /* synthetic */ boolean lambda$new$4(Listener listener, View view) {
     listener.pureSettings();
     return true;
+  }
+
+  void youtube(YouTubeTaste.Snapshot snapshot, Runnable manage, YouTubeConnection.Player play) {
+    if (!snapshot.connected) return;
+    section("Your YouTube taste", "Manage", manage);
+    body.addView(text("VEXO picks based on your liked YouTube music", 12, Visuals.MUTED, false));
+    gap(body, 12);
+    if (snapshot.picks.isEmpty()) {
+      body.addView(action("View liked music & refresh picks", false, manage));
+    } else {
+      LinearLayout cards = shelf();
+      for (int i = 0; i < snapshot.picks.size(); i++) {
+        final int position = i;
+        songCard(cards, snapshot.picks.get(i), () -> play.play(snapshot.picks, position));
+      }
+    }
+    gap(body, 24);
   }
 
   private void feature(
