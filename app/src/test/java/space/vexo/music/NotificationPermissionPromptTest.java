@@ -33,6 +33,7 @@ public class NotificationPermissionPromptTest {
       AlertDialog dialog = (AlertDialog) ShadowDialog.getLatestDialog();
       assertNotNull(dialog); assertTrue(dialog.isShowing()); assertEquals(0, requests.get());
       dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+      Shadows.shadowOf(Looper.getMainLooper()).idle();
       assertEquals(1, requests.get());
       assertTrue(a.getSharedPreferences("settings", 0).getBoolean("notifications_asked", false));
       prompt.close();
@@ -82,14 +83,15 @@ public class NotificationPermissionPromptTest {
     }
   }
 
-  @Test @Config(sdk = 32)
+  @Test @Config(sdk = 26)
   public void olderAndroidOpensSettingsWithoutRequestingUnsupportedRuntimePermission() {
     try (var controller = Robolectric.buildActivity(Activity.class).setup().visible().windowFocusChanged(true)) {
       Activity a = controller.get();
       Shadows.shadowOf(a.getSystemService(NotificationManager.class)).setNotificationsEnabled(false);
-      NotificationPermissionPrompt prompt = new NotificationPermissionPrompt(a, () -> true, () -> fail("No runtime permission on Android 12"));
+      NotificationPermissionPrompt prompt = new NotificationPermissionPrompt(a, () -> true, () -> fail("No runtime permission before Android 13"));
       prompt.resume(); Shadows.shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(1));
       ((AlertDialog) ShadowDialog.getLatestDialog()).getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+      Shadows.shadowOf(Looper.getMainLooper()).idle();
       android.content.Intent intent = Shadows.shadowOf(a).getNextStartedActivity();
       assertEquals(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS, intent.getAction());
       assertEquals(a.getPackageName(), intent.getStringExtra(android.provider.Settings.EXTRA_APP_PACKAGE));
