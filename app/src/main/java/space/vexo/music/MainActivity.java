@@ -896,9 +896,10 @@ public final class MainActivity extends ComponentActivity {
             });
     homePanel = panel;
     try {
-      personalInterests = MusicInterests.read(this);
-      if (!personalKey.isEmpty() && !personalKey.equals(personalInterests.signature))
+      MusicInterests currentInterests = MusicInterests.read(this);
+      if (!personalKey.isEmpty() && !personalKey.equals(currentInterests.signature))
         invalidatePersonal();
+      personalInterests = currentInterests;
       if (!homeFilter.equals("Playlists")
           && !new SmartStore(this).preferences().optBoolean("focus")) {
         drawPersonal();
@@ -915,6 +916,11 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private void youtubeChanged() {
+    try {
+      if (!new YouTubeTaste(this).read().connected) OnlineMusic.clearCache();
+    } catch (IllegalStateException unavailable) {
+      /* Existing player remains usable. */
+    }
     invalidatePersonal();
     radioChanged();
     render();
@@ -928,6 +934,7 @@ public final class MainActivity extends ComponentActivity {
     personalKey = "";
     personalAt = 0;
     personalSongs = new ArrayList<>();
+    personalInterests = null;
   }
 
   private void drawPersonal() {
@@ -1509,7 +1516,7 @@ public final class MainActivity extends ComponentActivity {
     List<Track> cached = new ArrayList<>(store.tracks("history"));
     cached.addAll(store.tracks("favourites"));
     try {
-      cached.addAll(MusicInterests.read(this).imported);
+      cached.addAll(new YouTubeTaste(this).read().sources());
     } catch (IllegalStateException unavailable) {
       /* Keep existing search usable. */
     }

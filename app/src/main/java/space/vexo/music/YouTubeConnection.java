@@ -50,6 +50,8 @@ final class YouTubeConnection implements AutoCloseable {
     this.player = player;
     awaitingConsent = state != null && state.getBoolean("youtube_consent", false);
     busy = awaitingConsent;
+    if (state != null && state.containsKey("youtube_playlists"))
+      includePlaylists = state.getBoolean("youtube_playlists");
     permission =
         activity.registerForActivityResult(
             new ActivityResultContracts.StartIntentSenderForResult(),
@@ -73,6 +75,7 @@ final class YouTubeConnection implements AutoCloseable {
 
   void saveState(Bundle state) {
     state.putBoolean("youtube_consent", awaitingConsent);
+    if (includePlaylists != null) state.putBoolean("youtube_playlists", includePlaylists);
   }
 
   void show() {
@@ -355,7 +358,7 @@ final class YouTubeConnection implements AutoCloseable {
                         finish(
                             partial
                                 ? "Connected. Liked music imported; playlist music couldn’t load."
-                                      + " Refresh to retry."
+                                    + " Refresh to retry."
                                 : sources.isEmpty()
                                     ? "Connected. No matching music was found in this sample."
                                     : "Connected · your music now helps shape Home and radio.");
@@ -411,6 +414,7 @@ final class YouTubeConnection implements AutoCloseable {
     cancelWork();
     try {
       taste.clear();
+      includePlaylists = false;
       status = "Disconnected. Imported YouTube data and VEXO picks were removed from this phone.";
       changed.run();
     } catch (IllegalStateException unavailable) {

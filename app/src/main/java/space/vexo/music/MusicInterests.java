@@ -81,15 +81,28 @@ final class MusicInterests {
     }
     Set<String> blocked = new HashSet<>(new RadioStore(context).hidden());
 
+    List<Track> explicit = new ArrayList<>(library.tracks("favourites"));
+    JSONObject choices = smart.feedback();
+    Iterator<String> keys = choices.keys();
+    int extra = 0;
+    while (keys.hasNext() && extra < 30) {
+      JSONObject choice = choices.optJSONObject(keys.next());
+      if (choice != null
+          && "more".equals(choice.optString("value"))
+          && choice.optJSONObject("track") != null) {
+        explicit.add(Track.from(choice.optJSONObject("track")));
+        extra++;
+      }
+    }
     MusicInterests result =
         new MusicInterests(
-            library.tracks("favourites"),
+            explicit,
             library.tracks("history"),
             playlists,
             new YouTubeTaste(context).read(),
             smart.preferences(),
             smart.taste(),
-            smart.feedback(),
+            choices,
             blocked,
             SmartPolicy.blocked(smart, System.currentTimeMillis()));
     return result;
