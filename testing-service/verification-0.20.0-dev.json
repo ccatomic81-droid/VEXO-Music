@@ -1,0 +1,21 @@
+{
+  "sourceCommit": "7d1ff89de54d03d698e45c6db0065217b094972c",
+  "workflowRun": 40324049550,
+  "apkSha256": "639125fcbdd3bb12b5e3cc00dee0a939041948ebe6b38df7977b4fc8749fa0cc",
+  "sameCertificate": true,
+  "signedPayloadMatchesUnsignedCandidate": true,
+  "androidChecks": {
+    "tests": 193,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 8
+  },
+  "publicManifestVerified": true,
+  "publicApkChecksumVerified": true,
+  "rangeAndHeadVerified": true,
+  "publicPageVerified": true,
+  "stableStillVersion": "0.19.3",
+  "writeRoutesClosed": true,
+  "oldTesterRouteUnitTestPassed": true,
+  "oldTesterLiveHead": "Network proxy rejected this final optional request; archived route passed unit tests."
+}
