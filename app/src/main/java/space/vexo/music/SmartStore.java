@@ -336,7 +336,8 @@ final class SmartStore {
       TastePolicy.record(songs, track, milliseconds, manualSkip, failed, now);
       try {
         JSONArray next = SessionTaste.record(session(), track, milliseconds, manualSkip, now);
-        write("session", new JSONObject().put("events", next));
+        if (!next.toString().equals(session().toString()))
+          write("session", new JSONObject().put("events", next));
       } catch (JSONException e) {
         throw new IllegalArgumentException(e);
       }

@@ -33,6 +33,9 @@ public class SessionQueueTest {
     assertEquals(first.url, interests.rank(Arrays.asList(other, first), false).get(0).url);
     assertTrue(SessionTaste.bonus(first, smart.session(), now) > 0);
     assertEquals(0, SessionTaste.bonus(first, smart.session(), now + SessionTaste.WINDOW));
+    JSONArray neutral = SessionTaste.record(smart.session(), first, 5000, false, now + 1);
+    assertEquals(1, neutral.length());
+    assertEquals(1, neutral.getJSONObject(0).getInt("value"));
     assertTrue(SessionTaste.seeds(smart.session(), now - 1).isEmpty());
     smart.preference("pause_history", true);
     assertTrue(MusicInterests.read(c).seeds.isEmpty());

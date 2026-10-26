@@ -113,7 +113,7 @@ final class MusicInterests {
       result.signature += ":session:" + result.session;
       result.bonuses.clear();
       List<Track> sessionSeeds = SessionTaste.seeds(result.session, System.currentTimeMillis());
-      sessionSeeds.removeIf(result::seedBlocked);
+      sessionSeeds.removeIf(t -> result.seedBlocked(t) || result.bonus(t) < 0);
       // Session evidence can lead discovery without discarding explicit favourites.
       List<Track> combined = new ArrayList<>(sessionSeeds);
       for (Track seed : result.seeds)

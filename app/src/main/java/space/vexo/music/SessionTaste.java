@@ -10,13 +10,16 @@ final class SessionTaste {
   static JSONArray record(JSONArray old, Track track, long ms, boolean skip, long now)
       throws JSONException {
     JSONArray out = new JSONArray();
-    if (RadioPolicy.music(track) && (ms >= 30000 || skip && ms >= 2000 && ms < 20000))
+    boolean accepted = RadioPolicy.music(track)
+        && (ms >= 30000 || skip && ms >= 2000 && ms < 20000);
+    if (accepted)
       out.put(new JSONObject().put("track", track.json()).put("at", now)
           .put("value", skip && ms < 20000 ? -1 : 1));
     for (int i = 0; i < old.length() && out.length() < 12; i++) {
       JSONObject e = old.optJSONObject(i);
       if (valid(e, now) && e.optJSONObject("track") != null
-          && !RadioPolicy.songKey(track).equals(RadioPolicy.songKey(Track.from(e.getJSONObject("track")))))
+          && (!accepted || !RadioPolicy.songKey(track).equals(
+              RadioPolicy.songKey(Track.from(e.getJSONObject("track"))))))
         out.put(e);
     }
     return out;
