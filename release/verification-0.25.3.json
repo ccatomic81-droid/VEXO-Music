@@ -1,0 +1,48 @@
+{
+  "version": "0.25.3",
+  "versionCode": 39,
+  "sourceCommit": "bbf17e1f210ad3b801fcda8d9cb4406f4d64db9f",
+  "workflowRun": 40499389418,
+  "apkSha256": "3206031de76df949c18293a1db23544ad01297acc1e4c4d3a729b5f568384753",
+  "sameCertificate": true,
+  "nonDebuggable": true,
+  "signedPayloadMatchesUnsignedCandidate": true,
+  "manifestSignatureVerified": true,
+  "androidChecks": {
+    "tests": 243,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 12,
+    "passed": 231
+  },
+  "liveChecks": {
+    "tests": 9,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 9
+  },
+  "publicChecks": [
+    "manifest",
+    "apk checksum",
+    "range",
+    "head",
+    "old public APK",
+    "closed writes"
+  ],
+  "physicalPhoneTested": false,
+  "nativeScreensReviewed": [
+    "popup-action-short-1.0",
+    "popup-action-list-1.6",
+    "popup-action-long-1.6",
+    "rounded-vexo-logo"
+  ],
+  "workerPublicationDisabled": true,
+  "workerBindingNames": [
+    "RELEASES"
+  ],
+  "fullButtonVisibilityChecked": true,
+  "minimum48dpButtonTargetsChecked": true,
+  "normalAndLargeTextScrollingAndStackedActionsChecked": true,
+  "logoRoundedCornerTransparencyChecked": true
+}

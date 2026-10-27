@@ -1,12 +1,12 @@
-# VEXO Music 0.25.2
+# VEXO Music 0.25.3
 
 Developer: **Kavindu Kavishka**.
 
-Public version **0.25.2** refreshes the current logo across package details, launcher, startup and notifications; adds Global music discovery; and gives app popups and notices a shared VEXO design. Existing smart mixes, player features, animated update downloads and the 500 MB offline-saving fix remain.
+Public version **0.25.3** fixes clipped popup action buttons and rounds the VEXO logo tile. Short, long and scrolling dialogs reserve the complete action area, including large text and stacked rows. Existing Global discovery, custom popup design, player features, animated update downloads and 500 MB offline saving remain.
 
-[Download VEXO Music 0.25.2](https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.25.2.apk), use Settings → Check for updates, or open the [GitHub release](https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.25.2). Install as an update without uninstalling. Version code 38 upgrades public 0.25.1/code37 and earlier testers with the existing signing certificate. See [release notes](release/notes-0.25.2.md) and [verification](release/verification-0.25.2.json).
+[Download VEXO Music 0.25.3](https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.25.3.apk), use Settings → Check for updates, or open the [GitHub release](https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.25.3). Install as an update without uninstalling. Version code 39 upgrades public 0.25.2/code38 with the original signing identity. See [release notes](release/notes-0.25.3.md) and [verification](release/verification-0.25.3.json).
 
-Select Settings → Music region → Global for worldwide picks. It uses worldwide queries, omits the selected country from provider requests, and keeps worldwide/country caches separate. Provider availability and location behavior can still influence results. Package metadata exposes the current mark; third-party scanners that retain their own older bitmap may need a refresh or rescan. Android permission and installation prompts retain their system appearance.
+Select Settings → Music region → Global for worldwide picks. Package metadata exposes the current mark; third-party scanners retaining an older bitmap may need a refresh or rescan. Android permission and installation prompts retain their system appearance.
 
 Search now shows real song names, artwork and artists while typing, with direct play controls. Home has quick collection tiles, horizontally scrolling music cards, regional picks and VEXO mood mixes. Full playlist pages support Play all, a one-shot shuffled queue, adding songs, renaming and deleting a playlist, and removing individual tracks.
 

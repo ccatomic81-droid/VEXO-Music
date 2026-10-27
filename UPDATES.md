@@ -1,6 +1,6 @@
 # App updates and releases
 
-Current public release: **0.25.2 / code 38**. It updates public 0.25.1/code37 and earlier testers in place, preserving data and the original signing identity. The manifest is signed. Use Settings → Check for updates; Android still requires approval to install. See `release/public-0.25.2.json` and `release/verification-0.25.2.json`.
+Current public release: **0.25.3 / code 39**. It updates public 0.25.2/code38 in place, preserving data and the original signing identity. The manifest is signed. Use Settings → Check for updates; Android still requires approval to install. See `release/public-0.25.3.json` and `release/verification-0.25.3.json`.
 
 In 0.25.1, Get update opens an animated foreground download panel showing real percentage and MB transferred. Verification is a separate phase. Cancel stops the HTTP transfer and removes its partial file; Retry starts a new attempt after a connection or verification failure. A cached, already verified APK can be reused. Cancel remains visible while large-text content scrolls. Destroying the activity cancels its transfer. Older installed apps retain their existing update UI until this version is installed.
 

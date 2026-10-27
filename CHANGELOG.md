@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.25.3 — Complete popup buttons and rounded logo tiles (27 October 2026)
+
+- Fix clipped upper button edges by removing vertical child margins and reserving the complete naturally measured native action footer.
+- Keep full 48dp button touch targets, readable widths and stacked native rows at large text sizes.
+- Round the existing VEXO logo tile background and popup clipping without altering the white mark.
+- Retain Global discovery, custom popups, animated updates, offline saving and stored user data.
+
 ## 0.25.2 — Consistent branding, Global discovery and VEXO popups (27 October 2026)
 
 - Reference the current mark consistently in package/activity, legacy/adaptive/themed launcher, startup and notification resources.

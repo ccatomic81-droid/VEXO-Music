@@ -1,0 +1,14 @@
+{
+  "applicationId": "space.vexo.music.radio",
+  "versionCode": 39,
+  "versionName": "0.25.3",
+  "summary": "Fixed clipped popup action buttons: complete rounded edges, full touch targets and properly reserved space in short and scrolling dialogs. Rounded VEXO logo tiles. Global discovery, custom popups, animated updates and 500 MB offline saving remain. Install over your existing app to keep your music and settings.",
+  "downloadUrl": "https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.25.3.apk",
+  "sourceUrl": "https://github.com/ccatomic81-droid/VEXO-Music/archive/bbf17e1f210ad3b801fcda8d9cb4406f4d64db9f.zip",
+  "sourceCommit": "bbf17e1f210ad3b801fcda8d9cb4406f4d64db9f",
+  "size": 9103496,
+  "sha256": "3206031de76df949c18293a1db23544ad01297acc1e4c4d3a729b5f568384753",
+  "certificateSha256": "0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3",
+  "signedPayload": "eyJmb3JtYXQiOiJ2ZXhvLXJlbGVhc2UtdjEiLCJhcHBsaWNhdGlvbklkIjoic3BhY2UudmV4by5tdXNpYy5yYWRpbyIsInZlcnNpb25Db2RlIjozOSwidmVyc2lvbk5hbWUiOiIwLjI1LjMiLCJzdW1tYXJ5IjoiRml4ZWQgY2xpcHBlZCBwb3B1cCBhY3Rpb24gYnV0dG9uczogY29tcGxldGUgcm91bmRlZCBlZGdlcywgZnVsbCB0b3VjaCB0YXJnZXRzIGFuZCBwcm9wZXJseSByZXNlcnZlZCBzcGFjZSBpbiBzaG9ydCBhbmQgc2Nyb2xsaW5nIGRpYWxvZ3MuIFJvdW5kZWQgVkVYTyBsb2dvIHRpbGVzLiBHbG9iYWwgZGlzY292ZXJ5LCBjdXN0b20gcG9wdXBzLCBhbmltYXRlZCB1cGRhdGVzIGFuZCA1MDAgTUIgb2ZmbGluZSBzYXZpbmcgcmVtYWluLiBJbnN0YWxsIG92ZXIgeW91ciBleGlzdGluZyBhcHAgdG8ga2VlcCB5b3VyIG11c2ljIGFuZCBzZXR0aW5ncy4iLCJkb3dubG9hZFVybCI6Imh0dHBzOi8vdmV4by1tdXNpYy11cGRhdGVzLmthdmluZHVrYXZpc2hrYTc4NS53b3JrZXJzLmRldi9yZWxlYXNlcy9WRVhPLU11c2ljLTAuMjUuMy5hcGsiLCJzaXplIjo5MTAzNDk2LCJzaGEyNTYiOiIzMjA2MDMxZGU3NmRmOTQ5YzE4MjkzYTFkYjIzNTQ0YWQwMTI5N2FjYzFlNGM0ZDNhNzI5YjVmNTY4Mzg0NzUzIiwiY2VydGlmaWNhdGVTaGEyNTYiOiIwYjMxYzUwOTA0NTY3Mzg5YjcyM2UyM2FkNjA0M2IyZDJmYzY2MzVjMzBkZmRiM2VkNWVmM2Y5YmE5NzI3ZWYzIiwic291cmNlQ29tbWl0IjoiYmJmMTdlMWYyMTBhZDNiODAxZmNkYThkOWNiNDQwNmY0ZDY0ZGI5ZiJ9",
+  "releaseSignature": "D7HLzXpy7HHxK1UkOFVfkvnCqLhHPU7SCOM1ODc5h8Qij7/3Qcmyd16gR9j8hPCz+QjTWA/Q3A0tP14yLkHhHfvf618GzoSGrodFMXMwt2rm3nhOy8Ux61EOXh2GDNL1S8pBcr6I6s4oe7RJ4RgCT8aP/nXYOSxs3qHHG7Ko2ShI9GKiVEjAnVuICrMJMOArizb/uKhipgeEU3zQPnnjLYwURIi3aEMLyiy/8ai6ySSqvTQIQQcJFr+sro7nwQ27FN7ysASq5jT84UTGfv/467Hz6GNrbASkDZOANiEaL2QFhzI2mC0YuNrUJO3XuU0CxLmybZv93/ITJiD16tYMNA=="
+}
