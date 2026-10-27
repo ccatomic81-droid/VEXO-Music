@@ -1,0 +1,48 @@
+{
+  "version": "0.25.2",
+  "versionCode": 38,
+  "sourceCommit": "eec0369c9ca47e4e7c12cdb49a848f07616e97a5",
+  "workflowRun": 40474043031,
+  "apkSha256": "4d68218e4cda4112e7bb921b6865b7fddc06972d3e01c60a590717f9fcd06815",
+  "sameCertificate": true,
+  "nonDebuggable": true,
+  "signedPayloadMatchesUnsignedCandidate": true,
+  "manifestSignatureVerified": true,
+  "androidChecks": {
+    "tests": 241,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 12,
+    "passed": 229
+  },
+  "liveChecks": {
+    "tests": 9,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 9
+  },
+  "publicChecks": [
+    "manifest",
+    "apk checksum",
+    "range",
+    "head",
+    "old public APK",
+    "closed writes"
+  ],
+  "physicalPhoneTested": false,
+  "nativeScreensReviewed": [
+    "current-package-icon",
+    "vexo-region-picker-320",
+    "vexo-confirmation-320",
+    "vexo-confirmation-large-320"
+  ],
+  "workerPublicationDisabled": true,
+  "workerBindingNames": [
+    "RELEASES"
+  ],
+  "packageActivityNotificationAndSplashLogoVerified": true,
+  "globalRegionSelectionAndCacheVerified": true,
+  "brandedPopupAndNoticeActionsVerified": true,
+  "thirdPartyScannerCacheCleared": false
+}

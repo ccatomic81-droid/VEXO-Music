@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.25.2 — Consistent branding, Global discovery and VEXO popups (27 October 2026)
+
+- Reference the current mark consistently in package/activity, legacy/adaptive/themed launcher, startup and notification resources.
+- Add a persistent Global music region with worldwide queries, omitted selected-country metadata and separate caches.
+- Scope related-song cache entries by region and keep current playback intact when changing discovery region.
+- Style app-owned popup headers, cards, actions and notices before the first frame; retain confirmation and selection behavior.
+- Preserve native Android-owned permission and installation prompts, original signing identity and stored music/settings.
+
 ## 0.25.1 — Smart discovery, offline saving and update progress (27 October 2026)
 
 - Animated in-app update downloads with real percentage/MB progress, a distinct verification phase, Cancel and Retry.
