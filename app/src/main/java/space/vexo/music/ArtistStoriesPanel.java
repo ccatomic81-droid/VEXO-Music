@@ -58,7 +58,7 @@ final class ArtistStoriesPanel extends LinearLayout {
       inner.setBackground(circle);
       inner.setClipToOutline(true);
       inner.setPadding(dp(3), dp(3), dp(3), dp(3));
-      ImageView image = new ImageView(c);
+      ImageView image = new CircleImage(c);
       GradientDrawable imageCircle = new GradientDrawable();
       imageCircle.setShape(GradientDrawable.OVAL);
       imageCircle.setColor(PANEL);
@@ -101,5 +101,29 @@ final class ArtistStoriesPanel extends LinearLayout {
 
   private int dp(int value) {
     return Math.round(value * getResources().getDisplayMetrics().density);
+  }
+
+  /** Explicit clipping also works for software drawing and placeholder/error artwork. */
+  private static final class CircleImage extends ImageView {
+    private final Path circle = new Path();
+
+    CircleImage(Context c) {
+      super(c);
+    }
+
+    @Override
+    protected void onSizeChanged(int w, int h, int oldW, int oldH) {
+      super.onSizeChanged(w, h, oldW, oldH);
+      circle.reset();
+      circle.addOval(0, 0, w, h, Path.Direction.CW);
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+      int save = canvas.save();
+      canvas.clipPath(circle);
+      super.onDraw(canvas);
+      canvas.restoreToCount(save);
+    }
   }
 }

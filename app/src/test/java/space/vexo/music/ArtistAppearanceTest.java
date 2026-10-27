@@ -103,6 +103,12 @@ public class ArtistAppearanceTest {
     ImageView image = findType(card, ImageView.class);
     assertTrue(image.getClipToOutline());
     capture(panel, 320, 220, "artist-circles");
+    Bitmap portrait =
+        Bitmap.createBitmap(image.getWidth(), image.getHeight(), Bitmap.Config.ARGB_8888);
+    image.draw(new Canvas(portrait));
+    assertEquals("Artist artwork stays circular", 0, Color.alpha(portrait.getPixel(0, 0)));
+    assertEquals(255, Color.alpha(portrait.getPixel(image.getWidth() / 2, 1)));
+    portrait.recycle();
   }
 
   @Test
@@ -141,6 +147,8 @@ public class ArtistAppearanceTest {
         assertContrast(Visuals.BG, Visuals.LIME, 4.5);
         String theme = choice == 2 ? "light" : "dark";
         View root = a.get().findViewById(android.R.id.content);
+        View notice = root.findViewWithTag("vexo-notice");
+        if (notice != null) ((ViewGroup) notice.getParent()).removeView(notice);
         MusicHomePanel home = findType(root, MusicHomePanel.class);
         home.personal(
             MusicInterests.read(c),
