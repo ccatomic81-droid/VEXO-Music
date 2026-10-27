@@ -33,8 +33,17 @@ final class TrendingMusic {
       if (unavailable instanceof InterruptedException || Thread.currentThread().isInterrupted()) throw new InterruptedException();
     }
     if (MixCatalogue.songs(found).size() < 5) found.addAll(OnlineMusic.preview("TikTok viral songs", country));
-    return MixCatalogue.songs(found);
+    return candidates(found);
   }
+  static List<Track> candidates(List<Track> input) {
+    Map<String, Track> songs = new LinkedHashMap<>();
+    for (Track track : input) {
+      if (RadioPolicy.music(track)) songs.putIfAbsent(RadioPolicy.songKey(track), track);
+      if (songs.size() >= 100) break;
+    }
+    return new ArrayList<>(songs.values());
+  }
+
   static boolean eligible(String title) {
     return RadioPolicy.normalize(title).matches(".*\\b(tiktok|tik tok|viral|trending)\\b.*");
   }

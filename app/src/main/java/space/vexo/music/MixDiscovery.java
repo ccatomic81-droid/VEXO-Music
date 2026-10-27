@@ -56,7 +56,7 @@ final class MixDiscovery {
     interrupted();
     try { pool.addAll(mix.id.equals("trending") ? source.trending(query(mix, interests, tuning, country, now)) : source.search(query(mix, interests, tuning, country, now))); }
     catch (Exception e) { if (e instanceof InterruptedException) throw e; interrupted(); if (pool.isEmpty()) throw e; }
-    if (!station && !mix.id.equals("trending") && pool.size() < 12) {
+    if (!station && !mix.id.equals("trending") && select(mix, interests, pool, tuning, now, exclude, 6).size() < 6) {
       String language = tuning.language.isEmpty() ? interests.preferences.optString("language") : tuning.language;
       interrupted();
       try { pool.addAll(source.search(language + " " + (tuning.mood.isEmpty() ? mix.intent : tuning.mood) + " songs")); }

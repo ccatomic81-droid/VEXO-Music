@@ -17,7 +17,15 @@ final class MixTuner {
   static AlertDialog show(Context c, MixCatalogue.Mix mix, Executor worker, Runnable changed) {
     JSONObject saved = new SmartStore(c).preferences().optJSONObject("mix_tune:" + mix.id);
     MixDiscovery.Tuning tuning = new MixDiscovery.Tuning(saved == null ? new JSONObject() : saved);
-    MusicSurface view = new MusicSurface(c);
+    MusicSurface view = new MusicSurface(c) {
+      @Override protected void onMeasure(int width, int height) {
+        int limit = dp(Math.max(200, Math.min(440, getResources().getConfiguration().screenHeightDp - 260)));
+        if (View.MeasureSpec.getMode(height) != View.MeasureSpec.UNSPECIFIED)
+          limit = Math.min(limit, View.MeasureSpec.getSize(height));
+        super.onMeasure(width, View.MeasureSpec.makeMeasureSpec(limit, View.MeasureSpec.AT_MOST));
+      }
+    };
+    view.setFillViewport(false);
     view.body.addView(view.text(mix.name, 22, Visuals.TEXT, true));
     view.gap(view.body, 10);
     view.body.addView(view.text("Shape the next picks. Your playing song and manual queue stay in place.", 13, Visuals.MUTED, false));
@@ -30,10 +38,13 @@ final class MixTuner {
     view.body.addView(repeats);
     view.gap(view.body, 8);
     view.body.addView(view.text("Listening learning can be paused or cleared in Smart → Recommendation controls.", 12, Visuals.MUTED, false));
+    TextView reset = view.action("Reset mix preferences", false, () -> {});
+    view.gap(view.body, 10); view.body.addView(reset);
     AlertDialog dialog = new AlertDialog.Builder(c).setTitle("Tune My Mix").setView(view)
-        .setNegativeButton("Cancel", null).setNeutralButton("Reset", null).setPositiveButton("Save mix", null).create();
+        .setNegativeButton("Cancel", null).setPositiveButton("Save mix", null).create();
     dialog.setOnShowListener(ignored -> {
       dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+        reset.setEnabled(false);
         try {
           JSONObject value = new JSONObject().put("familiarity", balance.getSelectedItemPosition())
               .put("language", language.getSelectedItemPosition() == 0 ? "" : LANGUAGES[language.getSelectedItemPosition()])
@@ -42,7 +53,7 @@ final class MixTuner {
           save(c, mix, value, worker, changed, dialog);
         } catch (JSONException impossible) { throw new IllegalArgumentException(impossible); }
       });
-      dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(v -> save(c, mix, null, worker, changed, dialog));
+      reset.setOnClickListener(v -> { reset.setEnabled(false); save(c, mix, null, worker, changed, dialog); });
     });
     dialog.show();
     if (dialog.getWindow() != null) {
@@ -54,7 +65,6 @@ final class MixTuner {
 
   private static void save(Context c, MixCatalogue.Mix mix, JSONObject value, Executor worker, Runnable changed, AlertDialog dialog) {
     dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
-    dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setEnabled(false);
     Handler main = new Handler(Looper.getMainLooper());
     worker.execute(() -> {
       try {

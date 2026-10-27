@@ -65,7 +65,12 @@ public class DiscoveryMixUiTest {
     decor.draw(new android.graphics.Canvas(image));File dir=new File("build/ui-checks");dir.mkdirs();
     try(var out=new FileOutputStream(new File(dir,"tune-my-mix-large-320.png"))){image.compress(android.graphics.Bitmap.CompressFormat.PNG,100,out);}image.recycle();
     assertTrue(decor.getHeight()<=700);
-    assertTrue(dialog.getButton(AlertDialog.BUTTON_POSITIVE).getWidth()>0);
+    for (int which : new int[]{AlertDialog.BUTTON_POSITIVE, AlertDialog.BUTTON_NEGATIVE}) {
+      View button = dialog.getButton(which); int[] at = new int[2], origin = new int[2];
+      button.getLocationOnScreen(at); decor.getLocationOnScreen(origin);
+      assertTrue("Action must fit horizontally", at[0] - origin[0] >= 0 && at[0] - origin[0] + button.getWidth() <= decor.getWidth());
+      assertTrue("Action must be fully visible vertically", at[1] - origin[1] >= 0 && at[1] - origin[1] + button.getHeight() <= decor.getHeight());
+    }
     dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick();Shadows.shadowOf(Looper.getMainLooper()).idle();
     assertTrue(changed[0]);assertNull(MixSession.active(app));
     assertNotNull(new SmartStore(app).preferences().optJSONObject("mix_tune:daily"));

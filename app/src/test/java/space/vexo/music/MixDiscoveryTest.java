@@ -103,4 +103,13 @@ public class MixDiscoveryTest {
     new LibraryStore(app).recent(song);assertTrue(cache.cached(mix,"LK").isEmpty());
   }
 
+  @Test public void trendingRetainsCandidatesBeyondTheFirstVisibleBatchForContinuation() {
+    List<Track> pool = new ArrayList<>();
+    for (int i=0;i<80;i++) pool.add(song("id"+i,"Song "+i,"Artist "+i));
+    List<Track> candidates = TrendingMusic.candidates(pool); assertEquals(80,candidates.size());
+    Set<String> played = new HashSet<>();for(Track t:candidates.subList(0,30))played.add(QueuePolicy.identity(t.url));
+    List<Track> next = MixDiscovery.select(MixCatalogue.trending(),interests(Collections.emptyList(),Collections.emptyList(),new JSONObject(),new JSONObject()),candidates,defaults,System.currentTimeMillis(),played,10);
+    assertEquals(10,next.size());assertTrue(next.stream().noneMatch(t->played.contains(QueuePolicy.identity(t.url))));
+  }
+
 }
