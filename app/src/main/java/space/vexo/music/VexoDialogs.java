@@ -57,6 +57,7 @@ final class VexoDialogs {
       super.setCustomTitle(header);
       AlertDialog dialog = super.create();
       dialog.setOnShowListener(unused -> style(dialog));
+      style(dialog);
       return dialog;
     }
 
@@ -64,6 +65,7 @@ final class VexoDialogs {
     public AlertDialog show() {
       AlertDialog dialog = create();
       dialog.show();
+      style(dialog);
       return dialog;
     }
   }
@@ -76,6 +78,13 @@ final class VexoDialogs {
       android.graphics.drawable.GradientDrawable background = round(0xff202322, dp(c, 26));
       background.setStroke(dp(c, 1), 0xff37443b);
       window.setBackgroundDrawable(background);
+      window.getDecorView().setPadding(0, 0, 0, 0);
+      for (String panel :
+          new String[] {"parentPanel", "topPanel", "contentPanel", "customPanel", "buttonPanel"}) {
+        int id = c.getResources().getIdentifier(panel, "id", "android");
+        View view = id == 0 ? null : dialog.findViewById(id);
+        if (view != null) view.setBackgroundColor(android.graphics.Color.TRANSPARENT);
+      }
       window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
       window.setDimAmount(.72f);
       int available = c.getResources().getDisplayMetrics().widthPixels - dp(c, 32);

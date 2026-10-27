@@ -104,6 +104,7 @@ public class BrandRegionDialogTest {
       capture(dialog, "vexo-confirmation-320");
       assertNotNull(text(dialog.getWindow().getDecorView(), "VEXO MUSIC"));
       dialog.getButton(AlertDialog.BUTTON_NEGATIVE).performClick();
+      Shadows.shadowOf(Looper.getMainLooper()).idle();
       assertFalse(confirmed[0]);
       assertFalse(dialog.isShowing());
       dialog =
@@ -113,6 +114,7 @@ public class BrandRegionDialogTest {
               .setPositiveButton("Install update", (d, w) -> confirmed[0] = true)
               .show();
       dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+      Shadows.shadowOf(Looper.getMainLooper()).idle();
       assertTrue(confirmed[0]);
     }
   }
