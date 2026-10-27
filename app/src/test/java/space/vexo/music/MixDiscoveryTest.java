@@ -78,4 +78,11 @@ public class MixDiscoveryTest {
     store.preference("learn_listening",false);assertTrue(MusicInterests.read(app).seeds.isEmpty());
     store.resetTaste();assertEquals(0,store.taste().length());
   }
+  @Test public void newNegativeFeedbackImmediatelyHidesSongsFromTheDayStableCache() {
+    android.content.Context app=RuntimeEnvironment.getApplication();MixCatalogue c=new MixCatalogue(app);
+    Track song=song("aaaaaaaaaaa","Home","Nova");MixCatalogue.Mix daily=MixCatalogue.find("daily","LK");
+    c.save(daily,"LK",Arrays.asList(song));assertEquals(1,c.cached(daily,"LK").size());
+    new SmartStore(app).feedback(song,"never");assertTrue(c.cached(daily,"LK").isEmpty());
+  }
+
 }

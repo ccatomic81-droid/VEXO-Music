@@ -45,7 +45,10 @@ final class MixTuner {
       dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(v -> save(c, mix, null, worker, changed, dialog));
     });
     dialog.show();
-    if (dialog.getWindow() != null) dialog.getWindow().setLayout(-1, -2);
+    if (dialog.getWindow() != null) {
+      dialog.getWindow().setBackgroundDrawable(Visuals.round(0xff202020, view.dp(20)));
+      dialog.getWindow().setLayout(Math.min(view.dp(420), c.getResources().getDisplayMetrics().widthPixels - view.dp(32)), -2);
+    }
     return dialog;
   }
 

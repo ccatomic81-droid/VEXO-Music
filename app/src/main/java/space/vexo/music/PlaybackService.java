@@ -135,6 +135,65 @@ public final class PlaybackService extends MediaSessionService {
     }
   }
 
+  private java.util.List<Track> loadAutoplay(Track seed, java.util.List<Track> queueSnapshot) throws Exception {
+    MixCatalogue.Mix mix = MixSession.active(this);
+    if (mix != null) {
+      MusicInterests interests = MusicInterests.read(this);
+      java.util.Set<String> exclude = new java.util.HashSet<>();
+      // This immutable snapshot was captured on the player thread for this request.
+      for (Track track : queueSnapshot) {
+        exclude.add(QueuePolicy.identity(track.url)); exclude.add(RadioPolicy.songKey(track));
+      }
+      PersonalDiscovery.Source source = new PersonalDiscovery.Source() {
+        public java.util.List<Track> related(Track track) throws Exception { return OnlineMusic.relatedPreview(track); }
+        public java.util.List<Track> trending(String query) throws Exception { return TrendingMusic.load(query, MixSession.country(PlaybackService.this)); }
+        public java.util.List<Track> search(String query) throws Exception {
+          OnlineMusic.Results page = OnlineMusic.search(query, MixSession.country(PlaybackService.this));
+          java.util.List<Track> found = new java.util.ArrayList<>(page.tracks);
+          if (page.next != null && found.size() < 60) {
+            try { found.addAll(OnlineMusic.more(page).tracks); }
+            catch (Exception unavailable) { if (Thread.currentThread().isInterrupted()) throw new InterruptedException(); }
+          }
+          return found;
+        }
+      };
+      java.util.List<Track> found = MixDiscovery.load(mix, interests, source,
+          MixSession.country(this), System.currentTimeMillis(), exclude);
+      if (found.size() < 5 && (mix.id.equals("daily") || mix.id.equals("discover"))) {
+        java.util.List<Track> expanded = new java.util.ArrayList<>(found);
+        try { expanded.addAll(source.related(seed)); } catch (Exception unavailable) { if (Thread.currentThread().isInterrupted()) throw new InterruptedException(); }
+        found = MixDiscovery.select(mix, interests, expanded, MixDiscovery.Tuning.read(interests, mix.id),
+            System.currentTimeMillis(), exclude, 30);
+      }
+      return found;
+    }
+    Track anchor = radioStore.anchor();
+    if (anchor == null) anchor = seed;
+    java.util.List<Track> candidates =
+        new RadioCatalogue(
+                new RadioCatalogue.Source() {
+                  public java.util.List<Track> related(Track t) throws Exception {
+                    return OnlineMusic.relatedPreview(t);
+                  }
+
+                  public java.util.List<Track> search(String query) throws Exception {
+                    return OnlineMusic.preview(
+                        query, RegionPolicy.current(PlaybackService.this));
+                  }
+                })
+            .load(anchor, seed);
+    candidates = tuneCandidates(candidates);
+    try {
+      SmartStore smart = new SmartStore(this);
+      MusicInterests interests = MusicInterests.read(this);
+      boolean discover = radioStore.mode() == RadioPolicy.Mode.DISCOVER;
+      return interests.rank(
+          SmartPolicy.rank(candidates, smart, interests.history, discover), discover);
+    } catch (IllegalStateException unavailable) {
+      return candidates;
+    }
+  }
+
   private String lastSaveRequest = "";
 
   private java.util.List<Track> queueTracks() {
@@ -281,62 +340,12 @@ public final class PlaybackService extends MediaSessionService {
                 player.play();
               }
             },
-            seed -> {
-              MixCatalogue.Mix mix = MixSession.active(this);
-              if (mix != null) {
-                MusicInterests interests = MusicInterests.read(this);
-                java.util.Set<String> exclude = new java.util.HashSet<>();
-                // Snapshot is supplied on the player thread through queue's recent history below.
-                for (Track track : new QueueStore(this).read().tracks) {
-                  exclude.add(QueuePolicy.identity(track.url)); exclude.add(RadioPolicy.songKey(track));
-                }
-                PersonalDiscovery.Source source = new PersonalDiscovery.Source() {
-                  public java.util.List<Track> related(Track track) throws Exception { return OnlineMusic.relatedPreview(track); }
-                  public java.util.List<Track> trending(String query) throws Exception { return TrendingMusic.load(query, MixSession.country(PlaybackService.this)); }
-                  public java.util.List<Track> search(String query) throws Exception {
-                    OnlineMusic.Results page = OnlineMusic.search(query, MixSession.country(PlaybackService.this));
-                    java.util.List<Track> found = new java.util.ArrayList<>(page.tracks);
-                    if (page.next != null && found.size() < 60) {
-                      try { found.addAll(OnlineMusic.more(page).tracks); }
-                      catch (Exception unavailable) { if (Thread.currentThread().isInterrupted()) throw new InterruptedException(); }
-                    }
-                    return found;
-                  }
-                };
-                java.util.List<Track> found = MixDiscovery.load(mix, interests, source,
-                    MixSession.country(this), System.currentTimeMillis(), exclude);
-                if (found.size() < 5 && (mix.id.equals("daily") || mix.id.equals("discover"))) {
-                  java.util.List<Track> expanded = new java.util.ArrayList<>(found);
-                  try { expanded.addAll(source.related(seed)); } catch (Exception unavailable) { if (Thread.currentThread().isInterrupted()) throw new InterruptedException(); }
-                  found = MixDiscovery.select(mix, interests, expanded, MixDiscovery.Tuning.read(interests, mix.id),
-                      System.currentTimeMillis(), exclude, 30);
-                }
-                return found;
+            new AutoplayManager.Loader() {
+              public java.util.List<Track> load(Track seed) throws Exception {
+                return loadAutoplay(seed, java.util.Collections.emptyList());
               }
-              Track anchor = radioStore.anchor();
-              if (anchor == null) anchor = seed;
-              java.util.List<Track> candidates =
-                  new RadioCatalogue(
-                          new RadioCatalogue.Source() {
-                            public java.util.List<Track> related(Track t) throws Exception {
-                              return OnlineMusic.relatedPreview(t);
-                            }
-
-                            public java.util.List<Track> search(String query) throws Exception {
-                              return OnlineMusic.preview(
-                                  query, RegionPolicy.current(PlaybackService.this));
-                            }
-                          })
-                      .load(anchor, seed);
-              candidates = tuneCandidates(candidates);
-              try {
-                SmartStore smart = new SmartStore(this);
-                MusicInterests interests = MusicInterests.read(this);
-                boolean discover = radioStore.mode() == RadioPolicy.Mode.DISCOVER;
-                return interests.rank(
-                    SmartPolicy.rank(candidates, smart, interests.history, discover), discover);
-              } catch (IllegalStateException unavailable) {
-                return candidates;
+              public java.util.List<Track> load(Track seed, java.util.List<Track> snapshot) throws Exception {
+                return loadAutoplay(seed, snapshot);
               }
             },
             radioWorker,

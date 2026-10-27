@@ -47,6 +47,7 @@ public class DiscoveryMixUiTest {
       try(var out=new FileOutputStream(new File(dir,"tune-my-mix-320.png"))){image.compress(android.graphics.Bitmap.CompressFormat.PNG,100,out);}image.recycle();
       assertTrue(decor.getHeight()<=720);
       dialog.getButton(AlertDialog.BUTTON_NEGATIVE).performClick();
+      Shadows.shadowOf(Looper.getMainLooper()).idle();
       assertFalse(dialog.isShowing());assertEquals(1,new LibraryStore(app).tracks("favourites").size());
     }
   }
@@ -55,6 +56,7 @@ public class DiscoveryMixUiTest {
     Context app=new android.view.ContextThemeWrapper(activity.get(),R.style.AppTheme);
     MixCatalogue.Mix daily=MixCatalogue.find("daily","LK");final boolean[] changed={false};
     AlertDialog dialog=MixTuner.show(app,daily,Runnable::run,()->changed[0]=true);
+    Shadows.shadowOf(Looper.getMainLooper()).idle();
     dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick();Shadows.shadowOf(Looper.getMainLooper()).idle();
     assertTrue(changed[0]);assertNull(MixSession.active(app));
     assertNotNull(new SmartStore(app).preferences().optJSONObject("mix_tune:daily"));

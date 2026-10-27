@@ -120,6 +120,17 @@ final class MixCatalogue {
       for (int i = 0; i < a.length(); i++) songs.add(Track.from(a.getJSONObject(i)));
     } catch (Exception ignored) {
     }
+    // A day-stable cache must still respect new explicit negative feedback immediately.
+    JSONObject feedback = new SmartStore(context).feedback();
+    Set<String> hidden = new RadioStore(context).hidden();
+    long now = System.currentTimeMillis();
+    songs.removeIf(t -> {
+      String key = RadioPolicy.songKey(t);
+      JSONObject choice = feedback.optJSONObject(key);
+      String value = choice == null ? "" : choice.optString("value");
+      return hidden.contains(QueuePolicy.identity(t.url)) || hidden.contains("song:" + key)
+          || value.equals("never") || value.equals("break") && now - choice.optLong("at") < 7 * 86400000L;
+    });
     return songs;
   }
 
