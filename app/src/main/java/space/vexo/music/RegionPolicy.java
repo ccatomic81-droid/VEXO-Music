@@ -5,9 +5,21 @@ import android.telephony.TelephonyManager;
 import java.util.*;
 
 public final class RegionPolicy {
+  public static final String GLOBAL = "GLOBAL";
+
+  public static boolean global(String code) {
+    return GLOBAL.equalsIgnoreCase(code);
+  }
+
+  /** Empty means that the provider request must omit the selected country. */
+  public static String providerCountry(String code) {
+    return global(code) ? "" : valid(code) ? code.toUpperCase(Locale.ROOT) : "LK";
+  }
+
   public static boolean valid(String code) {
-    return code != null
-        && Arrays.asList(Locale.getISOCountries()).contains(code.toUpperCase(Locale.ROOT));
+    return global(code)
+        || code != null
+            && Arrays.asList(Locale.getISOCountries()).contains(code.toUpperCase(Locale.ROOT));
   }
 
   public static String choose(String manual, String network, String sim, String locale) {
@@ -32,6 +44,7 @@ public final class RegionPolicy {
   }
 
   public static String name(String code) {
+    if (global(code)) return "Global";
     return new Locale("", code).getDisplayCountry(Locale.ENGLISH);
   }
 }

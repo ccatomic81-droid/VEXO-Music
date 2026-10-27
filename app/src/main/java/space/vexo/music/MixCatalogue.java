@@ -34,15 +34,15 @@ final class MixCatalogue {
 
   static List<Mix> mixes(String country) {
     String regional =
-        country.equals("LK") ? "Sinhala favourites" : RegionPolicy.name(country) + " favourites";
+        RegionPolicy.global(country) ? "Global favourites" : country.equals("LK") ? "Sinhala favourites" : RegionPolicy.name(country) + " favourites";
     return Arrays.asList(
         new Mix("calm", "Calm & connected", "A softer side of your taste", "calm relaxing songs", 0xff416c72),
         new Mix("feelgood", "Feel-good favourites", "Your kind of good energy", "happy uplifting songs", 0xffaa743d),
         new Mix(
             "regional",
             regional,
-            "A little closer to home",
-            country.equals("LK")
+            RegionPolicy.global(country) ? "Music without borders" : "A little closer to home",
+            RegionPolicy.global(country) ? "worldwide international popular songs" : country.equals("LK")
                 ? "Sinhala popular songs"
                 : RegionPolicy.name(country) + " popular songs",
             0xff6456b8),

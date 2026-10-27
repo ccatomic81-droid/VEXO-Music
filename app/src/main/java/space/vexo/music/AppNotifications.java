@@ -63,7 +63,7 @@ final class AppNotifications {
             .notify(
                 i,
                 new NotificationCompat.Builder(context, CHANNEL)
-                    .setSmallIcon(R.drawable.ic_notification)
+                    .setSmallIcon(R.drawable.vexo_notification_v2)
                     .setContentTitle(str)
                     .setContentText(str2)
                     .setStyle(new NotificationCompat.BigTextStyle().bigText(str2))

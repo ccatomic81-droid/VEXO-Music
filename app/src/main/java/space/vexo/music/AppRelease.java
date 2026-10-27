@@ -7,15 +7,11 @@ import org.json.*;
 /** A release feed contains metadata only. Downloads always need a user tap. */
 final class AppRelease {
   static final String NOTES =
-      "• Animated in-app update downloads with percentage, MB progress, verification and cancellation.\n"
-          + "• Fixed automatic offline saving with the 500 MB storage limit and an on/off control.\n"
-          + "• TikTok-inspired Trending Music with full-song playback and clear source labels.\n"
-          + "• Personalized mood mixes, a Daily Mix and New to you discovery.\n"
-          + "• Tune My Mix controls for familiarity, language, mood and recent-song avoidance.\n"
-          + "• On-device learning from audible listening and manual skips, with privacy controls.\n"
-          + "• Continuous mix playback and smart queue refills; your song and manual queue stay put.\n"
-          + "• Existing VEXO player, crossfade, MindRadio, PureSong and offline features remain.\n"
-          + "• Update over your existing VEXO app to keep your music and settings.";
+      "• Consistent current VEXO icon across package details, launcher, startup and notifications.\n"
+          + "• Global music region for worldwide discovery and mixes.\n"
+          + "• Custom VEXO popups and in-app notices with branded cards and clear actions.\n"
+          + "• Animated update downloads and the 500 MB offline-saving fix remain.\n"
+          + "• Update over your existing app to keep your music and settings.";
   final int code;
   final String version, summary, url;
   String sha256 = "";

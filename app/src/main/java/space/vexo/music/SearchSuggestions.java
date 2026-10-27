@@ -22,8 +22,8 @@ final class SearchSuggestions implements AutoCloseable {
       (query, country) -> {
         OnlineMusic.initialize();
         SuggestionExtractor extractor = ServiceList.YouTube.getSuggestionExtractor();
-        extractor.forceContentCountry(new ContentCountry(country));
-        extractor.forceLocalization(new Localization(Locale.getDefault().getLanguage(), country));
+        if (!RegionPolicy.global(country)) extractor.forceContentCountry(new ContentCountry(RegionPolicy.providerCountry(country)));
+        if (!RegionPolicy.global(country)) extractor.forceLocalization(new Localization(Locale.getDefault().getLanguage(), RegionPolicy.providerCountry(country)));
         return extractor.suggestionList(query);
       };
   private final Handler main;

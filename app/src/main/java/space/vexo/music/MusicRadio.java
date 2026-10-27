@@ -18,20 +18,23 @@ final class MusicRadio {
   }
 
   static List<Track> load(Track seed) throws Exception {
+    return load(seed, RegionPolicy.providerCountry(Locale.getDefault().getCountry()));
+  }
+
+  static List<Track> load(Track seed, String country) throws Exception {
     String id = videoId(seed);
     if (id.isEmpty()) return Collections.emptyList();
     OnlineMusic.initialize();
     String version = YoutubeParsingHelper.getYoutubeMusicClientVersion();
-    String country = Locale.getDefault().getCountry();
-    if (!RegionPolicy.valid(country)) country = "LK";
     JSONObject client =
         new JSONObject()
             .put("clientName", "WEB_REMIX")
             .put("clientVersion", version)
             .put("hl", "en")
-            .put("gl", country)
             .put("platform", "DESKTOP")
             .put("utcOffsetMinutes", 0);
+    String providerCountry = RegionPolicy.providerCountry(country);
+    if (!providerCountry.isEmpty()) client.put("gl", providerCountry);
     JSONObject request =
         new JSONObject()
             .put("context", new JSONObject().put("client", client))

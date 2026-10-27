@@ -48,7 +48,7 @@ final class PureSongPanel extends MusicSurface {
               try {
                 run.run();
               } catch (IllegalStateException | IllegalArgumentException error) {
-                new AlertDialog.Builder(getContext())
+                new VexoDialogs.Builder(getContext())
                     .setMessage(error.getMessage())
                     .setPositiveButton("Close", null)
                     .show();

@@ -145,7 +145,7 @@ public final class PlaybackService extends MediaSessionService {
         exclude.add(QueuePolicy.identity(track.url)); exclude.add(RadioPolicy.songKey(track));
       }
       PersonalDiscovery.Source source = new PersonalDiscovery.Source() {
-        public java.util.List<Track> related(Track track) throws Exception { return OnlineMusic.relatedPreview(track); }
+        public java.util.List<Track> related(Track track) throws Exception { return OnlineMusic.relatedPreview(track, RegionPolicy.current(PlaybackService.this)); }
         public java.util.List<Track> trending(String query) throws Exception { return TrendingMusic.load(query, MixSession.country(PlaybackService.this)); }
         public java.util.List<Track> search(String query) throws Exception {
           OnlineMusic.Results page = OnlineMusic.search(query, MixSession.country(PlaybackService.this));
@@ -174,7 +174,7 @@ public final class PlaybackService extends MediaSessionService {
         new RadioCatalogue(
                 new RadioCatalogue.Source() {
                   public java.util.List<Track> related(Track t) throws Exception {
-                    return OnlineMusic.relatedPreview(t);
+                    return OnlineMusic.relatedPreview(t, RegionPolicy.current(PlaybackService.this));
                   }
 
                   public java.util.List<Track> search(String query) throws Exception {
@@ -258,7 +258,7 @@ public final class PlaybackService extends MediaSessionService {
     super.onCreate();
     androidx.media3.session.DefaultMediaNotificationProvider notifications =
         new androidx.media3.session.DefaultMediaNotificationProvider.Builder(this).build();
-    notifications.setSmallIcon(R.drawable.ic_notification);
+    notifications.setSmallIcon(R.drawable.vexo_notification_v2);
     setMediaNotificationProvider(notifications);
     radioStore = new RadioStore(this);
     OfflineLibrary offline = OfflineLibrary.get(this);

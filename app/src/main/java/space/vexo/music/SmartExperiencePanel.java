@@ -58,7 +58,7 @@ final class SmartExperiencePanel extends MusicSurface {
     try {
       action.run();
     } catch (IllegalStateException e) {
-      new AlertDialog.Builder(getContext())
+      new VexoDialogs.Builder(getContext())
           .setMessage(e.getMessage())
           .setPositiveButton("Close", null)
           .show();
@@ -241,7 +241,7 @@ final class SmartExperiencePanel extends MusicSurface {
                     });
               };
           if (!smart.preferences().optBoolean("cloud_consent"))
-            new AlertDialog.Builder(getContext())
+            new VexoDialogs.Builder(getContext())
                 .setTitle("Use cloud MindRadio?")
                 .setMessage(
                     "Your typed request and selected genre, language, mood, energy and artist"
@@ -297,7 +297,7 @@ final class SmartExperiencePanel extends MusicSurface {
     button(
         "Reset learned listening interests",
         () ->
-            new AlertDialog.Builder(getContext())
+            new VexoDialogs.Builder(getContext())
                 .setMessage(
                     "Reset learned listening interests? Favourites, explicit feedback, memories and"
                         + " playlists stay.")
@@ -357,11 +357,7 @@ final class SmartExperiencePanel extends MusicSurface {
                   .trim()
                   .substring(0, Math.min(200, artists.getText().toString().trim().length())));
           listener.changed();
-          Toast.makeText(
-                  getContext(),
-                  "Preferences saved · future radio refills use these",
-                  Toast.LENGTH_SHORT)
-              .show();
+          VexoNotice.show(getContext(), "Preferences saved · future radio refills use these");
         });
     button(
         "Forgotten favourites",
@@ -496,9 +492,7 @@ final class SmartExperiencePanel extends MusicSurface {
           () -> {
             smart.feedback(t, value);
             listener.changed();
-            Toast.makeText(
-                    getContext(), "Feedback saved for future recommendations", Toast.LENGTH_SHORT)
-                .show();
+            VexoNotice.show(getContext(), "Feedback saved for future recommendations");
           });
     }
   }
@@ -516,13 +510,11 @@ final class SmartExperiencePanel extends MusicSurface {
           try {
             at = Math.multiplyExact(Long.parseLong(seconds.getText().toString()), 1000L);
           } catch (Exception e) {
-            Toast.makeText(getContext(), "Enter a valid moment in seconds", Toast.LENGTH_SHORT)
-                .show();
+            VexoNotice.show(getContext(), "Enter a valid moment in seconds");
             return;
           }
           if (at < 0 || at > (t.duration > 0 ? t.duration * 1000 : 86400000L)) {
-            Toast.makeText(getContext(), "Choose a moment within this song", Toast.LENGTH_SHORT)
-                .show();
+            VexoNotice.show(getContext(), "Choose a moment within this song");
             return;
           }
           smart.memory(t, note.getText().toString(), at, System.currentTimeMillis());
@@ -554,7 +546,7 @@ final class SmartExperiencePanel extends MusicSurface {
               () -> listener.play(Collections.singletonList(t), 0, m.optLong("moment")));
       row.setOnLongClickListener(
           v -> {
-            new AlertDialog.Builder(getContext())
+            new VexoDialogs.Builder(getContext())
                 .setMessage("Delete this memory?")
                 .setNegativeButton("Cancel", null)
                 .setPositiveButton(
@@ -609,7 +601,7 @@ final class SmartExperiencePanel extends MusicSurface {
     button(
         "Restore this version in place",
         () ->
-            new AlertDialog.Builder(getContext())
+            new VexoDialogs.Builder(getContext())
                 .setMessage(
                     "Replace the current playlist named “"
                         + r.optString("name")
@@ -632,7 +624,7 @@ final class SmartExperiencePanel extends MusicSurface {
           "Recover track: " + t.title,
           () -> {
             List<String> names = library.playlists();
-            new AlertDialog.Builder(getContext())
+            new VexoDialogs.Builder(getContext())
                 .setTitle("Recover into playlist")
                 .setItems(
                     names.toArray(new String[0]),
@@ -735,7 +727,7 @@ final class SmartExperiencePanel extends MusicSurface {
             if (saved != null)
               for (int j = 0; j < saved.length(); j++)
                 if (names.get(i).equals(saved.optString(j))) selected[i] = true;
-          new AlertDialog.Builder(getContext())
+          new VexoDialogs.Builder(getContext())
               .setTitle("Pin favourite playlists")
               .setMultiChoiceItems(
                   names.toArray(new String[0]), selected, (d, w, checked) -> selected[w] = checked)
@@ -781,7 +773,7 @@ final class SmartExperiencePanel extends MusicSurface {
     button(
         "Clear listening history",
         () ->
-            new AlertDialog.Builder(getContext())
+            new VexoDialogs.Builder(getContext())
                 .setMessage(
                     "Clear timestamped plays and the older recently played list? Memories and"
                         + " playlists stay.")
@@ -815,7 +807,7 @@ final class SmartExperiencePanel extends MusicSurface {
             note("Enter a name of 1–40 characters.");
             return;
           }
-          new AlertDialog.Builder(getContext())
+          new VexoDialogs.Builder(getContext())
               .setTitle("Choose a song")
               .setItems(
                   available.stream().map(t -> t.title).toArray(String[]::new),

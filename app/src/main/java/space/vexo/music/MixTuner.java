@@ -40,9 +40,10 @@ final class MixTuner {
     view.body.addView(view.text("Listening learning can be paused or cleared in Smart → Recommendation controls.", 12, Visuals.MUTED, false));
     TextView reset = view.action("Reset mix preferences", false, () -> {});
     view.gap(view.body, 10); view.body.addView(reset);
-    AlertDialog dialog = new AlertDialog.Builder(c).setTitle("Tune My Mix").setView(view)
+    AlertDialog dialog = new VexoDialogs.Builder(c).setTitle("Tune My Mix").setView(view)
         .setNegativeButton("Cancel", null).setPositiveButton("Save mix", null).create();
     dialog.setOnShowListener(ignored -> {
+      VexoDialogs.style(dialog);
       dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
         reset.setEnabled(false);
         try {
@@ -57,7 +58,7 @@ final class MixTuner {
     });
     dialog.show();
     if (dialog.getWindow() != null) {
-      dialog.getWindow().setBackgroundDrawable(Visuals.round(0xff202020, view.dp(20)));
+
       dialog.getWindow().setLayout(Math.min(view.dp(420), c.getResources().getDisplayMetrics().widthPixels - view.dp(32)), -2);
     }
     return dialog;
@@ -72,7 +73,7 @@ final class MixTuner {
         new MixCatalogue(c).tuned(mix);
         main.post(() -> { dialog.dismiss(); changed.run(); });
       } catch (IllegalStateException error) {
-        main.post(() -> { dialog.dismiss(); new AlertDialog.Builder(c).setMessage(error.getMessage()).setPositiveButton("Close", null).show(); });
+        main.post(() -> { dialog.dismiss(); new VexoDialogs.Builder(c).setMessage(error.getMessage()).setPositiveButton("Close", null).show(); });
       }
     });
   }
