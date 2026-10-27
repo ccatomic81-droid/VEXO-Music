@@ -68,6 +68,17 @@ public class ArtistIdentityTest {
   }
 
   @Test
+  public void differentProviderIdentitiesWithTheSameNameRemainSeparate() {
+    List<SearchArtists.Artist> artists = new ArrayList<>();
+    SearchArtists.merge(
+        artists, new SearchArtists.Artist(KEVIN, "Same name", "", Arrays.asList("one"), 0, false));
+    SearchArtists.merge(
+        artists,
+        new SearchArtists.Artist(ADHEESHA, "Same name", "", Arrays.asList("two"), 0, false));
+    assertEquals(2, artists.size());
+  }
+
+  @Test
   public void existingAlbumArtAndCollaborationTilesAreRepairedWithoutClearingSearches()
       throws Exception {
     Context c = RuntimeEnvironment.getApplication();

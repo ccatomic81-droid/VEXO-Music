@@ -165,7 +165,8 @@ final class SearchArtists {
     for (int i = 0; i < out.size(); i++) {
       Artist old = out.get(i);
       if ((!old.id.isEmpty() && old.id.equals(incoming.id))
-          || RadioPolicy.normalize(old.name).equals(RadioPolicy.normalize(incoming.name))) {
+          || (old.id.isEmpty() || incoming.id.isEmpty())
+              && RadioPolicy.normalize(old.name).equals(RadioPolicy.normalize(incoming.name))) {
         LinkedHashSet<String> terms = new LinkedHashSet<>(old.queries);
         terms.addAll(incoming.queries);
         List<String> refs = new ArrayList<>(terms);

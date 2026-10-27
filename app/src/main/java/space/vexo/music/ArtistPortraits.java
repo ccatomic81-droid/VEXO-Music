@@ -72,7 +72,10 @@ final class ArtistPortraits implements AutoCloseable {
               }
               main.post(
                   () -> {
-                    if (!closed && token == generation) running = false;
+                    if (!closed && token == generation) {
+                      running = false;
+                      refresh(country, changed);
+                    }
                   });
             });
   }
