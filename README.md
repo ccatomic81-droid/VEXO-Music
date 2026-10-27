@@ -1,10 +1,12 @@
-# VEXO Music 0.24.0
+# VEXO Music 0.25.1
 
 Developer: **Kavindu Kavishka**.
 
-Public version **0.24.0** adds album-style artwork without stretching, detected black-border removal, a cleaner Home, a slimmer mini-player and an artwork-tinted player. Playing a search song continues with its related radio; starting radio preserves the current song and manual queue. YouTube account connection stays optional; MindRadio, PureSong, Smart Experience, crossfade, offline music, accounts and playlists remain.
+Public version **0.25.1** adds real in-app update download progress and animation, restores automatic offline saving within 500 MB, and includes Trending Music, personalized mood/Daily/New to you mixes, Tune My Mix and continuous smart queues. Existing VEXO features, playback and manual queue priority remain.
 
-[Download VEXO Music 0.24.0](https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.24.0.apk), use Settings → Check for updates, or open the [GitHub release](https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.24.0). Install as an update; do not uninstall. Version code 34 upgrades public 0.22.0 and 0.24.0-dev testers using the existing app certificate. See [release notes](release/notes-0.24.0.md), [verification](release/verification-0.24.0.json) and the [next-feature plan](docs/NEXT-MUSIC-DISCOVERY-PLAN.md).
+[Download VEXO Music 0.25.1](https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.25.1.apk), use Settings → Check for updates, or open the [GitHub release](https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.25.1). Install as an update without uninstalling. Version code 37 upgrades public 0.24.0 and 0.25.0-dev/0.25.1-dev testers with the existing signing certificate. See [release notes](release/notes-0.25.1.md) and [verification](release/verification-0.25.1.json).
+
+The new updater shows percentage, MB transferred, cancellation and a separate verification stage before Android installation. It becomes available after installing this release and applies to future in-app updates. In Settings, turn on Auto-save offline music; completed songs appear in Library → Offline and can replay after restarting without internet. Saving uses internet data, stops at the existing 500 MB limit and preserves previously completed songs.
 
 Search now shows real song names, artwork and artists while typing, with direct play controls. Home has quick collection tiles, horizontally scrolling music cards, regional picks and VEXO mood mixes. Full playlist pages support Play all, a one-shot shuffled queue, adding songs, renaming and deleting a playlist, and removing individual tracks.
 

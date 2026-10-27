@@ -1,10 +1,13 @@
-# 0.25.1-dev
-
-- Restore automatic offline song saving within the existing 500 MB limit.
-- Restore the Settings auto-save switch and apply it to the currently playing song.
-- Cover production save behavior, restart/offline replay, failure/retry, full storage and clearing.
-
 # Changelog
+
+## 0.25.1 — Smart discovery, offline saving and update progress (27 October 2026)
+
+- Animated in-app update downloads with real percentage/MB progress, a distinct verification phase, Cancel and Retry.
+- Keep Cancel visible with small screens and large text; abort activity-owned transfers on destruction and clean partial files.
+- Restore automatic offline song saving and its Settings switch within the existing 500 MB limit.
+- Add TikTok-inspired Trending Music, personalized mood/Daily/New to you mixes and Tune My Mix.
+- Learn local listening interests and refill mix queues while preserving manual queue priority and current playback.
+- Publish with the original certificate and increasing version code 37 for public and tester upgrades.
 
 ## 0.24.0 — Artwork, player and song-related radio (27 October 2026)
 

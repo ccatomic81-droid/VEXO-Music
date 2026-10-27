@@ -1,0 +1,45 @@
+{
+  "version": "0.25.1",
+  "versionCode": 37,
+  "sourceCommit": "673b780c260a170cc101d99831a81c7f52f4650e",
+  "workflowRun": 40469132439,
+  "apkSha256": "ccf18924c076541e6ae7a7c6c223230de77869eb1cfd3b9706ad01c778857d26",
+  "sameCertificate": true,
+  "nonDebuggable": true,
+  "signedPayloadMatchesUnsignedCandidate": true,
+  "manifestSignatureVerified": true,
+  "androidChecks": {
+    "tests": 234,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 11,
+    "passed": 223
+  },
+  "liveChecks": {
+    "tests": 8,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 8
+  },
+  "publicChecks": [
+    "manifest",
+    "apk checksum",
+    "range",
+    "head",
+    "old public APK",
+    "closed writes"
+  ],
+  "physicalPhoneTested": false,
+  "nativeScreensReviewed": [
+    "update-download-320",
+    "update-verifying-320",
+    "update-download-large-320"
+  ],
+  "workerPublicationDisabled": true,
+  "workerBindingNames": [
+    "RELEASES"
+  ],
+  "offlineRegressionTests": 5,
+  "updateRegressionTests": 5
+}

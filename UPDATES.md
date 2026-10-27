@@ -1,6 +1,8 @@
 # App updates and releases
 
-Current public release: **0.24.0 / code 34**. It updates public 0.22.0/code31 and 0.24.0-dev/code33 testers in place. The public manifest is signed and the APK uses the original certificate. Use Settings → Check for updates; Android still requires approval to install. See `release/public-0.24.0.json` and `release/verification-0.24.0.json`.
+Current public release: **0.25.1 / code 37**. It updates public 0.24.0/code34 and 0.25.0-dev/code35 or 0.25.1-dev/code36 testers in place. The manifest is signed and the APK uses the original certificate. Use Settings → Check for updates; Android still requires approval to install. See `release/public-0.25.1.json` and `release/verification-0.25.1.json`.
+
+In 0.25.1, Get update opens an animated foreground download panel showing real percentage and MB transferred. Verification is a separate phase. Cancel stops the HTTP transfer and removes its partial file; Retry starts a new attempt after a connection or verification failure. A cached, already verified APK can be reused. Cancel remains visible while large-text content scrolls. Destroying the activity cancels its transfer. Older installed apps retain their existing update UI until this version is installed.
 
 ## Built-in delivery
 
@@ -12,7 +14,7 @@ https://vexo-music-updates.kavindukavishka785.workers.dev/stable.json
 
 Settings → Check for updates fetches it immediately. Optional automatic checks run at most once per 24 hours when the app opens. A current or older version code does not prompt an update. Dismissing a remote release snoozes that version; a manual check can show it again. What's new also works offline for the installed release.
 
-Get update opens the signed APK in the browser after a user tap. Android controls installation. This is foreground checking, not background push or silent installation. Version codes must increase; 0.9.0 uses code 11. The JSON response is limited to 64 KiB and release summaries to 12,000 characters. App identity and HTTPS URLs are validated, redirects must stay HTTPS, and requests time out. Failed automatic checks do not interrupt listening; manual failures offer retry.
+Get update downloads and verifies the signed APK inside VEXO after a user tap. Android controls installation. This is foreground checking, not background push or silent installation. Version codes must increase; 0.9.0 uses code 11. The JSON response is limited to 64 KiB and release summaries to 12,000 characters. App identity and HTTPS URLs are validated, redirects must stay HTTPS, and requests time out. Failed automatic checks do not interrupt listening; manual failures offer retry.
 
 The public service serves release metadata and versioned APK/source downloads from Cloudflare R2. Its production Worker accepts GET/HEAD only, supports resumable downloads and caches immutable versioned files. It does not receive profile names, pictures or listening history. Standard hosting request logs may include IP address and request metadata.
 

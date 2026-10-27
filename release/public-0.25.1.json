@@ -1,0 +1,14 @@
+{
+  "applicationId": "space.vexo.music.radio",
+  "versionCode": 37,
+  "versionName": "0.25.1",
+  "summary": "Animated in-app update downloads with percentage, MB progress, verification, Cancel and Retry. Automatic offline song saving works again within the 500 MB limit. TikTok-inspired Trending Music, personalized mood mixes, Daily Mix, New to you, Tune My Mix and continuous smart queues are included. Existing VEXO features, music and settings are preserved.",
+  "downloadUrl": "https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.25.1.apk",
+  "sourceUrl": "https://github.com/ccatomic81-droid/VEXO-Music/archive/673b780c260a170cc101d99831a81c7f52f4650e.zip",
+  "sourceCommit": "673b780c260a170cc101d99831a81c7f52f4650e",
+  "size": 9099233,
+  "sha256": "ccf18924c076541e6ae7a7c6c223230de77869eb1cfd3b9706ad01c778857d26",
+  "certificateSha256": "0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3",
+  "signedPayload": "eyJmb3JtYXQiOiJ2ZXhvLXJlbGVhc2UtdjEiLCJhcHBsaWNhdGlvbklkIjoic3BhY2UudmV4by5tdXNpYy5yYWRpbyIsInZlcnNpb25Db2RlIjozNywidmVyc2lvbk5hbWUiOiIwLjI1LjEiLCJzdW1tYXJ5IjoiQW5pbWF0ZWQgaW4tYXBwIHVwZGF0ZSBkb3dubG9hZHMgd2l0aCBwZXJjZW50YWdlLCBNQiBwcm9ncmVzcywgdmVyaWZpY2F0aW9uLCBDYW5jZWwgYW5kIFJldHJ5LiBBdXRvbWF0aWMgb2ZmbGluZSBzb25nIHNhdmluZyB3b3JrcyBhZ2FpbiB3aXRoaW4gdGhlIDUwMCBNQiBsaW1pdC4gVGlrVG9rLWluc3BpcmVkIFRyZW5kaW5nIE11c2ljLCBwZXJzb25hbGl6ZWQgbW9vZCBtaXhlcywgRGFpbHkgTWl4LCBOZXcgdG8geW91LCBUdW5lIE15IE1peCBhbmQgY29udGludW91cyBzbWFydCBxdWV1ZXMgYXJlIGluY2x1ZGVkLiBFeGlzdGluZyBWRVhPIGZlYXR1cmVzLCBtdXNpYyBhbmQgc2V0dGluZ3MgYXJlIHByZXNlcnZlZC4iLCJkb3dubG9hZFVybCI6Imh0dHBzOi8vdmV4by1tdXNpYy11cGRhdGVzLmthdmluZHVrYXZpc2hrYTc4NS53b3JrZXJzLmRldi9yZWxlYXNlcy9WRVhPLU11c2ljLTAuMjUuMS5hcGsiLCJzaXplIjo5MDk5MjMzLCJzaGEyNTYiOiJjY2YxODkyNGMwNzY1NDFlNmFlN2E3YzZjMjIzMjMwZGU3Nzg2OWViMWNmZDNiOTcwNmFkMDFjNzc4ODU3ZDI2IiwiY2VydGlmaWNhdGVTaGEyNTYiOiIwYjMxYzUwOTA0NTY3Mzg5YjcyM2UyM2FkNjA0M2IyZDJmYzY2MzVjMzBkZmRiM2VkNWVmM2Y5YmE5NzI3ZWYzIiwic291cmNlQ29tbWl0IjoiNjczYjc4MGMyNjBhMTcwY2MxMDFkOTk4MzFhODFjN2Y1MmY0NjUwZSJ9",
+  "releaseSignature": "UXb7/xoyep1zFrcrztIPTnxearBnUa5hxyZ2cxAgH3S4KQkSfyJf6ep7pS0x0V3wPfyxW2gFzIg5CN3iAbrlAGAtu8e6r0jfBjSZPUNd6v+2e7UIvhRgZ4abHOv0YqCphSi/FwjI4mlJi+xe8xp6BG2Yd9xWFvumKX1Ay7ZEjkaDDbfwQ/5wzopJeZS4zuqL8pSDhpCVfc6PMvnvrBBD332ybI4kJVeJo35HZkMg+FLo/vNMEgAhuzK+4wGnzZ4imSgIP8jgGagM3/S9jnKPiHMI7G7Ncp0ZifZ5rOetM0PaygyyUpQTmjpHG6Lj4l2RqEZiia80l1oxTr/5lRh+sw=="
+}
