@@ -7,9 +7,10 @@ import org.json.*;
 /** A release feed contains metadata only. Downloads always need a user tap. */
 final class AppRelease {
   static final String NOTES =
-      "• Popup buttons now have complete rounded edges and full touch targets.\n"
-          + "• Rounded VEXO logo tiles in popups, notices and package branding.\n"
-          + "• Global music, custom popups, animated update downloads and offline saving remain.\n"
+      "• Your artists: circular shortcuts above Made for you, from your song searches.\n"
+          + "• Tap an artist to find their songs. Clear recent searches to clear the shortcuts.\n"
+          + "• Choose Dark, Light or Follow device in Settings → Appearance.\n"
+          + "• The player’s progress dot now stays fully round at both ends.\n"
           + "• Install over your existing app to keep your music and settings.";
   final int code;
   final String version, summary, url;

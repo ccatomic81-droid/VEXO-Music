@@ -69,7 +69,7 @@ class MusicSurface extends ScrollView {
     if (z) {
       textViewText.setBackground(Visuals.round(Visuals.LIME, dp(24.0f)));
     } else {
-      textViewText.setBackground(Visuals.round(0xff292929, dp(24)));
+      textViewText.setBackground(Visuals.round(Visuals.CONTROL, dp(24)));
     }
     textViewText.setOnClickListener(
         new View.OnClickListener() {
@@ -146,27 +146,29 @@ class MusicSurface extends ScrollView {
   }
 
   LinearLayout shelf() {
-    HorizontalScrollView horizontalScrollView = new HorizontalScrollView(getContext()) {
-      @Override protected void onMeasure(int w, int h) {
-        int available = MeasureSpec.getSize(w) - getPaddingLeft() - getPaddingRight();
-        int side = Math.min(dp(176), Math.max(dp(96), (available - dp(12)) / 2));
-        if (getChildCount() > 0 && getChildAt(0) instanceof LinearLayout) {
-          LinearLayout cards = (LinearLayout) getChildAt(0);
-          for (int i = 0; i < cards.getChildCount(); i++) {
-            View card = cards.getChildAt(i);
-            android.view.ViewGroup.LayoutParams cp = card.getLayoutParams();
-            cp.width = side;
-            if (card instanceof LinearLayout && ((LinearLayout) card).getChildCount() > 0) {
-              View cover = ((LinearLayout) card).getChildAt(0);
-              android.view.ViewGroup.LayoutParams art = cover.getLayoutParams();
-              art.width = side;
-              art.height = side;
+    HorizontalScrollView horizontalScrollView =
+        new HorizontalScrollView(getContext()) {
+          @Override
+          protected void onMeasure(int w, int h) {
+            int available = MeasureSpec.getSize(w) - getPaddingLeft() - getPaddingRight();
+            int side = Math.min(dp(176), Math.max(dp(96), (available - dp(12)) / 2));
+            if (getChildCount() > 0 && getChildAt(0) instanceof LinearLayout) {
+              LinearLayout cards = (LinearLayout) getChildAt(0);
+              for (int i = 0; i < cards.getChildCount(); i++) {
+                View card = cards.getChildAt(i);
+                android.view.ViewGroup.LayoutParams cp = card.getLayoutParams();
+                cp.width = side;
+                if (card instanceof LinearLayout && ((LinearLayout) card).getChildCount() > 0) {
+                  View cover = ((LinearLayout) card).getChildAt(0);
+                  android.view.ViewGroup.LayoutParams art = cover.getLayoutParams();
+                  art.width = side;
+                  art.height = side;
+                }
+              }
             }
+            super.onMeasure(w, h);
           }
-        }
-        super.onMeasure(w, h);
-      }
-    };
+        };
     horizontalScrollView.setHorizontalScrollBarEnabled(false);
     horizontalScrollView.setClipToPadding(false);
     LinearLayout linearLayoutRow = row();

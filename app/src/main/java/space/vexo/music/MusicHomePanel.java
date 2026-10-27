@@ -61,6 +61,8 @@ final class MusicHomePanel extends MusicSurface {
     void search();
 
     default void smart() {}
+
+    default void artist(String name) {}
   }
 
   void personalize() {
@@ -266,7 +268,7 @@ final class MusicHomePanel extends MusicSurface {
       textViewAction2.setMinHeight(dp(48));
       textViewAction2.setBackground(
           new android.graphics.drawable.InsetDrawable(
-              Visuals.round(str6.equals(str3) ? Visuals.LIME : 0xff292929, dp(18)),
+              Visuals.round(str6.equals(str3) ? Visuals.LIME : Visuals.CONTROL, dp(18)),
               0,
               dp(6),
               0,
@@ -286,6 +288,10 @@ final class MusicHomePanel extends MusicSurface {
     gap(this.body, 2);
     this.body.addView(linearLayoutRow2);
     gap(this.body, 8);
+    if (!str3.equals("Playlists"))
+      body.addView(
+          new ArtistStoriesPanel(
+              context, new SearchArtists(context).entries(), listener::artist, listener::search));
     personalSlot = column();
     if (!str3.equals("Playlists")) body.addView(personalSlot);
     Map<String, List<View>> linkedHashMap = new LinkedHashMap<>();
@@ -738,7 +744,7 @@ final class MusicHomePanel extends MusicSurface {
     linearLayoutColumn.addView(textViewText3);
     gap(linearLayoutColumn, 20);
     LinearLayout linearLayoutRow = row();
-    TextView textViewText4 = text("Explore mix  ›", 13, Visuals.TEXT, true);
+    TextView textViewText4 = text("Explore mix  ›", 13, android.graphics.Color.WHITE, true);
     textViewText4.setGravity(17);
     textViewText4.setPadding(dp(15.0f), dp(12.0f), dp(15.0f), dp(12.0f));
     textViewText4.setMinHeight(dp(48.0f));
@@ -841,7 +847,7 @@ final class MusicHomePanel extends MusicSurface {
       if (str2.equals("history")) {
         str2 = "timer";
       }
-      Visuals.Icon icon = new Visuals.Icon(context, str2, Visuals.TEXT);
+      Visuals.Icon icon = new Visuals.Icon(context, str2, android.graphics.Color.WHITE);
       icon.setGlyphSize(19.0f);
       frameLayoutCover.addView(icon, new FrameLayout.LayoutParams(-1, -1));
     }

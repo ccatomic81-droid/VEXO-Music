@@ -174,7 +174,8 @@ public final class MainActivity extends ComponentActivity {
           (prefs, key) -> {
             if (!destroyed && "connection_status".equals(key)) updatePlayback();
             if (!destroyed && radioStatus != null)
-              radioStatus.setText(NowPlayingPanel.statusSummary(prefs.getString("autoplay_status", "")));
+              radioStatus.setText(
+                  NowPlayingPanel.statusSummary(prefs.getString("autoplay_status", "")));
             if (!destroyed && queuePanel != null && queueDialog != null && queueDialog.isShowing())
               queuePanel.status(prefs.getString("autoplay_status", "Autoplay on"));
           };
@@ -230,6 +231,9 @@ public final class MainActivity extends ComponentActivity {
 
   @Override
   public void onCreate(Bundle state) {
+    boolean lightMode = AppAppearance.light(this);
+    Visuals.appearance(lightMode);
+    setTheme(lightMode ? R.style.VexoLightTheme : R.style.VexoBaseTheme);
     super.onCreate(state);
     profile = new UserProfile(this);
     account = new AccountAuth(this);
@@ -280,8 +284,7 @@ public final class MainActivity extends ComponentActivity {
     root.setBackground(Glass.backdrop());
     setContentView(root);
     if (Build.VERSION.SDK_INT >= 29) getWindow().setNavigationBarContrastEnforced(false);
-    androidx.core.view.WindowCompat.getInsetsController(getWindow(), root)
-        .setAppearanceLightNavigationBars(false);
+    AppAppearance.bars(getWindow());
     androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(
         root,
         (v, insets) -> {
@@ -394,6 +397,10 @@ public final class MainActivity extends ComponentActivity {
   @Override
   protected void onResume() {
     super.onResume();
+    if (AppAppearance.light(this) != Visuals.light) {
+      recreate();
+      return;
+    }
     if (notificationPrompt != null) notificationPrompt.resume();
     main.removeCallbacks(tick);
     main.post(tick);
@@ -764,7 +771,7 @@ public final class MainActivity extends ComponentActivity {
 
   private void buildMini() {
     mini = column();
-    mini.setBackground(round(0xff283b32, dp(8)));
+    mini.setBackground(round(MINI, dp(8)));
     mini.setPadding(dp(8), dp(3), dp(4), dp(3));
     mini.setMinimumHeight(dp(58));
     LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-1, -2);
@@ -782,7 +789,7 @@ public final class MainActivity extends ComponentActivity {
     miniTitle = text("", 13, TEXT, true);
     miniTitle.setSingleLine();
     miniTitle.setEllipsize(TextUtils.TruncateAt.END);
-    miniArtist = text("", 11, 0xffd1d8d4, false);
+    miniArtist = text("", 11, MUTED, false);
     miniArtist.setSingleLine();
     miniArtist.setEllipsize(TextUtils.TruncateAt.END);
     copy.addView(miniTitle);
@@ -795,8 +802,7 @@ public final class MainActivity extends ComponentActivity {
     miniProgress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
     miniProgress.setMax(1000);
     miniProgress.setProgressTintList(android.content.res.ColorStateList.valueOf(LIME));
-    miniProgress.setProgressBackgroundTintList(
-        android.content.res.ColorStateList.valueOf(0xff3b4544));
+    miniProgress.setProgressBackgroundTintList(android.content.res.ColorStateList.valueOf(BORDER));
     miniProgress.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
     LinearLayout.LayoutParams progress = new LinearLayout.LayoutParams(-1, dp(2));
     progress.setMargins(0, dp(2), 0, 0);
@@ -1012,8 +1018,18 @@ public final class MainActivity extends ComponentActivity {
               }
 
               public void search() {
-                tab = "Search";
+                navigate("Search");
+              }
+
+              public void artist(String name) {
+                navigate("Search");
+                online = true;
+                searchCategory = null;
+                searchLanguage = "Any";
+                query = name;
                 render();
+                if (searchField != null) searchField.setText(name);
+                search();
               }
 
               public void library(String section) {
@@ -1158,7 +1174,8 @@ public final class MainActivity extends ComponentActivity {
                         interests,
                         new PersonalDiscovery.Source() {
                           public List<Track> related(Track song) throws Exception {
-                            return OnlineMusic.relatedPreview(song, RegionPolicy.current(MainActivity.this));
+                            return OnlineMusic.relatedPreview(
+                                song, RegionPolicy.current(MainActivity.this));
                           }
 
                           public List<Track> search(String query) throws Exception {
@@ -1200,9 +1217,13 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private void prefetchHomeMixes() {
-    if (destroyed || !tab.equals("Home") || !activeMix.isEmpty() || !activeCollection.isEmpty()) return;
-    try { if (new SmartStore(this).preferences().optBoolean("focus")) return; }
-    catch (IllegalStateException unavailable) { return; }
+    if (destroyed || !tab.equals("Home") || !activeMix.isEmpty() || !activeCollection.isEmpty())
+      return;
+    try {
+      if (new SmartStore(this).preferences().optBoolean("focus")) return;
+    } catch (IllegalStateException unavailable) {
+      return;
+    }
     String country = RegionPolicy.current(this);
     List<MixCatalogue.Mix> mixes = new ArrayList<>(MixCatalogue.discovery());
     mixes.add(MixCatalogue.trending());
@@ -1220,60 +1241,114 @@ public final class MainActivity extends ComponentActivity {
     final String key = country + ":" + mix.id + ":" + scope;
     if (!force && mixCatalogue.fresh(mix, country, System.currentTimeMillis())) return;
     if (prefetchingMixes.contains(key)) {
-      if (foreground) { mixLoading = true; render(); }
+      if (foreground) {
+        mixLoading = true;
+        render();
+      }
       return;
     }
     if (!foreground && attemptedMixes.contains(key)) return;
     if (attemptedMixes.size() > 128) attemptedMixes.clear();
-    attemptedMixes.add(key); prefetchingMixes.add(key);
+    attemptedMixes.add(key);
+    prefetchingMixes.add(key);
     final int epoch = discoveryEpoch;
-    if (foreground) { mixLoading = true; mixError = ""; render(); }
-    mixIo.execute(() -> {
-      List<Track> songs = Collections.emptyList(); boolean failed = false;
-      try {
-        MusicInterests interests = MusicInterests.read(this);
-        songs = MixDiscovery.load(mix, interests, new PersonalDiscovery.Source() {
-          public List<Track> related(Track track) throws Exception { return OnlineMusic.relatedPreview(track, RegionPolicy.current(MainActivity.this)); }
-          public List<Track> trending(String query) throws Exception { return TrendingMusic.load(query, country); }
-          public List<Track> search(String query) throws Exception { return OnlineMusic.preview(query, country); }
-        }, country, System.currentTimeMillis(), Collections.emptySet());
-        failed = songs.isEmpty();
-        if (!failed && epoch == discoveryEpoch && scope.equals(mixCatalogue.scope(mix, country, System.currentTimeMillis())))
-          mixCatalogue.save(mix, country, songs, scope);
-      } catch (Exception error) {
-        failed = true;
-        if (!Thread.currentThread().isInterrupted()) AppDiagnostics.record(this, "mix_refresh", error);
-      }
-      final List<Track> found = songs; final boolean unavailable = failed;
-      main.post(() -> {
-        prefetchingMixes.remove(key);
-        if (destroyed || epoch != discoveryEpoch || !country.equals(RegionPolicy.current(this))) return;
-        if (!scope.equals(mixCatalogue.scope(mix, country, System.currentTimeMillis()))) {
-          if (activeMix.equals(mix.id)) { mixLoading = false; loadMix(false); }
-          return;
-        }
-        if (homePanel != null && !unavailable) homePanel.updateMix(mix, found);
-        else if (!unavailable) invalidateTab("Home");
-        if (activeMix.equals(mix.id)) {
-          mixLoading = false;
-          mixError = unavailable ? (mix.id.equals("discover") ? "No unseen songs found yet. Try different interests or refresh later." : "Couldn’t find fresh songs. Saved picks stay available; try Refresh.") : "";
-          render();
-        }
-      });
-    });
+    if (foreground) {
+      mixLoading = true;
+      mixError = "";
+      render();
+    }
+    mixIo.execute(
+        () -> {
+          List<Track> songs = Collections.emptyList();
+          boolean failed = false;
+          try {
+            MusicInterests interests = MusicInterests.read(this);
+            songs =
+                MixDiscovery.load(
+                    mix,
+                    interests,
+                    new PersonalDiscovery.Source() {
+                      public List<Track> related(Track track) throws Exception {
+                        return OnlineMusic.relatedPreview(
+                            track, RegionPolicy.current(MainActivity.this));
+                      }
+
+                      public List<Track> trending(String query) throws Exception {
+                        return TrendingMusic.load(query, country);
+                      }
+
+                      public List<Track> search(String query) throws Exception {
+                        return OnlineMusic.preview(query, country);
+                      }
+                    },
+                    country,
+                    System.currentTimeMillis(),
+                    Collections.emptySet());
+            failed = songs.isEmpty();
+            if (!failed
+                && epoch == discoveryEpoch
+                && scope.equals(mixCatalogue.scope(mix, country, System.currentTimeMillis())))
+              mixCatalogue.save(mix, country, songs, scope);
+          } catch (Exception error) {
+            failed = true;
+            if (!Thread.currentThread().isInterrupted())
+              AppDiagnostics.record(this, "mix_refresh", error);
+          }
+          final List<Track> found = songs;
+          final boolean unavailable = failed;
+          main.post(
+              () -> {
+                prefetchingMixes.remove(key);
+                if (destroyed
+                    || epoch != discoveryEpoch
+                    || !country.equals(RegionPolicy.current(this))) return;
+                if (!scope.equals(mixCatalogue.scope(mix, country, System.currentTimeMillis()))) {
+                  if (activeMix.equals(mix.id)) {
+                    mixLoading = false;
+                    loadMix(false);
+                  }
+                  return;
+                }
+                if (homePanel != null && !unavailable) homePanel.updateMix(mix, found);
+                else if (!unavailable) invalidateTab("Home");
+                if (activeMix.equals(mix.id)) {
+                  mixLoading = false;
+                  mixError =
+                      unavailable
+                          ? (mix.id.equals("discover")
+                              ? "No unseen songs found yet. Try different interests or refresh"
+                                    + " later."
+                              : "Couldn’t find fresh songs. Saved picks stay available; try"
+                                    + " Refresh.")
+                          : "";
+                  render();
+                }
+              });
+        });
   }
 
   private void tuneMix(MixCatalogue.Mix mix) {
-    MixTuner.show(this, mix, io, () -> {
-      if (destroyed) return;
-      discardInactivePages();
-      if (controller != null) {
-        Bundle args = new Bundle(); args.putString("mix_id", mix.id);
-        controller.sendCustomCommand(new SessionCommand(PlaybackService.MIX_CHANGED, Bundle.EMPTY), args);
-      }
-      if (activeMix.equals(mix.id)) { mixLoading = false; loadMix(true); }
-      else { render(); prefetchHomeMixes(); }
-    });
+    MixTuner.show(
+        this,
+        mix,
+        io,
+        () -> {
+          if (destroyed) return;
+          discardInactivePages();
+          if (controller != null) {
+            Bundle args = new Bundle();
+            args.putString("mix_id", mix.id);
+            controller.sendCustomCommand(
+                new SessionCommand(PlaybackService.MIX_CHANGED, Bundle.EMPTY), args);
+          }
+          if (activeMix.equals(mix.id)) {
+            mixLoading = false;
+            loadMix(true);
+          } else {
+            render();
+            prefetchHomeMixes();
+          }
+        });
   }
 
   private void chooseRegion() {
@@ -1295,7 +1370,8 @@ public final class MainActivity extends ComponentActivity {
             (d, w) -> {
               getSharedPreferences("settings", 0)
                   .edit()
-                  .putString("region", w == 0 ? "" : w == 1 ? RegionPolicy.GLOBAL : codes.get(w - 2))
+                  .putString(
+                      "region", w == 0 ? "" : w == 1 ? RegionPolicy.GLOBAL : codes.get(w - 2))
                   .apply();
               discoveryEpoch++;
               mixIo.getQueue().clear();
@@ -1407,11 +1483,13 @@ public final class MainActivity extends ComponentActivity {
 
               public void remove(String term) {
                 searchHistory.remove(term);
+                invalidateTab("Home");
                 requestSuggestions();
               }
 
               public void clear() {
                 searchHistory.clear();
+                invalidateTab("Home");
                 requestSuggestions();
               }
 
@@ -1435,7 +1513,7 @@ public final class MainActivity extends ComponentActivity {
     control.setMinHeight(dp(48));
     control.setPadding(dp(8), dp(8), dp(8), dp(8));
     control.setMaxLines(2);
-    if (selected) control.setBackground(round(0xff1c3b27, dp(10)));
+    if (selected) control.setBackground(round(SELECTED, dp(10)));
     control.setSelected(selected);
     control.setOnClickListener(v -> action.run());
     return control;
@@ -1445,8 +1523,7 @@ public final class MainActivity extends ComponentActivity {
     LinearLayout h = column();
     h.setPadding(dp(20), dp(8), dp(20), dp(8));
     LinearLayout titleRow = row();
-    TextView title =
-        text(searchCategory == null ? "Search" : searchCategory.name, 28, TEXT, true);
+    TextView title = text(searchCategory == null ? "Search" : searchCategory.name, 28, TEXT, true);
     title.setMaxLines(2);
     titleRow.addView(title, new LinearLayout.LayoutParams(0, -2, 1));
     if (online) {
@@ -1813,6 +1890,7 @@ public final class MainActivity extends ComponentActivity {
       clear.setOnClickListener(
           v -> {
             searchHistory.clear();
+            invalidateTab("Home");
             requestSuggestions();
           });
       suggestionBody.addView(clear);
@@ -1841,6 +1919,7 @@ public final class MainActivity extends ComponentActivity {
                 MUTED,
                 () -> {
                   searchHistory.remove(choice);
+                  invalidateTab("Home");
                   requestSuggestions();
                 });
         remove.setGlyphSize(18);
@@ -1917,6 +1996,7 @@ public final class MainActivity extends ComponentActivity {
     }
     cancelSearchWork();
     int generation = ++searchGeneration;
+    String searchedTerm = query;
     String request = categoryQuery(query);
     String country = RegionPolicy.current(this);
     searching = true;
@@ -1945,6 +2025,7 @@ public final class MainActivity extends ComponentActivity {
                       () -> {
                         if (destroyed || generation != searchGeneration) return;
                         results = tracks;
+                        rememberArtists(searchedTerm, tracks);
                         searching = false;
                         if (tab.equals("Search")) render();
                         else invalidateTab("Search");
@@ -1967,6 +2048,7 @@ public final class MainActivity extends ComponentActivity {
                         if (destroyed || generation != searchGeneration) return;
                         onlinePage = delivered;
                         results = new ArrayList<>(delivered.tracks);
+                        rememberArtists(searchedTerm, results);
                         searching = false;
                         if (tab.equals("Search")) render();
                         else invalidateTab("Search");
@@ -1988,6 +2070,12 @@ public final class MainActivity extends ComponentActivity {
                     });
               }
             });
+  }
+
+  private void rememberArtists(String term, List<Track> songs) {
+    new SearchArtists(this).record(term, songs);
+    invalidateTab("Home");
+    if (homePanel != null && tab.equals("Home")) render();
   }
 
   private boolean isYouTubeLink(String q) {
@@ -2309,7 +2397,8 @@ public final class MainActivity extends ComponentActivity {
       h.detail.setText(t.artist + (t.duration > 0 ? " · " + format(t.duration) : ""));
       artwork(h.art, t);
       h.itemView.setContentDescription("Play " + t.title + " by " + t.artist);
-      h.itemView.setOnClickListener(v -> playResult(tracks, h.getBindingAdapterPosition(), collection));
+      h.itemView.setOnClickListener(
+          v -> playResult(tracks, h.getBindingAdapterPosition(), collection));
       h.start.setContentDescription("Play " + t.title);
       h.start.setOnClickListener(
           v -> {
@@ -2383,8 +2472,11 @@ public final class MainActivity extends ComponentActivity {
     songOnly = songOnly && tracks.get(index).online();
     ((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE))
         .hideSoftInputFromWindow(root.getWindowToken(), 0);
-    if (tab.equals("Search") && searchField != null)
-      searchHistory.add(searchField.getText().toString());
+    if (tab.equals("Search") && online && searchField != null) {
+      String term = searchField.getText().toString();
+      searchHistory.add(term);
+      rememberArtists(term, Collections.singletonList(tracks.get(index)));
+    }
     if (getSharedPreferences("playback_state", 0).getBoolean("room_active", false)) {
       controller.sendCustomCommand(
           new SessionCommand(PlaybackService.ROOM_LEAVE, Bundle.EMPTY), Bundle.EMPTY);
@@ -2405,7 +2497,8 @@ public final class MainActivity extends ComponentActivity {
         !songOnly && tab.equals("Search") && searchCategory != null
             ? searchCategory.query("", searchLanguage)
             : "");
-    queueArgs.putString("ai_plan", songOnly || pendingAiPlan == null ? "" : pendingAiPlan.toString());
+    queueArgs.putString(
+        "ai_plan", songOnly || pendingAiPlan == null ? "" : pendingAiPlan.toString());
     pendingAiPlan = null;
     controller.sendCustomCommand(
         new SessionCommand(PlaybackService.NEW_QUEUE, Bundle.EMPTY), queueArgs);
@@ -2707,9 +2800,13 @@ public final class MainActivity extends ComponentActivity {
                 showCollection(name, "playlist:" + name);
               }
 
-              public void retry() { loadMix(true); }
+              public void retry() {
+                loadMix(true);
+              }
 
-              public void tune() { if (mix != null) tuneMix(mix); }
+              public void tune() {
+                if (mix != null) tuneMix(mix);
+              }
             });
     content.addView(panel, new LinearLayout.LayoutParams(-1, 0, 1));
   }
@@ -2942,7 +3039,7 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private void showPureSong(Track selected) {
-    Dialog dialog = new Dialog(this, android.R.style.Theme_Material_NoActionBar);
+    Dialog dialog = new Dialog(this, light ? R.style.VexoLightTheme : R.style.VexoBaseTheme);
     dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
     Track track =
         selected != null
@@ -2998,7 +3095,7 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private void showSmart(Track track, boolean embedded) {
-    Dialog dialog = new Dialog(this, android.R.style.Theme_Material_NoActionBar);
+    Dialog dialog = new Dialog(this, light ? R.style.VexoLightTheme : R.style.VexoBaseTheme);
     SmartStore smart = new SmartStore(this);
     final boolean[] closed = {false};
     final int[] generation = {0};
@@ -3166,7 +3263,7 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private void showRemoteRoom() {
-    Dialog dialog = new Dialog(this, android.R.style.Theme_Material_NoActionBar);
+    Dialog dialog = new Dialog(this, light ? R.style.VexoLightTheme : R.style.VexoBaseTheme);
     RemoteRoomPanel panel =
         new RemoteRoomPanel(
             this,
@@ -3261,7 +3358,7 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private void showAccount() {
-    Dialog dialog = new Dialog(this, android.R.style.Theme_Material_NoActionBar);
+    Dialog dialog = new Dialog(this, light ? R.style.VexoLightTheme : R.style.VexoBaseTheme);
     AccountPanel[] panels = new AccountPanel[1];
     panels[0] =
         new AccountPanel(
@@ -3378,7 +3475,7 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private void showNotifications() {
-    Dialog dialog = new Dialog(this, android.R.style.Theme_Material_NoActionBar);
+    Dialog dialog = new Dialog(this, light ? R.style.VexoLightTheme : R.style.VexoBaseTheme);
     MusicSurface panel = new MusicSurface(this);
     panel.body.addView(panel.text("NOTIFICATIONS", 11, LIME, true));
     panel.gap(panel.body, 12);
@@ -3475,6 +3572,23 @@ public final class MainActivity extends ComponentActivity {
     PanelWindow.expand(dialog);
   }
 
+  private void chooseAppearance() {
+    int selected =
+        java.util.Arrays.asList(AppAppearance.VALUES).indexOf(AppAppearance.choice(this));
+    new VexoDialogs.Builder(this)
+        .setTitle("Appearance")
+        .setSingleChoiceItems(
+            AppAppearance.LABELS,
+            selected,
+            (dialog, which) -> {
+              AppAppearance.save(this, which);
+              dialog.dismiss();
+              recreate();
+            })
+        .setNegativeButton("Cancel", null)
+        .show();
+  }
+
   private void renderSettings() {
     header("MAKE IT YOURS", "Settings");
     ScrollView scroll = new ScrollView(this);
@@ -3482,6 +3596,12 @@ public final class MainActivity extends ComponentActivity {
     body.setPadding(dp(22), dp(8), dp(22), dp(24));
     scroll.addView(body);
     content.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
+    setting(
+        body,
+        "Appearance",
+        AppAppearance.label(this) + " · light and dark themes",
+        false,
+        this::chooseAppearance);
     setting(body, "Your profile", profile.name() + " · name and photo", false, this::openProfile);
     setting(
         body,
@@ -3681,10 +3801,11 @@ public final class MainActivity extends ComponentActivity {
     setting(
         body,
         "Clear recent searches",
-        "Remove search terms saved on this phone",
+        "Remove search terms and artist shortcuts saved on this phone",
         false,
         () -> {
           searchHistory.clear();
+          invalidateTab("Home");
           message("Recent searches cleared");
         });
     setting(
@@ -3701,10 +3822,11 @@ public final class MainActivity extends ComponentActivity {
                         + " library. Your name and optional profile photo stay on this phone. No"
                         + " account is required.\n\n"
                         + "Search suggestions, searches and online playback contact YouTube. Recent"
-                        + " search terms stay on this phone and can be cleared in Settings. Update"
-                        + " checks contact the built-in VEXO release service. Artwork is loaded"
-                        + " from the source shown by YouTube. Favourites, playlists and listening"
-                        + " history are stored on this device. No analytics server is used.\n\n"
+                        + " search terms and artist shortcuts stay on this phone and can be cleared"
+                        + " in Settings. Update checks contact the built-in VEXO release service."
+                        + " Artwork is loaded from the source shown by YouTube. Favourites,"
+                        + " playlists and listening history are stored on this device. No analytics"
+                        + " server is used.\n\n"
                         + "VEXO Music is not affiliated with YMusic or YouTube. Online availability"
                         + " can change when YouTube changes its service. Local playback remains"
                         + " available.")
@@ -3833,17 +3955,28 @@ public final class MainActivity extends ComponentActivity {
       return;
     }
     updateDownloading = true;
-    Dialog progressDialog = new Dialog(this, android.R.style.Theme_Material_NoActionBar);
-    UpdateProgressPanel panel = new UpdateProgressPanel(this, release.version, () -> {
-      if (updateTransfer != null) updateTransfer.cancel();
-      progressDialog.dismiss();
-      message("Update download cancelled");
-    });
-    UpdateInstaller.Transfer transfer = new UpdateInstaller.Transfer((downloaded, total, verifying) ->
-        main.post(() -> {
-          if (!destroyed && updateTransfer != null && !updateTransfer.cancelled && progressDialog.isShowing())
-            panel.progress(downloaded, total, verifying);
-        }));
+    Dialog progressDialog =
+        new Dialog(this, light ? R.style.VexoLightTheme : R.style.VexoBaseTheme);
+    UpdateProgressPanel panel =
+        new UpdateProgressPanel(
+            this,
+            release.version,
+            () -> {
+              if (updateTransfer != null) updateTransfer.cancel();
+              progressDialog.dismiss();
+              message("Update download cancelled");
+            });
+    UpdateInstaller.Transfer transfer =
+        new UpdateInstaller.Transfer(
+            (downloaded, total, verifying) ->
+                main.post(
+                    () -> {
+                      if (!destroyed
+                          && updateTransfer != null
+                          && !updateTransfer.cancelled
+                          && progressDialog.isShowing())
+                        panel.progress(downloaded, total, verifying);
+                    }));
     updateTransfer = transfer;
     updateProgressDialog = progressDialog;
     progressDialog.setCancelable(false);
@@ -3906,7 +4039,9 @@ public final class MainActivity extends ComponentActivity {
                   if (destroyed || isFinishing() || transfer.cancelled) return;
                   new VexoDialogs.Builder(this)
                       .setTitle("Update couldn’t finish")
-                      .setMessage("Check your connection and try again. Your existing app, music and settings are safe.")
+                      .setMessage(
+                          "Check your connection and try again. Your existing app, music and"
+                              + " settings are safe.")
                       .setNegativeButton("Later", null)
                       .setPositiveButton("Retry", (d, w) -> downloadVerifiedUpdate(release))
                       .show();
@@ -3942,12 +4077,22 @@ public final class MainActivity extends ComponentActivity {
 
   private void setting(
       LinearLayout parent, String title, String detail, boolean toggle, Runnable action) {
-    setting(parent, title, detail, toggle,
-        getSharedPreferences("settings", 0).getBoolean("data_saver", false), action);
+    setting(
+        parent,
+        title,
+        detail,
+        toggle,
+        getSharedPreferences("settings", 0).getBoolean("data_saver", false),
+        action);
   }
 
   private void setting(
-      LinearLayout parent, String title, String detail, boolean toggle, boolean on, Runnable action) {
+      LinearLayout parent,
+      String title,
+      String detail,
+      boolean toggle,
+      boolean on,
+      Runnable action) {
     LinearLayout r = row();
     r.setPadding(dp(16), dp(16), dp(8), dp(16));
     r.setBackground(round(PANEL, dp(18)));
@@ -4086,7 +4231,7 @@ public final class MainActivity extends ComponentActivity {
   private void showPlayer() {
     if (controller == null || controller.getCurrentMediaItem() == null) return;
     if (playerDialog != null && playerDialog.isShowing()) return;
-    playerDialog = new Dialog(this, android.R.style.Theme_Material_NoActionBar);
+    playerDialog = new Dialog(this, light ? R.style.VexoLightTheme : R.style.VexoBaseTheme);
     NowPlayingPanel p =
         new NowPlayingPanel(
             this,
@@ -4174,7 +4319,9 @@ public final class MainActivity extends ComponentActivity {
     playerPlay = p.play;
     playerRepeat = p.repeat;
     seek = p.seek;
-    radioStatus.setText(NowPlayingPanel.statusSummary(getSharedPreferences("playback_state", 0).getString("autoplay_status", "")));
+    radioStatus.setText(
+        NowPlayingPanel.statusSummary(
+            getSharedPreferences("playback_state", 0).getString("autoplay_status", "")));
     androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(
         p,
         (view, insets) -> {
@@ -4188,6 +4335,7 @@ public final class MainActivity extends ComponentActivity {
     playerDialog.setContentView(p);
     Window window = playerDialog.getWindow();
     if (window != null) {
+      AppAppearance.bars(window);
       window.setStatusBarColor(BG);
       window.setNavigationBarColor(BG);
       window.setLayout(-1, -1);
@@ -4291,19 +4439,23 @@ public final class MainActivity extends ComponentActivity {
       args.putString("track", track.json().toString());
       args.putBoolean("next", next);
     }
-    ListenableFuture<SessionResult> result = controller.sendCustomCommand(
-        new SessionCommand(PlaybackService.MANUAL_QUEUE, Bundle.EMPTY), args);
-    result.addListener(() -> {
-      if (destroyed) return;
-      try {
-        message(result.get().resultCode == SessionResult.RESULT_SUCCESS
-            ? next ? "Added to play next" : "Added before automatic recommendations"
-            : "The queue changed or is full. Try again.");
-      } catch (Exception error) {
-        message("Couldn’t change the queue. Try again.");
-      }
-      refreshQueue();
-    }, main::post);
+    ListenableFuture<SessionResult> result =
+        controller.sendCustomCommand(
+            new SessionCommand(PlaybackService.MANUAL_QUEUE, Bundle.EMPTY), args);
+    result.addListener(
+        () -> {
+          if (destroyed) return;
+          try {
+            message(
+                result.get().resultCode == SessionResult.RESULT_SUCCESS
+                    ? next ? "Added to play next" : "Added before automatic recommendations"
+                    : "The queue changed or is full. Try again.");
+          } catch (Exception error) {
+            message("Couldn’t change the queue. Try again.");
+          }
+          refreshQueue();
+        },
+        main::post);
   }
 
   private boolean queueHasRoom() {
@@ -4443,7 +4595,7 @@ public final class MainActivity extends ComponentActivity {
   private void showQueue() {
     if (controller == null) return;
     if (queueDialog != null && queueDialog.isShowing()) return;
-    queueDialog = new Dialog(this, android.R.style.Theme_Material_NoActionBar);
+    queueDialog = new Dialog(this, light ? R.style.VexoLightTheme : R.style.VexoBaseTheme);
     queuePanel =
         new QueuePanel(
             this,
@@ -4515,6 +4667,7 @@ public final class MainActivity extends ComponentActivity {
     Window w = queueDialog.getWindow();
     if (w != null) {
       w.setLayout(-1, -1);
+      AppAppearance.bars(w);
       w.setStatusBarColor(BG);
       w.setNavigationBarColor(BG);
     }

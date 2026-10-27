@@ -26,16 +26,18 @@ public final class NowPlayingPanel extends LinearLayout {
   private android.graphics.Bitmap tintedArtwork;
 
   private void tint(int color) {
-    setBackground(new android.graphics.drawable.GradientDrawable(
-        android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
-        new int[] {color, 0xff191d1a, BG}));
+    setBackground(
+        new android.graphics.drawable.GradientDrawable(
+            android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
+            new int[] {light ? ArtworkPalette.lightShade(color) : color, PLAYER_MID, BG}));
   }
 
   static String statusSummary(String value) {
     if (value == null) return "";
     int line = value.indexOf('\n');
     String message = line >= 0 ? value.substring(line + 1) : value;
-    return message.replace("Autoplay on · related songs follow your queue", "Related songs follow · View queue");
+    return message.replace(
+        "Autoplay on · related songs follow your queue", "Related songs follow · View queue");
   }
 
   private int dp(int n) {
@@ -145,18 +147,21 @@ public final class NowPlayingPanel extends LinearLayout {
             outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), dp(8));
           }
         });
-    art = new ImageView(c) {
-      @Override public void setImageDrawable(android.graphics.drawable.Drawable drawable) {
-        super.setImageDrawable(drawable);
-        if (drawable instanceof android.graphics.drawable.BitmapDrawable) {
-          android.graphics.Bitmap image = ((android.graphics.drawable.BitmapDrawable) drawable).getBitmap();
-          if (image != tintedArtwork) {
-            tintedArtwork = image;
-            tint(ArtworkPalette.shade(image));
+    art =
+        new ImageView(c) {
+          @Override
+          public void setImageDrawable(android.graphics.drawable.Drawable drawable) {
+            super.setImageDrawable(drawable);
+            if (drawable instanceof android.graphics.drawable.BitmapDrawable) {
+              android.graphics.Bitmap image =
+                  ((android.graphics.drawable.BitmapDrawable) drawable).getBitmap();
+              if (image != tintedArtwork) {
+                tintedArtwork = image;
+                tint(ArtworkPalette.shade(image));
+              }
+            }
           }
-        }
-      }
-    };
+        };
     art.setContentDescription("Album artwork");
     art.setScaleType(ImageView.ScaleType.CENTER_CROP);
     artwork.addView(art, new FrameLayout.LayoutParams(-1, -1));
@@ -186,9 +191,19 @@ public final class NowPlayingPanel extends LinearLayout {
     gap(body, 8);
     seek = new SeekBar(c);
     seek.setMax(1000);
-    seek.setPadding(dp(2), 0, dp(2), 0);
+    // Leave room for the entire thumb at both 0% and 100%, including on OEM SeekBars.
+    android.graphics.drawable.GradientDrawable thumb =
+        new android.graphics.drawable.GradientDrawable();
+    thumb.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+    thumb.setColor(TEXT);
+    thumb.setSize(dp(12), dp(12));
+    seek.setThumb(thumb);
+    seek.setThumbOffset(dp(6));
+    seek.setPadding(dp(10), 0, dp(10), 0);
+    seek.setSplitTrack(false);
     seek.setContentDescription("Song position");
     seek.setProgressTintList(android.content.res.ColorStateList.valueOf(TEXT));
+    seek.setProgressBackgroundTintList(android.content.res.ColorStateList.valueOf(BORDER));
     seek.setThumbTintList(android.content.res.ColorStateList.valueOf(TEXT));
     seek.setOnSeekBarChangeListener(
         new SeekBar.OnSeekBarChangeListener() {
@@ -204,7 +219,7 @@ public final class NowPlayingPanel extends LinearLayout {
             if (user) actions.seek(value, false);
           }
         });
-    body.addView(seek, new LayoutParams(-1, dp(40)));
+    body.addView(seek, new LayoutParams(-1, dp(48)));
     LinearLayout times = row();
     times.setPadding(dp(2), 0, dp(2), 0);
     elapsed = text("0:00", 12, MUTED, false);
@@ -248,7 +263,7 @@ public final class NowPlayingPanel extends LinearLayout {
     radioStatus.setPadding(dp(12), dp(10), dp(12), dp(10));
     radioStatus.setMinHeight(dp(48));
     radioStatus.setGravity(Gravity.CENTER_VERTICAL);
-    radioStatus.setBackground(round(0x28101010, dp(8)));
+    radioStatus.setBackground(round(PANEL, dp(8)));
     radioStatus.setContentDescription("View radio queue");
     radioStatus.setOnClickListener(v -> actions.action("queue"));
     body.addView(radioStatus, new LayoutParams(-1, -2));
@@ -257,5 +272,4 @@ public final class NowPlayingPanel extends LinearLayout {
     state.setGravity(Gravity.CENTER);
     body.addView(state, new LayoutParams(-1, -2));
   }
-
 }

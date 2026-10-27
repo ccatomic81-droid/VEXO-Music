@@ -43,7 +43,7 @@ final class UpdateProgressPanel extends LinearLayout {
     bar = new ProgressBar(context, null, android.R.attr.progressBarStyleHorizontal);
     bar.setMax(100);
     bar.setProgressTintList(ColorStateList.valueOf(LIME));
-    bar.setProgressBackgroundTintList(ColorStateList.valueOf(0xff343434));
+    bar.setProgressBackgroundTintList(ColorStateList.valueOf(BORDER));
     body.addView(bar, new LinearLayout.LayoutParams(-1, surface.dp(12)));
     surface.gap(body, 12);
     amount = surface.text("Waiting for the download to start", 14, MUTED, false);

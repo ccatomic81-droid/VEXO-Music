@@ -49,7 +49,7 @@ final class VexoNotice {
           notice.setGravity(Gravity.CENTER_VERTICAL);
           notice.setPadding(
               inset, Math.round(8 * density), Math.round(4 * density), Math.round(8 * density));
-          notice.setBackground(round(0xff25352b, Math.round(20 * density)));
+          notice.setBackground(round(SELECTED, Math.round(20 * density)));
           notice.setElevation(12 * density);
           notice.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
           ImageView mark = new ImageView(activity);

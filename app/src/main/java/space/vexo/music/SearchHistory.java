@@ -40,10 +40,11 @@ final class SearchHistory {
     List<String> terms = entries();
     terms.removeIf(s -> s.equalsIgnoreCase(term));
     write(terms);
+    SearchArtists.remove(prefs, term);
   }
 
   void clear() {
-    prefs.edit().remove("terms").apply();
+    prefs.edit().remove("terms").remove("artists").apply();
   }
 
   private void write(List<String> terms) {
