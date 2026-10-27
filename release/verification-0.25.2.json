@@ -44,5 +44,8 @@
   "packageActivityNotificationAndSplashLogoVerified": true,
   "globalRegionSelectionAndCacheVerified": true,
   "brandedPopupAndNoticeActionsVerified": true,
-  "thirdPartyScannerCacheCleared": false
+  "thirdPartyScannerCacheCleared": false,
+  "githubRelease": "https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.25.2",
+  "githubReleaseWorkflow": 40497682224,
+  "githubReleasePublished": true
 }
