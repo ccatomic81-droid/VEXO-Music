@@ -1,10 +1,10 @@
-# VEXO Music 0.22.0
+# VEXO Music 0.24.0
 
 Developer: **Kavindu Kavishka**.
 
-Public version **0.22.0** fixes artwork recovery, transient retries and missing/stale-cover fallbacks across Home, Search, queue and both players. It also includes the simpler interface and VEXO session/queue improvements from testing. YouTube account connection stays optional; MindRadio, PureSong, Smart Experience, crossfade, offline music, accounts and playlists remain.
+Public version **0.24.0** adds album-style artwork without stretching, detected black-border removal, a cleaner Home, a slimmer mini-player and an artwork-tinted player. Playing a search song continues with its related radio; starting radio preserves the current song and manual queue. YouTube account connection stays optional; MindRadio, PureSong, Smart Experience, crossfade, offline music, accounts and playlists remain.
 
-[Download VEXO Music 0.22.0](https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.22.0.apk), use Settings → Check for updates, or open the [GitHub release](https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.22.0). Install as an update; do not uninstall. Version code 31 upgrades public 0.19.3 and testers 0.20/0.21 using the existing app certificate. See [artwork behavior](docs/ARTWORK-0.22.md) and [verification](release/verification-0.22.0.json).
+[Download VEXO Music 0.24.0](https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.24.0.apk), use Settings → Check for updates, or open the [GitHub release](https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.24.0). Install as an update; do not uninstall. Version code 34 upgrades public 0.22.0 and 0.24.0-dev testers using the existing app certificate. See [release notes](release/notes-0.24.0.md), [verification](release/verification-0.24.0.json) and the [next-feature plan](docs/NEXT-MUSIC-DISCOVERY-PLAN.md).
 
 Search now shows real song names, artwork and artists while typing, with direct play controls. Home has quick collection tiles, horizontally scrolling music cards, regional picks and VEXO mood mixes. Full playlist pages support Play all, a one-shot shuffled queue, adding songs, renaming and deleting a playlist, and removing individual tracks.
 
@@ -73,12 +73,12 @@ This APK uses the same app ID and signing certificate as v0.4.0 Radio. Install i
 ## This update: Song Radio
 
 - Start song radio from any supported online song's menu or from Now Playing. The original song anchors the station while related songs continue automatically.
-- Tune radio to Balanced, Familiar or Discover from Now Playing, Up Next or Settings.
+- Choose Balanced, Familiar or Discover in Settings. Up next contains autoplay and shows the station status.
 - Local favourites and listening history influence ranking. Artist variety prevents same-artist runs when alternatives exist.
 - Duplicate YouTube URLs, alternate lyric/official uploads, recent songs and common non-music/long-compilation results are filtered.
 - “Don't recommend in radio” hides a song and matching title/artist uploads from future radio refills. Reset radio feedback in Settings.
-- Up Next shows station/mode/loading status and offers Tune radio and Retry radio. Tuning and feedback apply to future refills, preserving your current queue.
-- Candidate gathering combines the original station seed, the current song and music-only artist search, with independent request fallbacks and bounded cancellation-safe loading.
+- Up next shows station/loading status. Retry appears when recommendations fail or run out; starting radio preserves current playback and manual queue entries.
+- The original song anchors candidate gathering; continuation can expand through songs in that station. Sparse results fall back to verified same-artist songs. Cancellation prevents an older station replacing the newly selected song.
 
 See [RADIO-RESEARCH.md](RADIO-RESEARCH.md) for the Spotify/YouTube research, exact ranking rules and limitations. This is an original metadata-based implementation; it does not claim to reproduce those services' private recommendation models.
 
@@ -92,7 +92,7 @@ Auto-save is enabled by default and attempts to save the full audio of a played 
 
 ## Install or update VEXO Music
 
-Install `VEXO-Music-0.22.0.apk`. It appears as **VEXO Music**, package `space.vexo.music.radio`, version code 31.
+Install `VEXO-Music-0.24.0.apk`. It appears as **VEXO Music**, package `space.vexo.music.radio`, version code 34.
 
 The earlier delivery workspace and its signing key were reset. The v0.4.x line uses its backed-up development signing certificate and a separate app ID so it can coexist with v0.3.0. **Keep the old app installed to preserve its favourites, playlists and offline audio. That private app data does not automatically transfer to this build.** This APK is not an in-place update to v0.3.0.
 

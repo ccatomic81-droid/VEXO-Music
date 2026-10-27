@@ -1,6 +1,6 @@
 # App updates and releases
 
-Current public release: **0.22.0 / code 31**. It updates public 0.19.3/code 28 and testers 0.20/0.21 codes 29/30 in place. The public manifest is signed and the APK uses the original certificate. Use Settings → Check for updates; Android still requires approval to install. See `release/public-0.22.0.json` and `release/verification-0.22.0.json`.
+Current public release: **0.24.0 / code 34**. It updates public 0.22.0/code31 and 0.24.0-dev/code33 testers in place. The public manifest is signed and the APK uses the original certificate. Use Settings → Check for updates; Android still requires approval to install. See `release/public-0.24.0.json` and `release/verification-0.24.0.json`.
 
 ## Built-in delivery
 

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.24.0 — Artwork, player and song-related radio (27 October 2026)
+
+- Fill artwork frames without distortion and remove detected symmetric black video borders.
+- Compact Home filters, aligned covers, slimmer mini-player and artwork-tinted Now Playing.
+- Play only the selected search song, followed by related station recommendations.
+- Preserve playback position and manual queue when starting radio; reduce duplicate controls.
+- Publish with the original certificate and version code34, upgrading public and tester installs.
+- Record Trending Music, interest learning, personalized mood/daily mixes and Tune My Mix as future plans.
+
 ## 0.22.0 — Artwork recovery and public experience update (26 October 2026)
 
 - Reload the same cover after Refresh & repair and restore cached artwork views on attachment.

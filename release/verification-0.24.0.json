@@ -1,0 +1,39 @@
+{
+  "version": "0.24.0",
+  "versionCode": 34,
+  "sourceCommit": "1f7bd2302e0340e6313de3c90bc2ecdc29a8c98a",
+  "workflowRun": 40460755459,
+  "apkSha256": "f6b86fef57a9845d1d06eba125c49226076dc5b687336b422acf44dc8482119f",
+  "sameCertificate": true,
+  "nonDebuggable": true,
+  "signedPayloadMatchesUnsignedCandidate": true,
+  "manifestSignatureVerified": true,
+  "androidChecks": {
+    "tests": 210,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 10,
+    "passed": 200
+  },
+  "liveChecks": {
+    "tests": 7,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 7
+  },
+  "publicChecks": [
+    "manifest",
+    "apk checksum",
+    "range",
+    "head",
+    "old public APK",
+    "closed writes"
+  ],
+  "releaseWorkflow": 40461388999,
+  "releaseWorkflowPassed": true,
+  "githubReleaseUrl": "https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.24.0",
+  "githubAssetMatchesPublicApk": true,
+  "publicationDisabled": true,
+  "physicalPhoneTested": false
+}
