@@ -44,5 +44,8 @@
   "fullButtonVisibilityChecked": true,
   "minimum48dpButtonTargetsChecked": true,
   "normalAndLargeTextScrollingAndStackedActionsChecked": true,
-  "logoRoundedCornerTransparencyChecked": true
+  "logoRoundedCornerTransparencyChecked": true,
+  "githubRelease": "https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.25.3",
+  "githubReleaseWorkflow": 40500676493,
+  "githubReleasePublished": true
 }
