@@ -41,5 +41,8 @@
     "RELEASES"
   ],
   "offlineRegressionTests": 5,
-  "updateRegressionTests": 5
+  "updateRegressionTests": 5,
+  "githubRelease": "https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.25.1",
+  "githubReleaseWorkflow": 40470046368,
+  "githubReleasePublished": true
 }
