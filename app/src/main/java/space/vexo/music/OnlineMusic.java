@@ -61,7 +61,7 @@ public final class OnlineMusic {
       if (Thread.currentThread().isInterrupted()) throw new InterruptedException();
     }
     // General YouTube related videos are not a music catalogue. Never mix them into radio.
-    if (songs.isEmpty()) songs = search(seed.artist + " music").tracks;
+    // Artist-only fallback is filtered by RadioCatalogue, never raw search results here.
     rememberRelated(seed.url, songs);
     return songs;
   }

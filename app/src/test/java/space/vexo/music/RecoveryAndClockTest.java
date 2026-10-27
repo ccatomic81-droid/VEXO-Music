@@ -172,7 +172,7 @@ public class RecoveryAndClockTest {
       TextView artistView = (TextView) artist.get(activity);
       artistView.setText("Jaymes Young");
       new DiscoveryUiTest().capture(root, 320, 640, "home-mini-v09-large");
-      assertTrue(mini.getHeight() >= 66);
+      assertTrue(mini.getHeight() >= 58);
       int[] bottom = new int[2], line = new int[2];
       mini.getLocationOnScreen(bottom);
       artistView.getLocationOnScreen(line);

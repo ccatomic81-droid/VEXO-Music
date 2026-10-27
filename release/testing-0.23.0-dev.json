@@ -1,0 +1,21 @@
+{
+  "channel": "testing",
+  "version": "0.23.0-dev",
+  "versionName": "0.23.0-dev",
+  "versionCode": 32,
+  "packageName": "space.vexo.music.radio",
+  "downloadUrl": "https://vexo-music-testing.kavindukavishka785.workers.dev/releases/VEXO-Music-0.23.0-dev.apk",
+  "sha256": "ee083772882d53fd3e3b088098bc0935c63595478c597cb55898007e1941b730",
+  "sizeBytes": 9082849,
+  "sourceCommit": "6034934319352df4fcd5af844f640512e110d455",
+  "sourceUrl": "https://github.com/ccatomic81-droid/VEXO-Music/archive/6034934319352df4fcd5af844f640512e110d455.zip",
+  "signingCertificateSha256": "0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3",
+  "releaseNotes": "Play a search song, then hear related radio instead of search results. Full artwork fit, station continuity, refreshed automatic picks without interrupting the current song, and fewer duplicate playback/radio controls. YouTube connection remains optional.",
+  "minimumAndroidApi": 26,
+  "debugDevelopmentBuild": false,
+  "automaticTestUpdates": false,
+  "limitations": [
+    "Physical-phone upgrade, audio, Bluetooth and background playback acceptance testing remains required.",
+    "The built-in updater checks the stable feed; install this tester build using its download page."
+  ]
+}

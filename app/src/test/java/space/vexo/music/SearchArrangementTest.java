@@ -93,8 +93,8 @@ public class SearchArrangementTest {
     mini.getLocationOnScreen(miniXY);
     assertTrue(navXY[1] + nav.getHeight() <= height);
     assertTrue(miniXY[1] + mini.getHeight() <= navXY[1]);
-    assertEquals(20, miniXY[0]);
-    assertEquals(width - 20, miniXY[0] + mini.getWidth());
+    assertEquals(8, miniXY[0]);
+    assertEquals(width - 8, miniXY[0] + mini.getWidth());
   }
 
   @Test

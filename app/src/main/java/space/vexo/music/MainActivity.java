@@ -168,13 +168,13 @@ public final class MainActivity extends ComponentActivity {
   private QueuePanel queuePanel;
   private NowPlayingPanel playerPanel;
   private List<Integer> queueViewIndices = new ArrayList<>();
-  private TextView speedButton, autoplayButton, radioStatus;
+  private TextView speedButton, radioStatus;
   private final android.content.SharedPreferences.OnSharedPreferenceChangeListener
       playbackStateChanged =
           (prefs, key) -> {
             if (!destroyed && "connection_status".equals(key)) updatePlayback();
             if (!destroyed && radioStatus != null)
-              radioStatus.setText(prefs.getString("autoplay_status", ""));
+              radioStatus.setText(NowPlayingPanel.statusSummary(prefs.getString("autoplay_status", "")));
             if (!destroyed && queuePanel != null && queueDialog != null && queueDialog.isShowing())
               queuePanel.status(prefs.getString("autoplay_status", "Autoplay on"));
           };
@@ -543,7 +543,7 @@ public final class MainActivity extends ComponentActivity {
 
   private void buildNav() {
     nav = row();
-    nav.setPadding(dp(10), dp(2), dp(10), dp(4));
+    nav.setPadding(dp(6), dp(2), dp(6), dp(2));
     nav.setMinimumHeight(dp(64));
     // Only the pill has a surface; the surrounding overlay stays transparent.
     nav.setBackgroundColor(BG);
@@ -587,10 +587,10 @@ public final class MainActivity extends ComponentActivity {
         LinearLayout item = (LinearLayout) nav.getChildAt(j);
         boolean selected = labels[j].equals(tab);
         Icon glyph = (Icon) item.getChildAt(0);
-        glyph.set(names[j], selected ? LIME : MUTED);
+        glyph.set(names[j], selected ? TEXT : MUTED);
         glyph.setBackground(null);
         TextView caption = (TextView) item.getChildAt(1);
-        caption.setTextColor(selected ? LIME : MUTED);
+        caption.setTextColor(selected ? TEXT : MUTED);
         item.setSelected(selected);
       }
       return;
@@ -600,13 +600,13 @@ public final class MainActivity extends ComponentActivity {
       boolean selected = label.equals(tab);
       LinearLayout item = column();
       item.setGravity(Gravity.CENTER);
-      Icon i = new Icon(this, names[j], selected ? LIME : MUTED);
+      Icon i = new Icon(this, names[j], selected ? TEXT : MUTED);
       i.setGlyphSize(24);
       item.addView(i, new LinearLayout.LayoutParams(dp(48), dp(40)));
 
       i.setContentDescription(label);
       i.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-      TextView caption = text(label, 10, selected ? LIME : MUTED, selected);
+      TextView caption = text(label, 10, selected ? TEXT : MUTED, selected);
       caption.setGravity(Gravity.CENTER);
       caption.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
       item.addView(caption);
@@ -761,43 +761,34 @@ public final class MainActivity extends ComponentActivity {
 
   private void buildMini() {
     mini = column();
-    Glass.apply(mini, 20, false);
-    mini.setPadding(dp(8), dp(8), dp(4), dp(5));
-    mini.setMinimumHeight(dp(66));
+    mini.setBackground(round(0xff283b32, dp(8)));
+    mini.setPadding(dp(8), dp(3), dp(4), dp(3));
+    mini.setMinimumHeight(dp(58));
     LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-1, -2);
-    p.setMargins(dp(20), dp(8), dp(20), dp(8));
+    p.setMargins(dp(8), dp(6), dp(8), dp(2));
     floatingDock.addView(mini, p);
     mini.setVisibility(View.GONE);
     LinearLayout line = row();
     mini.addView(line, new LinearLayout.LayoutParams(-1, -2));
     miniArt = new RoundedArtwork(this);
-    miniArt.setBackground(round(PANEL, dp(11)));
+    miniArt.setBackground(round(PANEL, dp(5)));
     miniArt.setClipToOutline(true);
-    line.addView(miniArt, new LinearLayout.LayoutParams(dp(44), dp(44)));
+    line.addView(miniArt, new LinearLayout.LayoutParams(dp(40), dp(40)));
     LinearLayout copy = column();
     copy.setPadding(dp(10), 0, dp(4), 0);
-    miniTitle = text("", 14, TEXT, true);
+    miniTitle = text("", 13, TEXT, true);
     miniTitle.setSingleLine();
     miniTitle.setEllipsize(TextUtils.TruncateAt.END);
-    miniArtist = text("", 12, MUTED, false);
+    miniArtist = text("", 11, 0xffd1d8d4, false);
     miniArtist.setSingleLine();
     miniArtist.setEllipsize(TextUtils.TruncateAt.END);
     copy.addView(miniTitle);
     gap(copy, 4);
     copy.addView(miniArtist);
     line.addView(copy, new LinearLayout.LayoutParams(0, -2, 1));
-    miniPlay = icon("play", LIME, this::togglePlay);
+    miniPlay = icon("play", TEXT, this::togglePlay);
     miniPlay.setGlyphSize(24);
     line.addView(miniPlay);
-    Icon next =
-        icon(
-            "next",
-            TEXT,
-            () -> {
-              if (controller != null) controller.seekToNextMediaItem();
-            });
-    next.setGlyphSize(24);
-    line.addView(next);
     miniProgress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
     miniProgress.setMax(1000);
     miniProgress.setProgressTintList(android.content.res.ColorStateList.valueOf(LIME));
@@ -805,7 +796,7 @@ public final class MainActivity extends ComponentActivity {
         android.content.res.ColorStateList.valueOf(0xff3b4544));
     miniProgress.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
     LinearLayout.LayoutParams progress = new LinearLayout.LayoutParams(-1, dp(2));
-    progress.setMargins(dp(5), dp(5), dp(5), 0);
+    progress.setMargins(0, dp(2), 0, 0);
     mini.addView(miniProgress, progress);
     mini.setContentDescription("Open now playing");
     mini.setOnClickListener(v -> showPlayer());
@@ -1410,7 +1401,7 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private TextView searchSource(String title, boolean selected, Runnable action) {
-    TextView control = text(title, 13, selected ? LIME : MUTED, selected);
+    TextView control = text(title, 13, selected ? TEXT : MUTED, selected);
     control.setGravity(Gravity.CENTER);
     control.setMinHeight(dp(48));
     control.setPadding(dp(8), dp(8), dp(8), dp(8));
@@ -1742,7 +1733,7 @@ public final class MainActivity extends ComponentActivity {
               searchHistory.add(term);
               ((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE))
                   .hideSoftInputFromWindow(root.getWindowToken(), 0);
-              play(matches, index);
+              play(matches, index, true);
             });
         suggestionBody.addView(holder.itemView, new LinearLayout.LayoutParams(-1, -2));
       }
@@ -2289,13 +2280,13 @@ public final class MainActivity extends ComponentActivity {
       h.detail.setText(t.artist + (t.duration > 0 ? " · " + format(t.duration) : ""));
       artwork(h.art, t);
       h.itemView.setContentDescription("Play " + t.title + " by " + t.artist);
-      h.itemView.setOnClickListener(v -> play(tracks, h.getBindingAdapterPosition()));
+      h.itemView.setOnClickListener(v -> playResult(tracks, h.getBindingAdapterPosition(), collection));
       h.start.setContentDescription("Play " + t.title);
       h.start.setOnClickListener(
           v -> {
             int index = h.getBindingAdapterPosition();
             if (index < 0) index = pos;
-            play(tracks, index);
+            playResult(tracks, index, collection);
           });
       h.more.set("more", MUTED);
       h.more.setContentDescription("Options for " + t.title);
@@ -2342,12 +2333,21 @@ public final class MainActivity extends ComponentActivity {
     }
   }
 
+  private void playResult(List<Track> tracks, int index, String collection) {
+    play(tracks, index, tab.equals("Search") && collection == null && online);
+  }
+
   private void play(List<Track> tracks, int index) {
+    play(tracks, index, false);
+  }
+
+  private void play(List<Track> tracks, int index, boolean songOnly) {
     if (controller == null) {
       message("Player is connecting. Try again in a moment.");
       return;
     }
     if (index < 0 || index >= tracks.size()) return;
+    songOnly = songOnly && tracks.get(index).online();
     ((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE))
         .hideSoftInputFromWindow(root.getWindowToken(), 0);
     if (tab.equals("Search") && searchField != null)
@@ -2363,18 +2363,21 @@ public final class MainActivity extends ComponentActivity {
     for (Track t : tracks.subList(first, end)) queue.add(t.mediaItem());
     Bundle queueArgs = new Bundle();
     queueArgs.putString("track", tracks.get(index).json().toString());
+    queueArgs.putBoolean("play_song", songOnly);
     queueArgs.putString(
         "session_query",
-        tab.equals("Search") && searchCategory != null
+        !songOnly && tab.equals("Search") && searchCategory != null
             ? searchCategory.query("", searchLanguage)
             : "");
-    queueArgs.putString("ai_plan", pendingAiPlan == null ? "" : pendingAiPlan.toString());
+    queueArgs.putString("ai_plan", songOnly || pendingAiPlan == null ? "" : pendingAiPlan.toString());
     pendingAiPlan = null;
     controller.sendCustomCommand(
         new SessionCommand(PlaybackService.NEW_QUEUE, Bundle.EMPTY), queueArgs);
-    controller.setMediaItems(queue, index - first, 0);
-    controller.prepare();
-    controller.play();
+    if (!songOnly) {
+      controller.setMediaItems(queue, index - first, 0);
+      controller.prepare();
+      controller.play();
+    }
     showPlayer();
   }
 
@@ -3982,14 +3985,13 @@ public final class MainActivity extends ComponentActivity {
         controller.getPlaybackState() == Player.STATE_BUFFERING
             ? "Loading audio…"
             : item.mediaMetadata.artist);
-    miniPlay.set(controller.isPlaying() ? "pause" : "play", LIME);
+    miniPlay.set(controller.isPlaying() ? "pause" : "play", TEXT);
     String art =
         item.mediaMetadata.artworkUri == null ? "" : item.mediaMetadata.artworkUri.toString();
     artwork(miniArt, Track.from(item));
     if (playerDialog != null && playerDialog.isShowing()) {
       if (speedButton != null)
         speedButton.setText(speedLabel(controller.getPlaybackParameters().speed));
-      if (playerPanel != null) playerPanel.autoplayState(autoplayEnabled());
       playerTitle.setText(item.mediaMetadata.title);
       playerArtist.setText(item.mediaMetadata.artist);
       artwork(playerArt, Track.from(item));
@@ -4010,7 +4012,8 @@ public final class MainActivity extends ComponentActivity {
                   ? "Loading audio…"
                   : OfflineLibrary.get(this).complete(item.mediaId)
                       ? "SAVED OFFLINE"
-                      : Track.from(item).online() ? "YOUTUBE AUDIO" : "ON THIS PHONE");
+                      : Track.from(item).online() ? "" : "On this phone");
+      playerState.setVisibility(playerState.getText().length() == 0 ? View.GONE : View.VISIBLE);
     }
   }
 
@@ -4113,16 +4116,6 @@ public final class MainActivity extends ComponentActivity {
                     MediaItem current = controller.getCurrentMediaItem();
                     if (current != null) songMenu(Track.from(current), null);
                     break;
-                  case "autoplay":
-                    setAutoplay(!autoplayEnabled());
-                    break;
-                  case "start-radio":
-                    MediaItem seed = controller.getCurrentMediaItem();
-                    if (seed != null) startRadio(Track.from(seed));
-                    break;
-                  case "tune-radio":
-                    tuneRadio();
-                    break;
                   case "seek-start":
                     dragging = true;
                     break;
@@ -4146,15 +4139,13 @@ public final class MainActivity extends ComponentActivity {
     playerDuration = p.duration;
     playerState = p.state;
     speedButton = p.speed;
-    autoplayButton = p.autoplay;
     radioStatus = p.radioStatus;
     playerLike = p.favourite;
     playerShuffle = p.shuffle;
     playerPlay = p.play;
     playerRepeat = p.repeat;
     seek = p.seek;
-    p.autoplayState(autoplayEnabled());
-    radioStatus.setText(getSharedPreferences("playback_state", 0).getString("autoplay_status", ""));
+    radioStatus.setText(NowPlayingPanel.statusSummary(getSharedPreferences("playback_state", 0).getString("autoplay_status", "")));
     androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(
         p,
         (view, insets) -> {
@@ -4259,7 +4250,6 @@ public final class MainActivity extends ComponentActivity {
     if (controller != null)
       controller.sendCustomCommand(
           new SessionCommand(PlaybackService.AUTOPLAY_CHANGED, Bundle.EMPTY), Bundle.EMPTY);
-    if (playerPanel != null) playerPanel.autoplayState(enabled);
   }
 
   private void manualQueue(Track track, boolean next, int existing) {
@@ -4470,10 +4460,6 @@ public final class MainActivity extends ComponentActivity {
               public void clearAll() {
                 controller.sendCustomCommand(
                     new SessionCommand(PlaybackService.CLEAR_QUEUE, Bundle.EMPTY), Bundle.EMPTY);
-              }
-
-              public void tune() {
-                tuneRadio();
               }
 
               public void retry() {

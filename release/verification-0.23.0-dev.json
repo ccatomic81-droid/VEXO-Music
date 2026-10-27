@@ -1,0 +1,35 @@
+{
+  "versionName": "0.23.0-dev",
+  "versionCode": 32,
+  "sourceCommit": "6034934319352df4fcd5af844f640512e110d455",
+  "workflowRun": 40372224321,
+  "apkSha256": "ee083772882d53fd3e3b088098bc0935c63595478c597cb55898007e1941b730",
+  "sameCertificate": true,
+  "nonDebuggable": true,
+  "signedPayloadMatchesUnsignedCandidate": true,
+  "androidChecks": {
+    "tests": 207,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 10
+  },
+  "liveChecks": {
+    "tests": 7,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "publicChecks": [
+    "manifest",
+    "apk checksum",
+    "page",
+    "range",
+    "head",
+    "archived 0.21 download",
+    "closed writes",
+    "stable 0.22 unchanged"
+  ],
+  "limitations": [
+    "Physical-phone audio, background playback and upgrade acceptance testing remains required."
+  ]
+}

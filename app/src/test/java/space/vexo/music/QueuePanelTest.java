@@ -56,10 +56,6 @@ public class QueuePanelTest {
                 actions.add("all");
               }
 
-              public void tune() {
-                actions.add("tune");
-              }
-
               public void retry() {
                 actions.add("retry");
               }
@@ -93,9 +89,14 @@ public class QueuePanelTest {
     }
     text(panel, "Clear upcoming").performClick();
     text(panel, "Clear queue").performClick();
-    text(panel, "Tune radio").performClick();
-    text(panel, "Retry radio").performClick();
+    assertNull(text(panel, "Tune radio"));
+    assertEquals(View.GONE, text(panel, "Retry recommendations").getVisibility());
+    panel.status("Couldn’t load related songs · retry from Up next");
+    assertEquals(View.VISIBLE, text(panel, "Retry recommendations").getVisibility());
+    text(panel, "Retry recommendations").performClick();
+    panel.status("Autoplay added 10 related songs");
+    assertEquals(View.GONE, text(panel, "Retry recommendations").getVisibility());
     panel.autoplayState(false);
-    assertEquals(Arrays.asList("upcoming", "all", "tune", "retry"), actions);
+    assertEquals(Arrays.asList("upcoming", "all", "retry"), actions);
   }
 }

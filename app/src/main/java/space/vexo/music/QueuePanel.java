@@ -25,12 +25,10 @@ public final class QueuePanel extends LinearLayout {
 
     void autoplay(boolean enabled);
 
-    default void tune() {}
-
     default void retry() {}
   }
 
-  private final TextView summary, status;
+  private final TextView summary, status, retry;
   private final Switch toggle;
   private final Songs adapter = new Songs();
   private final Actions actions;
@@ -117,12 +115,9 @@ public final class QueuePanel extends LinearLayout {
         });
     automatic.addView(toggle, new LayoutParams(dp(58), -2));
     addView(automatic);
-    LinearLayout radioTools = row();
-    LayoutParams tunerParams = new LayoutParams(0, -2, 1);
-    tunerParams.setMargins(0, 0, dp(8), 0);
-    radioTools.addView(action("Tune radio", actions::tune), tunerParams);
-    radioTools.addView(action("Retry radio", actions::retry), new LayoutParams(0, -2, 1));
-    addView(radioTools);
+    retry = action("Retry recommendations", actions::retry);
+    retry.setVisibility(GONE);
+    addView(retry, new LayoutParams(-1, -2));
     status = text("", 12, MUTED);
     status.setPadding(0, dp(4), 0, dp(12));
     addView(status);
@@ -144,7 +139,7 @@ public final class QueuePanel extends LinearLayout {
                 + " · "
                 + Math.max(0, songs.size() - 1)
                 + " songs up next");
-    status.setText(message);
+    status(message);
     adapter.notifyDataSetChanged();
   }
 
@@ -156,6 +151,8 @@ public final class QueuePanel extends LinearLayout {
 
   public void status(String message) {
     status.setText(message);
+    retry.setVisibility(message != null && (message.contains("Couldn’t load related songs")
+        || message.contains("No new related songs")) ? VISIBLE : GONE);
   }
 
   private final class Songs extends RecyclerView.Adapter<Holder> {

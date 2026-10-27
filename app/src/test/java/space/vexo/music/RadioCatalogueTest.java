@@ -7,7 +7,28 @@ import org.junit.Test;
 
 public class RadioCatalogueTest {
   @Test
-  public void oneDistinctInterestSeedBroadensTheStationWithIndependentFailureFallback()
+  public void healthyRadioDoesNotRunSearchOrUseUnrelatedCurrentSong() throws Exception {
+    List<String> calls = new ArrayList<>();
+    Track related = RadioPolicyTest.song("related", "Related", "Related artist");
+    RadioCatalogue catalogue = new RadioCatalogue(new RadioCatalogue.Source() {
+      public List<Track> related(Track seed) {
+        calls.add(seed.title);
+        List<Track> tracks = new ArrayList<>();
+        tracks.add(related);
+        for (int i = 0; i < 12; i++) tracks.add(RadioPolicyTest.song("radio" + i, "Song " + i, "Artist " + i));
+        return tracks;
+      }
+      public List<Track> search(String query) { throw new AssertionError("Healthy radio must not search"); }
+    });
+    catalogue.load(RadioPolicyTest.SEED, RadioPolicyTest.song("manual", "Unrelated manual", "Other"));
+    assertEquals(Arrays.asList("Seed song"), calls);
+    calls.clear();
+    catalogue.load(RadioPolicyTest.SEED, related);
+    assertEquals(Arrays.asList("Seed song", "Related"), calls);
+  }
+
+  @Test
+  public void unrelatedInterestsCannotChangeTheSelectedSongsStation()
       throws Exception {
     List<String> related = new ArrayList<>();
     Track interest = RadioPolicyTest.song("interest", "Taste seed", "Loved");
@@ -30,8 +51,8 @@ public class RadioCatalogueTest {
             RadioPolicyTest.SEED,
             Arrays.asList(
                 RadioPolicyTest.SEED, interest, RadioPolicyTest.song("unused", "Unused", "Other")));
-    assertEquals(Arrays.asList("Anchor", "Loved"), related);
-    assertEquals(2, result.size());
+    assertEquals(Arrays.asList("Anchor"), related);
+    assertEquals(1, result.size());
   }
 
   @Test
@@ -47,13 +68,13 @@ public class RadioCatalogueTest {
 
               public List<Track> search(String q) {
                 requests.add(q);
-                return Arrays.asList(RadioPolicyTest.song("new", "Next", "Other"));
+                return Arrays.asList(RadioPolicyTest.song("new", "Next", "Anchor"));
               }
             });
     List<Track> result =
         catalogue.load(
             RadioPolicyTest.SEED, RadioPolicyTest.song("current", "Current song", "Different"));
-    assertEquals(Arrays.asList("Seed song", "Current song", "Anchor songs"), requests);
+    assertEquals(Arrays.asList("Seed song", "Anchor songs"), requests);
     assertEquals(1, result.size());
   }
 
@@ -71,7 +92,7 @@ public class RadioCatalogueTest {
               public List<Track> search(String q) {
                 return Arrays.asList(
                     new Track("https://youtu.be/same", "Tune", "A", "", 200),
-                    RadioPolicyTest.song("second", "Another", "B"));
+                    RadioPolicyTest.song("second", "Another", "Anchor"));
               }
             });
     assertEquals(2, catalogue.load(RadioPolicyTest.SEED, RadioPolicyTest.SEED).size());

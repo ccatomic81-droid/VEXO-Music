@@ -23,38 +23,34 @@ public final class RadioCatalogue {
   public List<Track> load(Track anchor, Track current, List<Track> interests) throws Exception {
     LinkedHashMap<String, Track> pool = new LinkedHashMap<>();
     Exception failure = null;
-    for (Track seed :
-        QueuePolicy.identity(anchor.url).equals(QueuePolicy.identity(current.url))
-            ? Arrays.asList(anchor)
-            : Arrays.asList(anchor, current)) {
+    if (Thread.currentThread().isInterrupted()) throw new InterruptedException();
+    try {
+      add(pool, source.related(anchor));
+    } catch (Exception e) {
+      failure = e;
+    }
+    // Expand only from a song the original station actually recommends. A manual queue
+    // addition or an unrelated listening interest must not redirect this station.
+    String currentId = QueuePolicy.identity(current.url);
+    if (!QueuePolicy.identity(anchor.url).equals(currentId) && pool.containsKey(currentId)) {
       if (Thread.currentThread().isInterrupted()) throw new InterruptedException();
       try {
-        add(pool, source.related(seed));
+        add(pool, source.related(current));
       } catch (Exception e) {
         failure = e;
       }
     }
     if (Thread.currentThread().isInterrupted()) throw new InterruptedException();
-    // Always include music-search candidates: related videos can be sparse or mostly non-music.
-    String query = anchor.artist.trim();
-    if (query.isEmpty()) query = anchor.title;
-    try {
-      add(pool, source.search(query + " songs"));
-    } catch (Exception e) {
-      failure = e;
-    }
-    // A single additional taste seed broadens sparse stations without unbounded requests.
-    for (Track taste : pool.size() < 20 ? interests : Collections.<Track>emptyList()) {
-      if (Thread.currentThread().isInterrupted()) throw new InterruptedException();
-      if (!RadioPolicy.music(taste)
-          || RadioPolicy.artist(taste).equals(RadioPolicy.artist(anchor))
-          || RadioPolicy.artist(taste).equals(RadioPolicy.artist(current))) continue;
+    // Search is a sparse-provider fallback, not a second queue of search results.
+    String artist = RadioPolicy.artist(anchor);
+    if (pool.size() < 10 && !artist.isEmpty()) {
       try {
-        add(pool, source.related(taste));
+        List<Track> fallback = new ArrayList<>(source.search(anchor.artist.trim() + " songs"));
+        fallback.removeIf(song -> !RadioPolicy.artist(song).equals(artist));
+        add(pool, fallback);
       } catch (Exception e) {
         failure = e;
       }
-      break;
     }
     if (pool.isEmpty() && failure != null) throw failure;
     return new ArrayList<>(pool.values());

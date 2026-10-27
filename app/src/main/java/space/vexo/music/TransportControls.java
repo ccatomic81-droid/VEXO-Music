@@ -19,7 +19,7 @@ public final class TransportControls extends LinearLayout {
   @Override
   protected void onMeasure(int widthSpec, int heightSpec) {
     int width = MeasureSpec.getSize(widthSpec) - getPaddingLeft() - getPaddingRight();
-    int play = Math.max(0, Math.min(dp(80), width - dp(48) * 4));
+    int play = Math.max(0, Math.min(dp(72), width - dp(48) * 4));
     if (play < dp(56)) play = Math.min(dp(64), Math.max(0, width / 3));
     int side = Math.max(0, (width - play) / 4);
     for (int i = 0; i < getChildCount(); i++) {
@@ -31,6 +31,6 @@ public final class TransportControls extends LinearLayout {
       p.rightMargin = 0;
       child.setLayoutParams(p);
     }
-    super.onMeasure(widthSpec, MeasureSpec.makeMeasureSpec(dp(80), MeasureSpec.EXACTLY));
+    super.onMeasure(widthSpec, MeasureSpec.makeMeasureSpec(dp(72), MeasureSpec.EXACTLY));
   }
 }

@@ -18,7 +18,6 @@ public final class Visuals {
   public static GradientDrawable round(int color, float radius) {
     GradientDrawable d = new GradientDrawable();
     d.setColor(color);
-    if (color == PANEL) d.setStroke(1, 0xff333333);
     d.setCornerRadius(radius);
     return d;
   }

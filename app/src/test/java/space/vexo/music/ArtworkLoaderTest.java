@@ -64,6 +64,43 @@ public class ArtworkLoaderTest {
   }
 
   @Test
+  public void wideAndPortraitArtworkFillsSquareCoversWithoutStretching() throws Exception {
+    for (int[] dimensions : new int[][] {{320, 180}, {180, 320}}) {
+      Bitmap source = Bitmap.createBitmap(dimensions[0], dimensions[1], Bitmap.Config.ARGB_8888);
+      source.eraseColor(Color.BLUE);
+      Canvas canvas = new Canvas(source);
+      Paint edge = new Paint();
+      edge.setColor(Color.RED);
+      canvas.drawRect(0, 0, dimensions[0], 16, edge);
+      canvas.drawRect(0, dimensions[1] - 16, dimensions[0], dimensions[1], edge);
+      canvas.drawRect(0, 0, 16, dimensions[1], edge);
+      canvas.drawRect(dimensions[0] - 16, 0, dimensions[0], dimensions[1], edge);
+      ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+      source.compress(Bitmap.CompressFormat.PNG, 100, bytes);
+      byte[] data = bytes.toByteArray();
+      ArtworkLoader.configure(context, new OkHttpClient.Builder().addInterceptor(
+          chain -> response(chain, 200, data)).build());
+      ImageView target = view();
+      Visuals.artwork(target, "https://covers.example/fit-" + System.nanoTime() + ".png");
+      await(target, Color.BLUE);
+      Bitmap actual = ((BitmapDrawable) target.getDrawable()).getBitmap();
+      assertEquals(128, actual.getWidth());
+      assertEquals(128, actual.getHeight());
+      assertEquals(Color.BLUE, actual.getPixel(64, 64));
+      // Uniform scaling crops only the longer axis; the short-axis edges remain.
+      if (dimensions[0] > dimensions[1]) {
+        assertEquals(Color.RED, actual.getPixel(64, 1));
+        assertEquals(Color.RED, actual.getPixel(64, 126));
+      } else {
+        assertEquals(Color.RED, actual.getPixel(1, 64));
+        assertEquals(Color.RED, actual.getPixel(126, 64));
+      }
+      assertEquals(ImageView.ScaleType.CENTER_CROP, target.getScaleType());
+      source.recycle();
+    }
+  }
+
+  @Test
   public void duplicateCoversShareOneFetchAndMemoryCacheDoesNotFlash() throws Exception {
     byte[] bytes = image(Color.BLUE);
     AtomicInteger calls = new AtomicInteger();

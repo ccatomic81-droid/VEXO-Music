@@ -15,7 +15,7 @@ final class RoundedArtwork extends ImageView {
   RoundedArtwork(Context context) {
     super(context);
     this.clip = new Path();
-    this.radius = getResources().getDisplayMetrics().density * 11.0f;
+    this.radius = getResources().getDisplayMetrics().density * 5.0f;
     setOutlineProvider(
         new ViewOutlineProvider() {
           @Override // android.view.ViewOutlineProvider
