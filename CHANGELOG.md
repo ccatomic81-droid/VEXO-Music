@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.26.0 — Artist circles and appearance themes (27 October 2026)
+
+- Show circular artist shortcuts above Made for you from song searches; tap to find the artist’s songs.
+- Keep the artist shelf bounded and local, deduplicate names, and clear it with recent searches. Reuse searched song artwork and clip all image/placeholder paths to circles.
+- Add Light, Dark and Follow device options, preserving Dark as the default; coordinate surfaces, widgets, popups, artwork-tinted player and system bars.
+- Reserve the entire player progress thumb at both ends of the song, with a 48 dp touch target.
+- Upgrade resolved Guava Android to 33.7.2 for GHSA-xxph-c9ww-hj94.
+- Publish version code 40 with the original certificate. Preserve Global discovery, animated updates and 500 MB offline saving.
+
+
 ## 0.25.3 — Complete popup buttons and rounded logo tiles (27 October 2026)
 
 - Fix clipped upper button edges by removing vertical child margins and reserving the complete naturally measured native action footer.

@@ -1,0 +1,60 @@
+{
+  "version": "0.26.0",
+  "versionCode": 40,
+  "sourceCommit": "2d217808e564ce8273bb30b1bfa9dabf868f586f",
+  "workflowRun": 40542074204,
+  "apkSha256": "63f078c769aa19b40358ad9edcad92469ed3035e968c59393e6a6c85ed343368",
+  "sameCertificate": true,
+  "nonDebuggable": true,
+  "signedPayloadMatchesUnsignedCandidate": true,
+  "manifestSignatureVerified": true,
+  "androidChecks": {
+    "tests": 248,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 12,
+    "passed": 236
+  },
+  "liveChecks": {
+    "tests": 9,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 9
+  },
+  "publicChecks": [
+    "manifest",
+    "apk checksum",
+    "range",
+    "head",
+    "old public APK",
+    "closed writes"
+  ],
+  "physicalPhoneTested": false,
+  "nativeScreensReviewed": [
+    "home-light",
+    "home-dark",
+    "artist-circles",
+    "settings-light",
+    "popup-light",
+    "player-light-320",
+    "player-dark-320",
+    "seek-dark-320-0"
+  ],
+  "workerPublicationDisabled": true,
+  "workerBindingNames": [
+    "RELEASES"
+  ],
+  "circularArtistArtworkAndPlaceholderClippingChecked": true,
+  "artistHistoryBoundedAndClearedWithSearchHistory": true,
+  "lightDarkAndDeviceAppearanceChecked": true,
+  "themeContrastChecked": true,
+  "seekThumbBothEndpointsChecked": true,
+  "dependencyAudit": {
+    "source": "https://api.osv.dev/v1/querybatch",
+    "resolved_packages": 127,
+    "findings": [],
+    "scope": "Known OSV advisories for resolved Maven versions; not a complete security audit"
+  },
+  "guavaAndroidVersion": "33.7.2-android"
+}

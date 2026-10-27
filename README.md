@@ -1,12 +1,14 @@
-# VEXO Music 0.25.3
+# VEXO Music 0.26.0
 
 Developer: **Kavindu Kavishka**.
 
-Public version **0.25.3** fixes clipped popup action buttons and rounds the VEXO logo tile. Short, long and scrolling dialogs reserve the complete action area, including large text and stacked rows. Existing Global discovery, custom popup design, player features, animated update downloads and 500 MB offline saving remain.
+Public version **0.26.0** adds circular artist shortcuts above Made for you, using artist names and artwork from successful song searches. Tap a circle to search that artist’s songs. The shortcuts stay on your phone and clear with recent searches.
 
-[Download VEXO Music 0.25.3](https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.25.3.apk), use Settings → Check for updates, or open the [GitHub release](https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.25.3). Install as an update without uninstalling. Version code 39 upgrades public 0.25.2/code38 with the original signing identity. See [release notes](release/notes-0.25.3.md) and [verification](release/verification-0.25.3.json).
+Choose **Settings → Appearance → Light, Dark or Follow device** for coordinated colors across the app, player, queue and custom dialogs. Dark remains the default. The player’s progress dot now stays fully round at both ends, with a 48 dp slider touch target.
 
-Select Settings → Music region → Global for worldwide picks. Package metadata exposes the current mark; third-party scanners retaining an older bitmap may need a refresh or rescan. Android permission and installation prompts retain their system appearance.
+[Download VEXO Music 0.26.0](https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.26.0.apk), use Settings → Check for updates, or open the [GitHub release](https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.26.0). Install as an update without uninstalling. Version code 40 upgrades public 0.25.3/code39 with the original signing identity. See [release notes](release/notes-0.26.0.md) and [verification](release/verification-0.26.0.json).
+
+Global discovery, rounded VEXO logos, branded popups, animated update downloads and 500 MB offline saving remain. Third-party scanners may need a refresh to discard their own cached logo. Android owns permission and installation prompts.
 
 Search now shows real song names, artwork and artists while typing, with direct play controls. Home has quick collection tiles, horizontally scrolling music cards, regional picks and VEXO mood mixes. Full playlist pages support Play all, a one-shot shuffled queue, adding songs, renaming and deleting a playlist, and removing individual tracks.
 

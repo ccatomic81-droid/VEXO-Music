@@ -1,0 +1,14 @@
+{
+  "applicationId": "space.vexo.music.radio",
+  "versionCode": 40,
+  "versionName": "0.26.0",
+  "summary": "Your artists: circular shortcuts above Made for you from song searches. Tap an artist to find their songs. Choose Light, Dark or Follow device in Settings → Appearance. Fixed the player progress dot at both ends. Rounded logos, Global discovery, animated updates and 500 MB offline saving remain. Install over your existing app to keep music and settings.",
+  "downloadUrl": "https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.26.0.apk",
+  "sourceUrl": "https://github.com/ccatomic81-droid/VEXO-Music/archive/2d217808e564ce8273bb30b1bfa9dabf868f586f.zip",
+  "sourceCommit": "2d217808e564ce8273bb30b1bfa9dabf868f586f",
+  "size": 9152648,
+  "sha256": "63f078c769aa19b40358ad9edcad92469ed3035e968c59393e6a6c85ed343368",
+  "certificateSha256": "0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3",
+  "signedPayload": "eyJmb3JtYXQiOiJ2ZXhvLXJlbGVhc2UtdjEiLCJhcHBsaWNhdGlvbklkIjoic3BhY2UudmV4by5tdXNpYy5yYWRpbyIsInZlcnNpb25Db2RlIjo0MCwidmVyc2lvbk5hbWUiOiIwLjI2LjAiLCJzdW1tYXJ5IjoiWW91ciBhcnRpc3RzOiBjaXJjdWxhciBzaG9ydGN1dHMgYWJvdmUgTWFkZSBmb3IgeW91IGZyb20gc29uZyBzZWFyY2hlcy4gVGFwIGFuIGFydGlzdCB0byBmaW5kIHRoZWlyIHNvbmdzLiBDaG9vc2UgTGlnaHQsIERhcmsgb3IgRm9sbG93IGRldmljZSBpbiBTZXR0aW5ncyDihpIgQXBwZWFyYW5jZS4gRml4ZWQgdGhlIHBsYXllciBwcm9ncmVzcyBkb3QgYXQgYm90aCBlbmRzLiBSb3VuZGVkIGxvZ29zLCBHbG9iYWwgZGlzY292ZXJ5LCBhbmltYXRlZCB1cGRhdGVzIGFuZCA1MDAgTUIgb2ZmbGluZSBzYXZpbmcgcmVtYWluLiBJbnN0YWxsIG92ZXIgeW91ciBleGlzdGluZyBhcHAgdG8ga2VlcCBtdXNpYyBhbmQgc2V0dGluZ3MuIiwiZG93bmxvYWRVcmwiOiJodHRwczovL3ZleG8tbXVzaWMtdXBkYXRlcy5rYXZpbmR1a2F2aXNoa2E3ODUud29ya2Vycy5kZXYvcmVsZWFzZXMvVkVYTy1NdXNpYy0wLjI2LjAuYXBrIiwic2l6ZSI6OTE1MjY0OCwic2hhMjU2IjoiNjNmMDc4Yzc2OWFhMTliNDAzNThhZDllZGNhZDkyNDY5ZWQzMDM1ZTk2OGM1OTM5M2U2YTZjODVlZDM0MzM2OCIsImNlcnRpZmljYXRlU2hhMjU2IjoiMGIzMWM1MDkwNDU2NzM4OWI3MjNlMjNhZDYwNDNiMmQyZmM2NjM1YzMwZGZkYjNlZDVlZjNmOWJhOTcyN2VmMyIsInNvdXJjZUNvbW1pdCI6IjJkMjE3ODA4ZTU2NGNlODI3M2JiMzBiMWJmYTlkYWJmODY4ZjU4NmYifQ==",
+  "releaseSignature": "cIFliCL0eqolz5Ly7+nAlfqju0bKo5SJf7FsFARFhA9FaaCArO8bZneH2MUlrET8HbXlawIqrTa8bopqFjLPVKKst0V4PMFsmyFXifr9G91LpnhKPo+fES+/r5kbxqP3Frv0QXSFUSHD4Adj3/aZvJ9TXQHML2g00w5WwP5a45h6NTXyOSIFAcvd1/wUxCYXS7Tbc65ukq0KwxTtK6nOejN0bxJQbK5EXJpXNvN22lludvF1m/YyGvmdjM8sbZj1/506PHL5Ffj6R44gAsKEFd/0OrCzOJEqS1A7pOikubtLk9CsYaiYTOmdFHz23OnvEyfANNGoi2V765gLwmewZg=="
+}

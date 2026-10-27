@@ -1,6 +1,6 @@
 # App updates and releases
 
-Current public release: **0.25.3 / code 39**. It updates public 0.25.2/code38 in place, preserving data and the original signing identity. The manifest is signed. Use Settings → Check for updates; Android still requires approval to install. See `release/public-0.25.3.json` and `release/verification-0.25.3.json`.
+Current public release: **0.26.0 / code 40**. It updates public 0.25.3/code39 in place, preserving data and the original signing identity. Artist circles, complete appearance themes and the progress-dot fix are included. The manifest is signed. Use Settings → Check for updates; Android still requires approval to install. See `release/public-0.26.0.json` and `release/verification-0.26.0.json`.
 
 In 0.25.1, Get update opens an animated foreground download panel showing real percentage and MB transferred. Verification is a separate phase. Cancel stops the HTTP transfer and removes its partial file; Retry starts a new attempt after a connection or verification failure. A cached, already verified APK can be reused. Cancel remains visible while large-text content scrolls. Destroying the activity cancels its transfer. Older installed apps retain their existing update UI until this version is installed.
 
@@ -36,6 +36,6 @@ GitHub Actions creates a test APK with the runner’s debug key. It cannot updat
 
 ## Search privacy
 
-Typing at least two characters fetches suggestions and playable song metadata from YouTube through NewPipe Extractor. Home fetches its first three mixes. The selected country is supplied. At most 20 recent terms are stored privately on the device, with clear/remove controls. Local phone-music searches do not request remote suggestions. No analytics backend is used.
+Typing at least two characters fetches suggestions and playable song metadata from YouTube through NewPipe Extractor. Home fetches its first three mixes. The selected country is supplied. At most 20 recent terms and 12 artist shortcuts are stored privately on the device. Successful online song searches record up to 3 distinct artists from the first 6 music results; selecting a search song prioritizes its artist. Artist circles reuse song artwork and open a new artist song search, without additional metadata requests. Remove a recent term to remove its associated artist shortcuts, or use Clear recent searches to clear both. A cleared in-flight search cannot restore its artist shortcuts. Local phone-music searches do not request remote suggestions. No analytics backend is used.
 
 Primary suggestion API reference: https://teamnewpipe.github.io/NewPipeExtractor/javadoc/org/schabi/newpipe/extractor/suggestion/SuggestionExtractor.html
