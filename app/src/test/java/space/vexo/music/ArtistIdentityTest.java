@@ -231,7 +231,8 @@ public class ArtistIdentityTest {
             .put(run("Kevin Smokio", KEVIN))
             .put(new JSONObject().put("text", ", "))
             .put(run("Earth, Wind & Fire", ADHEESHA))
-            .put(new JSONObject().put("text", " • 3:45"));
+            .put(new JSONObject().put("text", " • "))
+            .put(new JSONObject().put("text", "3:45"));
     row.getJSONArray("flexColumns").put(1, helper.column(new JSONObject().put("runs", runs)));
     Track track = MusicSearch.parse(helper.wrap(row), "song", "GLOBAL").tracks.get(0);
     assertEquals(2, track.artists.size());
