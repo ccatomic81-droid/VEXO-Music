@@ -11,7 +11,34 @@ import org.robolectric.annotation.Config;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 35)
 public class MusicDiscoveryLiveTest {
-  @Test public void globalFeedReturnsActualMusicWithoutACountryCode() throws Exception {
+  @Test
+  @org.robolectric.annotation.GraphicsMode(org.robolectric.annotation.GraphicsMode.Mode.NATIVE)
+  public void artistPortraitsMatchKevinSmokioAndBillieEilishAndDecodeRealPhotos() throws Exception {
+    Assume.assumeTrue("1".equals(System.getenv("VEXO_MUSIC_LIVE_TEST")));
+    okhttp3.OkHttpClient client =
+        new okhttp3.OkHttpClient.Builder()
+            .callTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
+            .build();
+    for (String name : Arrays.asList("Kevin Smokio", "Billie Eilish")) {
+      SearchArtists.Artist wanted = new SearchArtists.Artist(name, "", "fixture");
+      List<SearchArtists.Artist> results = ArtistCatalogue.resolve(wanted, RegionPolicy.GLOBAL);
+      assertEquals(1, results.size());
+      SearchArtists.Artist actual = results.get(0);
+      assertFalse("Expected canonical artist id for " + name, actual.id.isEmpty());
+      assertFalse("Expected artist portrait for " + name, actual.artwork.isEmpty());
+      try (okhttp3.Response response =
+          client.newCall(new okhttp3.Request.Builder().url(actual.artwork).build()).execute()) {
+        assertTrue(response.isSuccessful());
+        android.graphics.Bitmap image = ArtworkQuality.decode(response.body().byteStream());
+        assertNotNull("Expected real artist photo bytes for " + name, image);
+        image.recycle();
+      }
+      System.out.println("Verified artist portrait: " + name + " " + actual.id);
+    }
+  }
+
+  @Test
+  public void globalFeedReturnsActualMusicWithoutACountryCode() throws Exception {
     Assume.assumeTrue("1".equals(System.getenv("VEXO_MUSIC_LIVE_TEST")));
     RegionalFeed feed = RegionalFeed.fetch(RegionPolicy.GLOBAL);
     assertEquals(RegionPolicy.GLOBAL, feed.country);
@@ -24,19 +51,49 @@ public class MusicDiscoveryLiveTest {
   @Test
   public void trendingAndPersonalizedMixesReturnActualSongsWithoutAccountLogin() throws Exception {
     Assume.assumeTrue("1".equals(System.getenv("VEXO_MUSIC_LIVE_TEST")));
-    Track seed = OnlineMusic.preview("Ed Sheeran Perfect", "LK").stream().filter(RadioPolicy::music).findFirst().orElseThrow();
-    MusicInterests interests = MusicInterests.of(Arrays.asList(seed), Collections.emptyList(), Collections.emptyList(),
-        YouTubeTaste.Snapshot.empty(), new org.json.JSONObject().put("language", "English"), new org.json.JSONObject(), Collections.emptySet());
-    PersonalDiscovery.Source source = new PersonalDiscovery.Source() {
-      public List<Track> related(Track t) throws Exception { return OnlineMusic.relatedPreview(t); }
-      public List<Track> search(String q) throws Exception { return OnlineMusic.preview(q, "LK"); }
-      public List<Track> trending(String q) throws Exception { return TrendingMusic.load(q, "LK"); }
-    };
-    for (String id : new String[]{"daily", "calm", "trending", "discover"}) {
-      List<Track> songs = MixDiscovery.load(MixCatalogue.find(id, "LK"), interests, source, "LK", System.currentTimeMillis(), Collections.emptySet());
+    Track seed =
+        OnlineMusic.preview("Ed Sheeran Perfect", "LK").stream()
+            .filter(RadioPolicy::music)
+            .findFirst()
+            .orElseThrow();
+    MusicInterests interests =
+        MusicInterests.of(
+            Arrays.asList(seed),
+            Collections.emptyList(),
+            Collections.emptyList(),
+            YouTubeTaste.Snapshot.empty(),
+            new org.json.JSONObject().put("language", "English"),
+            new org.json.JSONObject(),
+            Collections.emptySet());
+    PersonalDiscovery.Source source =
+        new PersonalDiscovery.Source() {
+          public List<Track> related(Track t) throws Exception {
+            return OnlineMusic.relatedPreview(t);
+          }
+
+          public List<Track> search(String q) throws Exception {
+            return OnlineMusic.preview(q, "LK");
+          }
+
+          public List<Track> trending(String q) throws Exception {
+            return TrendingMusic.load(q, "LK");
+          }
+        };
+    for (String id : new String[] {"daily", "calm", "trending", "discover"}) {
+      List<Track> songs =
+          MixDiscovery.load(
+              MixCatalogue.find(id, "LK"),
+              interests,
+              source,
+              "LK",
+              System.currentTimeMillis(),
+              Collections.emptySet());
       assertTrue("Expected playable mix: " + id, songs.size() >= 2);
       assertTrue(songs.stream().allMatch(RadioPolicy::music));
-      if (id.equals("discover")) assertTrue(songs.stream().noneMatch(t -> RadioPolicy.songKey(t).equals(RadioPolicy.songKey(seed))));
+      if (id.equals("discover"))
+        assertTrue(
+            songs.stream()
+                .noneMatch(t -> RadioPolicy.songKey(t).equals(RadioPolicy.songKey(seed))));
       System.out.println("Live " + id + ": " + songs.size() + " real tracks");
     }
   }
@@ -44,22 +101,50 @@ public class MusicDiscoveryLiveTest {
   @Test
   public void selectedSongRadioProducesDistinctRelatedQueueWithoutSearchResults() throws Exception {
     Assume.assumeTrue("1".equals(System.getenv("VEXO_MUSIC_LIVE_TEST")));
-    Track seed = OnlineMusic.preview("Ed Sheeran Perfect", "LK").stream()
-        .filter(RadioPolicy::music).findFirst().orElseThrow();
+    Track seed =
+        OnlineMusic.preview("Ed Sheeran Perfect", "LK").stream()
+            .filter(RadioPolicy::music)
+            .findFirst()
+            .orElseThrow();
     List<Track> related = OnlineMusic.relatedPreview(seed);
     assertTrue("Expected an actual song radio", related.size() >= 10);
-    List<Track> candidates = new RadioCatalogue(new RadioCatalogue.Source() {
-      public List<Track> related(Track track) { return related; }
-      public List<Track> search(String query) { throw new AssertionError("Radio must use the song endpoint"); }
-    }).load(seed, seed);
-    List<Track> selected = RadioPolicy.select(seed, seed, candidates, Arrays.asList(seed),
-        Collections.emptyList(), Collections.emptyList(), Collections.emptySet(), RadioPolicy.Mode.BALANCED, 10);
+    List<Track> candidates =
+        new RadioCatalogue(
+                new RadioCatalogue.Source() {
+                  public List<Track> related(Track track) {
+                    return related;
+                  }
+
+                  public List<Track> search(String query) {
+                    throw new AssertionError("Radio must use the song endpoint");
+                  }
+                })
+            .load(seed, seed);
+    List<Track> selected =
+        RadioPolicy.select(
+            seed,
+            seed,
+            candidates,
+            Arrays.asList(seed),
+            Collections.emptyList(),
+            Collections.emptyList(),
+            Collections.emptySet(),
+            RadioPolicy.Mode.BALANCED,
+            10);
     assertEquals(10, selected.size());
-    assertTrue(selected.stream().noneMatch(song -> QueuePolicy.identity(song.url).equals(QueuePolicy.identity(seed.url))));
+    assertTrue(
+        selected.stream()
+            .noneMatch(
+                song -> QueuePolicy.identity(song.url).equals(QueuePolicy.identity(seed.url))));
     Set<String> artists = new HashSet<>();
     for (Track song : selected) artists.add(RadioPolicy.artist(song));
     assertTrue("Radio should include related artists", artists.size() > 1);
-    System.out.println("Selected-song radio: " + selected.size() + " tracks across " + artists.size() + " artists");
+    System.out.println(
+        "Selected-song radio: "
+            + selected.size()
+            + " tracks across "
+            + artists.size()
+            + " artists");
   }
 
   @Test
@@ -68,13 +153,17 @@ public class MusicDiscoveryLiveTest {
     Assume.assumeTrue("1".equals(System.getenv("VEXO_MUSIC_LIVE_TEST")));
     List<Track> songs = OnlineMusic.preview("Ed Sheeran", "LK");
     assertFalse(songs.isEmpty());
-    okhttp3.OkHttpClient client = new okhttp3.OkHttpClient.Builder()
-        .callTimeout(15, java.util.concurrent.TimeUnit.SECONDS).build();
+    okhttp3.OkHttpClient client =
+        new okhttp3.OkHttpClient.Builder()
+            .callTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
+            .build();
     int decoded = 0;
     for (Track track : songs.subList(0, Math.min(3, songs.size()))) {
       for (String url : ArtworkQuality.candidates(track.artwork, track.url, 512)) {
-        try (okhttp3.Response response = client.newCall(new okhttp3.Request.Builder().url(url).build()).execute()) {
-          if (!response.isSuccessful() || response.body() == null
+        try (okhttp3.Response response =
+            client.newCall(new okhttp3.Request.Builder().url(url).build()).execute()) {
+          if (!response.isSuccessful()
+              || response.body() == null
               || !response.header("Content-Type", "").startsWith("image/")) continue;
           android.graphics.Bitmap image = ArtworkQuality.decode(response.body().byteStream());
           if (image != null && image.getWidth() > 0 && image.getHeight() > 0) {
@@ -82,7 +171,9 @@ public class MusicDiscoveryLiveTest {
             image.recycle();
             break;
           }
-        } catch (java.io.IOException unavailable) { /* Try the bounded public fallback. */ }
+        } catch (java.io.IOException unavailable) {
+          /* Try the bounded public fallback. */
+        }
       }
     }
     assertTrue("Expected real cover bytes, not just artwork URLs", decoded >= 2);

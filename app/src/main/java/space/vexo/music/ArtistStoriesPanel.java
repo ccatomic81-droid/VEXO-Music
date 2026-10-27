@@ -11,7 +11,7 @@ import android.widget.*;
 import java.util.List;
 import java.util.function.Consumer;
 
-/** Story-sized artist shortcuts. Artwork comes from the artist's searched songs. */
+/** Story-sized shortcuts with verified artist portraits or readable initials. */
 final class ArtistStoriesPanel extends LinearLayout {
   ArtistStoriesPanel(
       Context c, List<SearchArtists.Artist> artists, Consumer<String> open, Runnable search) {
@@ -25,7 +25,9 @@ final class ArtistStoriesPanel extends LinearLayout {
     TextView detail =
         text(
             artists.isEmpty()
-                ? "Search a song to start your artist circle."
+                ? (new SearchArtists(c).entries().isEmpty()
+                    ? "Search a song to start your artist circle."
+                    : "Finding your artists…")
                 : "From your song searches",
             12,
             MUTED);
@@ -66,17 +68,18 @@ final class ArtistStoriesPanel extends LinearLayout {
       image.setClipToOutline(true);
       image.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
       inner.addView(image, new FrameLayout.LayoutParams(-1, -1));
-      artwork(image, artist.artwork);
+      ArtworkLoader.load(image, artist.artwork, new Initials(artist.name));
       ring.addView(inner, new FrameLayout.LayoutParams(-1, -1));
       card.addView(ring, new LayoutParams(dp(76), dp(76)));
       TextView name = text(artist.name, 12, TEXT);
       name.setGravity(Gravity.CENTER);
       name.setMaxLines(2);
+      card.setTooltipText(artist.name);
       name.setEllipsize(TextUtils.TruncateAt.END);
       name.setPadding(dp(2), dp(9), dp(2), dp(6));
       card.addView(name, new LayoutParams(-1, -2));
       card.setOnClickListener(v -> open.accept(artist.name));
-      LayoutParams params = new LayoutParams(dp(88), -2);
+      LayoutParams params = new LayoutParams(dp(96), -2);
       params.rightMargin = dp(10);
       row.addView(card, params);
     }
@@ -101,6 +104,56 @@ final class ArtistStoriesPanel extends LinearLayout {
 
   private int dp(int value) {
     return Math.round(value * getResources().getDisplayMetrics().density);
+  }
+
+  private static final class Initials extends android.graphics.drawable.Drawable {
+    private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final String letters;
+
+    Initials(String name) {
+      String[] words = name.trim().split("\\s+");
+      String first =
+          words.length == 0 || words[0].isEmpty()
+              ? "?"
+              : new String(Character.toChars(words[0].codePointAt(0)));
+      String last =
+          words.length < 2
+              ? ""
+              : new String(Character.toChars(words[words.length - 1].codePointAt(0)));
+      letters = (first + last).toUpperCase(java.util.Locale.ROOT);
+    }
+
+    @Override
+    public void draw(Canvas canvas) {
+      Rect b = getBounds();
+      paint.setColor(SELECTED);
+      canvas.drawOval(b.left, b.top, b.right, b.bottom, paint);
+      paint.setColor(TEXT);
+      paint.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+      paint.setTextAlign(Paint.Align.CENTER);
+      paint.setTextSize(Math.min(b.width(), b.height()) * .32f);
+      Paint.FontMetrics metrics = paint.getFontMetrics();
+      canvas.drawText(
+          letters,
+          b.exactCenterX(),
+          b.exactCenterY() - (metrics.ascent + metrics.descent) / 2,
+          paint);
+    }
+
+    @Override
+    public void setAlpha(int value) {
+      paint.setAlpha(value);
+    }
+
+    @Override
+    public void setColorFilter(ColorFilter filter) {
+      paint.setColorFilter(filter);
+    }
+
+    @Override
+    public int getOpacity() {
+      return PixelFormat.TRANSLUCENT;
+    }
   }
 
   /** Explicit clipping also works for software drawing and placeholder/error artwork. */

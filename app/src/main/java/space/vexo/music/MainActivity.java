@@ -117,6 +117,7 @@ public final class MainActivity extends ComponentActivity {
       };
   private EditText searchField;
   private SearchHistory searchHistory;
+  private ArtistPortraits artistPortraits;
   private SearchSuggestions suggestions;
   private MusicPreview musicPreview;
   private MixCatalogue mixCatalogue;
@@ -240,6 +241,9 @@ public final class MainActivity extends ComponentActivity {
     youtube = new YouTubeConnection(this, state, this::youtubeChanged, this::play);
     store = new LibraryStore(this);
     searchHistory = new SearchHistory(this);
+    artistPortraits =
+        new ArtistPortraits(
+            this, main, Executors.newSingleThreadExecutor(), ArtistCatalogue::resolve);
     suggestions =
         new SearchSuggestions(main, Executors.newSingleThreadExecutor(), SearchSuggestions.ONLINE);
     musicPreview =
@@ -467,6 +471,7 @@ public final class MainActivity extends ComponentActivity {
   protected void onDestroy() {
     invalidatePersonal();
     if (youtube != null) youtube.close();
+    if (artistPortraits != null) artistPortraits.close();
     if (googleCancellation != null) googleCancellation.cancel();
     if (notificationPrompt != null) notificationPrompt.close();
     destroyed = true;
@@ -1077,6 +1082,12 @@ public final class MainActivity extends ComponentActivity {
       // A disconnected or unavailable optional source must never block Home.
     }
     content.addView(panel, new LinearLayout.LayoutParams(-1, 0, 1));
+    artistPortraits.refresh(
+        RegionPolicy.current(this),
+        () -> {
+          invalidateTab("Home");
+          if (tab.equals("Home") && homePanel != null) homePanel.artists();
+        });
     main.postDelayed(this::prefetchHomeMixes, 600);
   }
 
@@ -1317,9 +1328,9 @@ public final class MainActivity extends ComponentActivity {
                       unavailable
                           ? (mix.id.equals("discover")
                               ? "No unseen songs found yet. Try different interests or refresh"
-                                    + " later."
+                                  + " later."
                               : "Couldn’t find fresh songs. Saved picks stay available; try"
-                                    + " Refresh.")
+                                  + " Refresh.")
                           : "";
                   render();
                 }
@@ -2919,6 +2930,7 @@ public final class MainActivity extends ComponentActivity {
 
   private void refreshApp() {
     invalidatePersonal();
+    if (artistPortraits != null) artistPortraits.retry();
     if (destroyed) return;
     discoveryEpoch++;
     DiscoveryRevision.changed(this);

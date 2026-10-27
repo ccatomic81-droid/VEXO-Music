@@ -232,11 +232,34 @@ public final class OnlineMusic {
             .fromQuery(text, Collections.singletonList("music_songs"), "");
     org.schabi.newpipe.extractor.search.SearchExtractor extractor =
         ServiceList.YouTube.getSearchExtractor(q);
-    if (!RegionPolicy.global(country)) extractor.forceContentCountry(
-        new org.schabi.newpipe.extractor.localization.ContentCountry(RegionPolicy.providerCountry(country)));
+    if (!RegionPolicy.global(country))
+      extractor.forceContentCountry(
+          new org.schabi.newpipe.extractor.localization.ContentCountry(
+              RegionPolicy.providerCountry(country)));
     extractor.fetchPage();
     ListExtractor.InfoItemsPage<InfoItem> page = extractor.getInitialPage();
     return new Results(convert(page.getItems()), page.getNextPage(), q);
+  }
+
+  static List<SearchArtists.Artist> artistPortraits(SearchArtists.Artist artist, String country)
+      throws Exception {
+    initialize();
+    PREVIEW.set(true);
+    try {
+      SearchQueryHandler query =
+          ServiceList.YouTube.getSearchQHFactory()
+              .fromQuery(artist.name, Collections.singletonList("music_artists"), "");
+      org.schabi.newpipe.extractor.search.SearchExtractor extractor =
+          ServiceList.YouTube.getSearchExtractor(query);
+      if (!RegionPolicy.global(country))
+        extractor.forceContentCountry(
+            new org.schabi.newpipe.extractor.localization.ContentCountry(
+                RegionPolicy.providerCountry(country)));
+      extractor.fetchPage();
+      return ArtistCatalogue.matches(artist, extractor.getInitialPage().getItems());
+    } finally {
+      PREVIEW.remove();
+    }
   }
 
   public static List<Track> preview(String text, String country) throws Exception {
