@@ -31,7 +31,7 @@
         <item name="android:textSize">12sp</item>
         <item name="android:fontFamily">sans-serif-medium</item>
         <item name="android:minHeight">48dp</item>
-        <item name="android:minWidth">0dp</item>
+        <item name="android:minWidth">72dp</item>
         <item name="android:paddingLeft">14dp</item>
         <item name="android:paddingRight">14dp</item>
     </style>
