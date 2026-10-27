@@ -44,7 +44,9 @@ final class MusicHomePanel extends MusicSurface {
 
     void play(List<Track> list, int i);
 
-    default void mixPlay(MixCatalogue.Mix mix, List<Track> songs, int index) { play(songs, index); }
+    default void mixPlay(MixCatalogue.Mix mix, List<Track> songs, int index) {
+      play(songs, index);
+    }
 
     void profile();
 
@@ -262,8 +264,13 @@ final class MusicHomePanel extends MusicSurface {
               });
       textViewAction2.setTextSize(13);
       textViewAction2.setMinHeight(dp(48));
-      textViewAction2.setBackground(new android.graphics.drawable.InsetDrawable(
-          Visuals.round(str6.equals(str3) ? Visuals.LIME : 0xff292929, dp(18)), 0, dp(6), 0, dp(6)));
+      textViewAction2.setBackground(
+          new android.graphics.drawable.InsetDrawable(
+              Visuals.round(str6.equals(str3) ? Visuals.LIME : 0xff292929, dp(18)),
+              0,
+              dp(6),
+              0,
+              dp(6)));
       // InsetDrawable supplies its own padding when installed; set label padding afterwards.
       textViewAction2.setPadding(dp(16), dp(6), dp(16), dp(6));
       LinearLayout.LayoutParams layoutParams3 = new LinearLayout.LayoutParams(-2, -2);
@@ -367,7 +374,6 @@ final class MusicHomePanel extends MusicSurface {
           mix2.id,
           (LinearLayout) linearLayoutShelf2.getChildAt(linearLayoutShelf2.getChildCount() - 1));
       mixCatalogue2 = mixCatalogue;
-
     }
     gap(this.body, 26);
     capture(linkedHashMap, "Mood mixes", childCount2);
@@ -473,16 +479,26 @@ final class MusicHomePanel extends MusicSurface {
       trendingShelf = trendingCards;
       List<Track> trendSongs = mixCatalogue.cached(trending, str);
       if (trendSongs.isEmpty()) {
-        card(trendingCards, trending.name, trending.detail, trendSongs, trending.color, () -> listener.mix(trending));
+        card(
+            trendingCards,
+            trending.name,
+            trending.detail,
+            trendSongs,
+            trending.color,
+            () -> listener.mix(trending));
         mixCards.put(trending.id, (LinearLayout) trendingCards.getChildAt(0));
       } else {
         for (int trend = 0; trend < Math.min(6, trendSongs.size()); trend++) {
           final int at = trend;
-          songCard(trendingCards, trendSongs.get(at), () -> listener.mixPlay(trending, trendSongs, at));
+          songCard(
+              trendingCards, trendSongs.get(at), () -> listener.mixPlay(trending, trendSongs, at));
         }
       }
       gap(body, 26);
-      String str9 = (z4 && regionalFeed.ranked) ? "Trending near you" : "Regional viral picks";
+      String str9 =
+          (z4 && regionalFeed.ranked)
+              ? "Trending near you"
+              : RegionPolicy.global(str) ? "Global viral picks" : "Regional viral picks";
       String str10 = z ? "Updating…" : "Refresh";
       Objects.requireNonNull(listener);
       section(
@@ -515,13 +531,22 @@ final class MusicHomePanel extends MusicSurface {
       } else {
         this.body.addView(
             text(
-                z ? "Finding music near you…" : "Find fresh music from your region",
+                z
+                    ? RegionPolicy.global(str)
+                        ? "Finding music worldwide…"
+                        : "Finding music near you…"
+                    : RegionPolicy.global(str)
+                        ? "Find fresh music from around the world"
+                        : "Find fresh music from your region",
                 15,
                 Visuals.TEXT,
                 true));
         gap(this.body, 8);
         LinearLayout linearLayout2 = this.body;
-        String str11 = z ? "Loading songs…" : "Load regional songs";
+        String str11 =
+            z
+                ? "Loading songs…"
+                : RegionPolicy.global(str) ? "Load global songs" : "Load regional songs";
         Objects.requireNonNull(listener);
         z3 = false;
         linearLayout2.addView(
@@ -639,7 +664,13 @@ final class MusicHomePanel extends MusicSurface {
     part.section("Your daily soundtrack", null, null);
     LinearLayout dailyCards = part.shelf();
     for (MixCatalogue.Mix mix : MixCatalogue.discovery()) {
-      part.card(dailyCards, mix.name, mix.detail, catalogue.cached(mix, country), mix.color, () -> listener.mix(mix));
+      part.card(
+          dailyCards,
+          mix.name,
+          mix.detail,
+          catalogue.cached(mix, country),
+          mix.color,
+          () -> listener.mix(mix));
       mixCards.put(mix.id, (LinearLayout) dailyCards.getChildAt(dailyCards.getChildCount() - 1));
     }
     part.gap(part.body, 20);

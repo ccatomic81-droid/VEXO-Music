@@ -25,31 +25,52 @@ public final class RegionalFeed {
 
   public static RegionalFeed fetch(String country) throws Exception {
     OnlineMusic.initialize();
-    try {
-      KioskExtractor<?> charts =
-          ServiceList.YouTube.getKioskList().getExtractorById("trending_music", null);
-      charts.forceContentCountry(new ContentCountry(country));
-      charts.fetchPage();
-      List<Track> songs = OnlineMusic.convert(charts.getInitialPage().getItems());
-      if (!songs.isEmpty())
-        return new RegionalFeed(
-            country, "YouTube trending music chart", true, System.currentTimeMillis(), songs);
-    } catch (Exception chartUnavailable) {
-      /* Some countries, including LK, have no YouTube chart. */
+    if (RegionPolicy.global(country)) {
+      List<Track> songs =
+          MixCatalogue.songs(
+              OnlineMusic.preview(
+                  "worldwide global viral songs international hits", RegionPolicy.GLOBAL));
+      if (songs.isEmpty()) throw new java.io.IOException("No worldwide music results");
+      return new RegionalFeed(
+          RegionPolicy.GLOBAL,
+          "YouTube Music · worldwide song picks · not a ranked chart",
+          false,
+          System.currentTimeMillis(),
+          songs);
     }
-    String query = RegionPolicy.name(country) + " viral songs";
+    if (!RegionPolicy.global(country))
+      try {
+        KioskExtractor<?> charts =
+            ServiceList.YouTube.getKioskList().getExtractorById("trending_music", null);
+        if (!RegionPolicy.global(country))
+          charts.forceContentCountry(new ContentCountry(RegionPolicy.providerCountry(country)));
+        charts.fetchPage();
+        List<Track> songs = OnlineMusic.convert(charts.getInitialPage().getItems());
+        if (!songs.isEmpty())
+          return new RegionalFeed(
+              country, "YouTube trending music chart", true, System.currentTimeMillis(), songs);
+      } catch (Exception chartUnavailable) {
+        /* Some countries, including LK, have no YouTube chart. */
+      }
+    String query =
+        RegionPolicy.global(country)
+            ? "worldwide global viral songs international hits"
+            : RegionPolicy.name(country) + " viral songs";
     if (country.equals("LK")) query = "Sinhala Tamil Sri Lanka viral songs";
     SearchExtractor search =
         ServiceList.YouTube.getSearchExtractor(
             ServiceList.YouTube.getSearchQHFactory()
                 .fromQuery(query, Collections.singletonList("music_songs"), ""));
-    search.forceContentCountry(new ContentCountry(country));
+    if (!RegionPolicy.global(country))
+      search.forceContentCountry(new ContentCountry(RegionPolicy.providerCountry(country)));
     search.fetchPage();
     List<Track> songs = OnlineMusic.convert(search.getInitialPage().getItems());
     if (songs.isEmpty()) throw new java.io.IOException("No regional music results");
     return new RegionalFeed(
         country,
-        "YouTube Music · regional song picks · not a ranked chart",
+        RegionPolicy.global(country)
+            ? "YouTube Music · worldwide song picks · not a ranked chart"
+            : "YouTube Music · regional song picks · not a ranked chart",
         false,
         System.currentTimeMillis(),
         songs);

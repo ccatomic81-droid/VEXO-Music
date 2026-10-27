@@ -541,7 +541,7 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private void message(String s) {
-    if (!destroyed) Toast.makeText(this, s, Toast.LENGTH_LONG).show();
+    if (!destroyed) VexoNotice.show(this, s);
   }
 
   private void buildNav() {
@@ -1158,7 +1158,7 @@ public final class MainActivity extends ComponentActivity {
                         interests,
                         new PersonalDiscovery.Source() {
                           public List<Track> related(Track song) throws Exception {
-                            return OnlineMusic.relatedPreview(song);
+                            return OnlineMusic.relatedPreview(song, RegionPolicy.current(MainActivity.this));
                           }
 
                           public List<Track> search(String query) throws Exception {
@@ -1233,7 +1233,7 @@ public final class MainActivity extends ComponentActivity {
       try {
         MusicInterests interests = MusicInterests.read(this);
         songs = MixDiscovery.load(mix, interests, new PersonalDiscovery.Source() {
-          public List<Track> related(Track track) throws Exception { return OnlineMusic.relatedPreview(track); }
+          public List<Track> related(Track track) throws Exception { return OnlineMusic.relatedPreview(track, RegionPolicy.current(MainActivity.this)); }
           public List<Track> trending(String query) throws Exception { return TrendingMusic.load(query, country); }
           public List<Track> search(String query) throws Exception { return OnlineMusic.preview(query, country); }
         }, country, System.currentTimeMillis(), Collections.emptySet());
@@ -1283,18 +1283,19 @@ public final class MainActivity extends ComponentActivity {
       codes.remove(first);
       codes.add(0, first);
     }
-    String[] names = new String[codes.size() + 1];
+    String[] names = new String[codes.size() + 2];
     names[0] = "Automatic · network / phone locale";
+    names[1] = "Global · music from around the world";
     for (int i = 0; i < codes.size(); i++)
-      names[i + 1] = RegionPolicy.name(codes.get(i)) + " (" + codes.get(i) + ")";
-    new AlertDialog.Builder(this)
+      names[i + 2] = RegionPolicy.name(codes.get(i)) + " (" + codes.get(i) + ")";
+    new VexoDialogs.Builder(this)
         .setTitle("Music region")
         .setItems(
             names,
             (d, w) -> {
               getSharedPreferences("settings", 0)
                   .edit()
-                  .putString("region", w == 0 ? "" : codes.get(w - 1))
+                  .putString("region", w == 0 ? "" : w == 1 ? RegionPolicy.GLOBAL : codes.get(w - 2))
                   .apply();
               discoveryEpoch++;
               mixIo.getQueue().clear();
@@ -1339,7 +1340,7 @@ public final class MainActivity extends ComponentActivity {
     String[] values = {"Any", "Sinhala", "Tamil", "English"};
     String[] labels = {"All languages", "Sinhala", "Tamil", "English"};
     int selected = Arrays.asList(values).indexOf(searchLanguage);
-    new AlertDialog.Builder(this)
+    new VexoDialogs.Builder(this)
         .setTitle("Search language")
         .setSingleChoiceItems(
             labels,
@@ -1416,7 +1417,7 @@ public final class MainActivity extends ComponentActivity {
 
               public void allRecent() {
                 List<String> terms = searchHistory.entries();
-                new AlertDialog.Builder(MainActivity.this)
+                new VexoDialogs.Builder(MainActivity.this)
                     .setTitle("Recent searches")
                     .setItems(
                         terms.toArray(new String[0]), (dialog, which) -> recent(terms.get(which)))
@@ -2091,14 +2092,14 @@ public final class MainActivity extends ComponentActivity {
                 "more",
                 MUTED,
                 () ->
-                    new AlertDialog.Builder(this)
+                    new VexoDialogs.Builder(this)
                         .setTitle(name)
                         .setItems(
                             new String[] {"Open playlist", "Delete playlist"},
                             (d, w) -> {
                               if (w == 0) showCollection(name, "playlist:" + name);
                               else
-                                new AlertDialog.Builder(this)
+                                new VexoDialogs.Builder(this)
                                     .setTitle("Delete playlist?")
                                     .setMessage(
                                         "Only this playlist will be removed. Your music files stay"
@@ -2436,7 +2437,7 @@ public final class MainActivity extends ComponentActivity {
     }
     if (collection != null) options.add("Remove from this collection");
     if (OfflineLibrary.get(this).complete(track.url)) options.add("Remove offline audio");
-    new AlertDialog.Builder(this)
+    new VexoDialogs.Builder(this)
         .setTitle(track.title)
         .setItems(
             options.toArray(new String[0]),
@@ -2524,7 +2525,7 @@ public final class MainActivity extends ComponentActivity {
     List<String> names = store.playlists();
     List<String> all = new ArrayList<>(names);
     all.add("+ New playlist");
-    new AlertDialog.Builder(this)
+    new VexoDialogs.Builder(this)
         .setTitle("Add to playlist")
         .setItems(
             all.toArray(new String[0]),
@@ -2549,7 +2550,7 @@ public final class MainActivity extends ComponentActivity {
     input.setSingleLine();
     input.setPadding(dp(24), dp(16), dp(24), dp(16));
     AlertDialog dialog =
-        new AlertDialog.Builder(this)
+        new VexoDialogs.Builder(this)
             .setTitle("Create playlist")
             .setView(input)
             .setNegativeButton("Cancel", null)
@@ -2716,7 +2717,7 @@ public final class MainActivity extends ComponentActivity {
   private void editPlaylist() {
     if (!activeCollection.startsWith("playlist:")) return;
     String name = collectionTitle;
-    new AlertDialog.Builder(this)
+    new VexoDialogs.Builder(this)
         .setTitle(name)
         .setItems(
             new String[] {
@@ -2731,7 +2732,7 @@ public final class MainActivity extends ComponentActivity {
               else if (which == 1) {
                 List<Track> songs = store.tracks("playlist:" + name);
                 String[] labels = songs.stream().map(t -> t.title).toArray(String[]::new);
-                new AlertDialog.Builder(this)
+                new VexoDialogs.Builder(this)
                     .setTitle("Remove a song")
                     .setItems(
                         labels,
@@ -2749,7 +2750,7 @@ public final class MainActivity extends ComponentActivity {
                     .setNegativeButton("Close", null)
                     .show();
               } else
-                new AlertDialog.Builder(this)
+                new VexoDialogs.Builder(this)
                     .setTitle("Delete playlist?")
                     .setMessage("Your music files stay on this phone.")
                     .setNegativeButton("Cancel", null)
@@ -2774,7 +2775,7 @@ public final class MainActivity extends ComponentActivity {
     input.setText(oldName);
     input.setSingleLine();
     AlertDialog dialog =
-        new AlertDialog.Builder(this)
+        new VexoDialogs.Builder(this)
             .setTitle("Rename playlist")
             .setView(input)
             .setNegativeButton("Cancel", null)
@@ -2883,7 +2884,7 @@ public final class MainActivity extends ComponentActivity {
     TextView details = text(report, 12, MUTED, false);
     details.setTextIsSelectable(true);
     body.addView(details);
-    new AlertDialog.Builder(this)
+    new VexoDialogs.Builder(this)
         .setTitle("Report a problem")
         .setView(scroll)
         .setNegativeButton("Cancel", null)
@@ -2895,7 +2896,7 @@ public final class MainActivity extends ComponentActivity {
               try {
                 startActivity(AppDiagnostics.email(report, description.getText().toString()));
               } catch (ActivityNotFoundException noEmail) {
-                new AlertDialog.Builder(this)
+                new VexoDialogs.Builder(this)
                     .setTitle("No email app available")
                     .setMessage(
                         "Copy this report and send it to "
@@ -3100,7 +3101,7 @@ public final class MainActivity extends ComponentActivity {
                                         + " anti-repeat restrictions.");
                                 return;
                               }
-                              new AlertDialog.Builder(MainActivity.this)
+                              new VexoDialogs.Builder(MainActivity.this)
                                   .setTitle(
                                       newArtists ? "Your discovery trail" : "Your MindRadio picks")
                                   .setItems(
@@ -3312,7 +3313,7 @@ public final class MainActivity extends ComponentActivity {
 
               public void sync() {
                 if (accountBusy) return;
-                new AlertDialog.Builder(MainActivity.this)
+                new VexoDialogs.Builder(MainActivity.this)
                     .setTitle("Sync your library?")
                     .setMessage(
                         "Merge online favourites and playlists with this account. Phone audio,"
@@ -3554,7 +3555,7 @@ public final class MainActivity extends ComponentActivity {
         "Remove saved audio · favourites and playlists stay",
         false,
         () ->
-            new AlertDialog.Builder(this)
+            new VexoDialogs.Builder(this)
                 .setTitle("Clear offline audio?")
                 .setMessage(
                     "Saved songs will need internet again. Your phone’s original audio files will"
@@ -3596,7 +3597,7 @@ public final class MainActivity extends ComponentActivity {
         new RadioStore(this).hiddenCount() + " hidden songs · allow them in future radio picks",
         false,
         () ->
-            new AlertDialog.Builder(this)
+            new VexoDialogs.Builder(this)
                 .setTitle("Reset radio feedback?")
                 .setMessage(
                     "Previously hidden songs can appear in radio again. Favourites and history"
@@ -3642,7 +3643,7 @@ public final class MainActivity extends ComponentActivity {
         "Your favourites and playlists will stay",
         false,
         () ->
-            new AlertDialog.Builder(this)
+            new VexoDialogs.Builder(this)
                 .setTitle("Clear listening history?")
                 .setNegativeButton("Cancel", null)
                 .setPositiveButton(
@@ -3692,7 +3693,7 @@ public final class MainActivity extends ComponentActivity {
         "Version " + BuildConfig.VERSION_NAME + " · Kavindu Kavishka",
         false,
         () ->
-            new AlertDialog.Builder(this)
+            new VexoDialogs.Builder(this)
                 .setTitle("VEXO Music " + BuildConfig.VERSION_NAME)
                 .setMessage(
                     "Developer: Kavindu Kavishka\n\n"
@@ -3715,7 +3716,7 @@ public final class MainActivity extends ComponentActivity {
         "GPL-3.0 · NewPipe Extractor · AndroidX · OkHttp",
         false,
         () ->
-            new AlertDialog.Builder(this)
+            new VexoDialogs.Builder(this)
                 .setTitle("Open-source licences")
                 .setMessage(
                     "VEXO Music is distributed under GPL-3.0-or-later.\n\n"
@@ -3744,7 +3745,7 @@ public final class MainActivity extends ComponentActivity {
     if (destroyed || isFinishing()) return;
     updates.seen(BuildConfig.VERSION_CODE);
     updateDialog =
-        new AlertDialog.Builder(this)
+        new VexoDialogs.Builder(this)
             .setTitle("What’s new in " + BuildConfig.VERSION_NAME)
             .setMessage(AppRelease.NOTES)
             .setPositiveButton("Let’s listen", null)
@@ -3784,7 +3785,7 @@ public final class MainActivity extends ComponentActivity {
                   if (!manual && updates.snoozed(release)) return;
                   if (updateDialog != null && updateDialog.isShowing()) return;
                   updateDialog =
-                      new AlertDialog.Builder(this)
+                      new VexoDialogs.Builder(this)
                           .setTitle("VEXO Music " + release.version + " is available")
                           .setMessage(
                               release.summary + "\n\nInstalled: " + BuildConfig.VERSION_NAME)
@@ -3859,7 +3860,7 @@ public final class MainActivity extends ComponentActivity {
                   updateDownloading = false;
                   closeUpdateProgress();
                   if (destroyed || isFinishing() || transfer.cancelled) return;
-                  new AlertDialog.Builder(this)
+                  new VexoDialogs.Builder(this)
                       .setTitle("Verified update ready")
                       .setMessage(
                           "VEXO Music "
@@ -3873,7 +3874,7 @@ public final class MainActivity extends ComponentActivity {
                             try {
                               if (Build.VERSION.SDK_INT >= 26
                                   && !getPackageManager().canRequestPackageInstalls()) {
-                                new AlertDialog.Builder(this)
+                                new VexoDialogs.Builder(this)
                                     .setTitle("Allow VEXO updates")
                                     .setMessage(
                                         "Enable Allow from this source for VEXO, then return to"
@@ -3903,7 +3904,7 @@ public final class MainActivity extends ComponentActivity {
                   updateDownloading = false;
                   closeUpdateProgress();
                   if (destroyed || isFinishing() || transfer.cancelled) return;
-                  new AlertDialog.Builder(this)
+                  new VexoDialogs.Builder(this)
                       .setTitle("Update couldn’t finish")
                       .setMessage("Check your connection and try again. Your existing app, music and settings are safe.")
                       .setNegativeButton("Later", null)
@@ -4258,7 +4259,7 @@ public final class MainActivity extends ComponentActivity {
               radioChanged();
               message(mode.label + " · applies to the next radio refill");
             }));
-    new AlertDialog.Builder(this)
+    new VexoDialogs.Builder(this)
         .setTitle("Song radio tuner")
         .setView(scroll)
         .setPositiveButton(
@@ -4317,7 +4318,7 @@ public final class MainActivity extends ComponentActivity {
     CrossfadeSettingsPanel panel =
         new CrossfadeSettingsPanel(
             this, getSharedPreferences("settings", 0).getInt("crossfade", 4));
-    new AlertDialog.Builder(this)
+    new VexoDialogs.Builder(this)
         .setTitle("Crossfade")
         .setView(panel)
         .setNegativeButton("Cancel", null)
@@ -4344,7 +4345,7 @@ public final class MainActivity extends ComponentActivity {
     }
     float[] values = {.75f, 1f, 1.25f, 1.5f, 1.75f, 2f};
     String[] labels = {"0.75×", "1× · Normal", "1.25×", "1.5×", "1.75×", "2×"};
-    new AlertDialog.Builder(this)
+    new VexoDialogs.Builder(this)
         .setTitle("Playback speed")
         .setItems(
             labels,
@@ -4405,7 +4406,7 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private void queueOptions(int index, Track track) {
-    new AlertDialog.Builder(this)
+    new VexoDialogs.Builder(this)
         .setTitle(track.title)
         .setItems(
             new String[] {"Play next", "Move up", "Move down", "Remove from queue", "Song options"},
@@ -4527,7 +4528,7 @@ public final class MainActivity extends ComponentActivity {
       "Off", "15 minutes", "30 minutes", "45 minutes", "60 minutes", "90 minutes"
     };
     int[] minutes = {0, 15, 30, 45, 60, 90};
-    new AlertDialog.Builder(this)
+    new VexoDialogs.Builder(this)
         .setTitle("Sleep timer")
         .setItems(
             options,
@@ -4547,7 +4548,7 @@ public final class MainActivity extends ComponentActivity {
 
   private void showPlaybackError() {
     if (destroyed) return;
-    new AlertDialog.Builder(this)
+    new VexoDialogs.Builder(this)
         .setTitle("Couldn’t play this song")
         .setMessage(
             "Check your connection or try another song. YouTube may restrict this track or require"

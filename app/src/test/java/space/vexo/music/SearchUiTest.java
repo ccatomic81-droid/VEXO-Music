@@ -126,9 +126,9 @@ public class SearchUiTest {
       ((View) text(root, "What’s new").getParent().getParent()).performClick();
       AlertDialog dialog = (AlertDialog) org.robolectric.shadows.ShadowDialog.getLatestDialog();
       assertTrue(dialog.isShowing());
-      assertEquals(
-          "What’s new in " + BuildConfig.VERSION_NAME,
-          org.robolectric.Shadows.shadowOf(dialog).getTitle().toString());
+      assertNotNull(
+          text(dialog.getWindow().getDecorView(), "What’s new in " + BuildConfig.VERSION_NAME));
+      assertNotNull(text(dialog.getWindow().getDecorView(), "VEXO MUSIC"));
       dialog.dismiss();
       assertNotNull(text(root, "Check for updates"));
       assertNull(text(root, "Update source"));

@@ -14,7 +14,7 @@ final class TrendingMusic {
     try {
       SearchExtractor search = ServiceList.YouTube.getSearchExtractor(ServiceList.YouTube.getSearchQHFactory()
           .fromQuery(query, Collections.singletonList("music_playlists"), ""));
-      search.forceContentCountry(new ContentCountry(country)); search.fetchPage();
+      if (!RegionPolicy.global(country)) search.forceContentCountry(new ContentCountry(RegionPolicy.providerCountry(country))); search.fetchPage();
       int attempted = 0;
       for (InfoItem item : search.getInitialPage().getItems()) {
         if (Thread.currentThread().isInterrupted()) throw new InterruptedException();
@@ -22,7 +22,7 @@ final class TrendingMusic {
         if (++attempted > 2) break;
         try {
           PlaylistExtractor playlist = ServiceList.YouTube.getPlaylistExtractor(item.getUrl());
-          playlist.forceContentCountry(new ContentCountry(country)); playlist.fetchPage();
+          if (!RegionPolicy.global(country)) playlist.forceContentCountry(new ContentCountry(RegionPolicy.providerCountry(country))); playlist.fetchPage();
           found.addAll(OnlineMusic.convert(playlist.getInitialPage().getItems()));
           if (MixCatalogue.songs(found).size() >= 20) break;
         } catch (Exception unavailable) {

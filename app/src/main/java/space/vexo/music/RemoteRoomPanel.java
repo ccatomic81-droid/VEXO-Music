@@ -167,7 +167,7 @@ final class RemoteRoomPanel extends MusicSurface {
             () -> {
               ((ClipboardManager) getContext().getSystemService(Context.CLIPBOARD_SERVICE))
                   .setPrimaryClip(ClipData.newPlainText("VEXO room invite", code));
-              Toast.makeText(getContext(), "Invite copied", Toast.LENGTH_SHORT).show();
+              VexoNotice.show(getContext(), "Invite copied");
             });
       }
       button("Reconnect to this room", actions::connect);
@@ -245,7 +245,7 @@ final class RemoteRoomPanel extends MusicSurface {
     Set<String> seen = new HashSet<>();
     for (String key : new String[] {"favourites", "history"})
       for (Track t : library.tracks(key)) if (RadioPolicy.music(t) && seen.add(t.url)) songs.add(t);
-    new android.app.AlertDialog.Builder(getContext())
+    new VexoDialogs.Builder(getContext())
         .setTitle("Request a song · 3 per listener")
         .setItems(
             songs.stream().map(t -> t.title + " · " + t.artist).toArray(String[]::new),

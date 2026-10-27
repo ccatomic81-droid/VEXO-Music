@@ -1,0 +1,7 @@
+<resources>
+    <style name="AppTheme" parent="@style/VexoBaseTheme">
+        <item name="android:windowSplashScreenBackground">#000000</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/vexo_foreground_v2</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">#000000</item>
+    </style>
+</resources>

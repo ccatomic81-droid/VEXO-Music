@@ -49,27 +49,36 @@ public final class OnlineMusic {
   private static final Map<String, List<Track>> relatedCache = new LinkedHashMap<>();
 
   public static List<Track> related(Track seed) throws Exception {
+    return related(seed, RegionPolicy.providerCountry(Locale.getDefault().getCountry()));
+  }
+
+  public static List<Track> related(Track seed, String country) throws Exception {
     initialize();
+    String cacheKey = country + ":" + seed.url;
     synchronized (OnlineMusic.class) {
-      List<Track> hit = relatedCache.get(seed.url);
+      List<Track> hit = relatedCache.get(cacheKey);
       if (hit != null && !hit.isEmpty()) return new ArrayList<>(hit);
     }
     List<Track> songs = new ArrayList<>();
     try {
-      songs = MusicRadio.load(seed);
+      songs = MusicRadio.load(seed, country);
     } catch (Exception unavailable) {
       if (Thread.currentThread().isInterrupted()) throw new InterruptedException();
     }
     // General YouTube related videos are not a music catalogue. Never mix them into radio.
     // Artist-only fallback is filtered by RadioCatalogue, never raw search results here.
-    rememberRelated(seed.url, songs);
+    rememberRelated(cacheKey, songs);
     return songs;
   }
 
   static List<Track> relatedPreview(Track seed) throws Exception {
+    return relatedPreview(seed, RegionPolicy.providerCountry(Locale.getDefault().getCountry()));
+  }
+
+  static List<Track> relatedPreview(Track seed, String country) throws Exception {
     PREVIEW.set(true);
     try {
-      return related(seed);
+      return related(seed, country);
     } finally {
       PREVIEW.remove();
     }
@@ -223,8 +232,8 @@ public final class OnlineMusic {
             .fromQuery(text, Collections.singletonList("music_songs"), "");
     org.schabi.newpipe.extractor.search.SearchExtractor extractor =
         ServiceList.YouTube.getSearchExtractor(q);
-    extractor.forceContentCountry(
-        new org.schabi.newpipe.extractor.localization.ContentCountry(country));
+    if (!RegionPolicy.global(country)) extractor.forceContentCountry(
+        new org.schabi.newpipe.extractor.localization.ContentCountry(RegionPolicy.providerCountry(country)));
     extractor.fetchPage();
     ListExtractor.InfoItemsPage<InfoItem> page = extractor.getInitialPage();
     return new Results(convert(page.getItems()), page.getNextPage(), q);

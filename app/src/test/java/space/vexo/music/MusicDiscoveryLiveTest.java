@@ -11,6 +11,16 @@ import org.robolectric.annotation.Config;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 35)
 public class MusicDiscoveryLiveTest {
+  @Test public void globalFeedReturnsActualMusicWithoutACountryCode() throws Exception {
+    Assume.assumeTrue("1".equals(System.getenv("VEXO_MUSIC_LIVE_TEST")));
+    RegionalFeed feed = RegionalFeed.fetch(RegionPolicy.GLOBAL);
+    assertEquals(RegionPolicy.GLOBAL, feed.country);
+    assertFalse(feed.ranked);
+    assertTrue("Expected worldwide music", feed.tracks.size() >= 5);
+    assertTrue(feed.tracks.stream().allMatch(RadioPolicy::music));
+    System.out.println("Global music feed: " + feed.tracks.size() + " songs");
+  }
+
   @Test
   public void trendingAndPersonalizedMixesReturnActualSongsWithoutAccountLogin() throws Exception {
     Assume.assumeTrue("1".equals(System.getenv("VEXO_MUSIC_LIVE_TEST")));

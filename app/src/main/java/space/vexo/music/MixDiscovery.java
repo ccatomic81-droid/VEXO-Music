@@ -26,7 +26,7 @@ final class MixDiscovery {
 
   static String query(MixCatalogue.Mix mix, MusicInterests interests, Tuning tuning, String country, long now) {
     String language = tuning.language.isEmpty() ? interests.preferences.optString("language") : tuning.language;
-    if (language.isEmpty()) language = country.equals("LK") ? "Sinhala Tamil" : RegionPolicy.name(country);
+    if (language.isEmpty()) language = RegionPolicy.global(country) ? "international worldwide" : country.equals("LK") ? "Sinhala Tamil" : RegionPolicy.name(country);
     language = language.substring(0, Math.min(60, language.length()));
     String month = day(now).substring(0, 7).replace('-', ' ');
     if (mix.id.equals("trending")) return language + " TikTok viral songs " + month;

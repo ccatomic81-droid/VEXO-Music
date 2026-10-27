@@ -63,6 +63,7 @@ final class PanelWindow {
   }
 
   static void expand(Dialog dialog) {
+    VexoNotice.host(dialog);
     configure(dialog);
     Window window = dialog.getWindow();
     if (window != null) {

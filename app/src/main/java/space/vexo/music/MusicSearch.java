@@ -48,14 +48,7 @@ final class MusicSearch {
       throws Exception {
     if (Thread.currentThread().isInterrupted()) throw new InterruptedException();
     OnlineMusic.initialize();
-    JSONObject client =
-        new JSONObject()
-            .put("clientName", "WEB_REMIX")
-            .put("clientVersion", YoutubeParsingHelper.getYoutubeMusicClientVersion())
-            .put("hl", "en")
-            .put("gl", RegionPolicy.valid(country) ? country : "LK")
-            .put("platform", "DESKTOP")
-            .put("utcOffsetMinutes", 0);
+    JSONObject client = client(country, YoutubeParsingHelper.getYoutubeMusicClientVersion());
     JSONObject body = new JSONObject().put("context", new JSONObject().put("client", client));
     if (token.isEmpty()) body.put("query", query).put("params", filter);
     String url = "https://music.youtube.com/youtubei/v1/search?prettyPrint=false";
@@ -75,6 +68,19 @@ final class MusicSearch {
         && !data.has("onResponseReceivedCommands"))
       throw new IOException("YouTube Music search returned an incomplete page");
     return data;
+  }
+
+  static JSONObject client(String country, String version) throws JSONException {
+    JSONObject client =
+        new JSONObject()
+            .put("clientName", "WEB_REMIX")
+            .put("clientVersion", version)
+            .put("hl", "en")
+            .put("platform", "DESKTOP")
+            .put("utcOffsetMinutes", 0);
+    String providerCountry = RegionPolicy.providerCountry(country);
+    if (!providerCountry.isEmpty()) client.put("gl", providerCountry);
+    return client;
   }
 
   static Result parse(JSONObject data, String query, String country) {

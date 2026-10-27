@@ -1,5 +1,5 @@
 <resources>
-    <style name="AppTheme" parent="android:style/Theme.Material.NoActionBar">
+    <style name="VexoBaseTheme" parent="android:style/Theme.Material.NoActionBar">
         <item name="android:fontFamily">sans</item>
         <item name="android:colorAccent">#1ED760</item>
         <item name="android:windowLightStatusBar">false</item>
@@ -7,5 +7,36 @@
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowActionModeOverlay">true</item>
         <item name="android:windowBackground">#121212</item>
+    </style>
+    <style name="AppTheme" parent="@style/VexoBaseTheme" />
+    <style name="VexoDialogTheme" parent="android:style/Theme.Material.Dialog.Alert">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:colorAccent">#1ED760</item>
+        <item name="android:colorControlActivated">#1ED760</item>
+        <item name="android:textColorPrimary">#FFFFFF</item>
+        <item name="android:textColorSecondary">#B3B3B3</item>
+        <item name="android:colorBackground">#202322</item>
+        <item name="android:windowBackground">@drawable/vexo_dialog_surface</item>
+        <item name="android:backgroundDimAmount">0.72</item>
+        <item name="android:buttonBarPositiveButtonStyle">@style/VexoDialogPositive</item>
+        <item name="android:buttonBarNegativeButtonStyle">@style/VexoDialogSecondary</item>
+        <item name="android:buttonBarNeutralButtonStyle">@style/VexoDialogSecondary</item>
+        <item name="android:windowMinWidthMajor">0dp</item>
+        <item name="android:windowMinWidthMinor">0dp</item>
+    </style>
+    <style name="VexoDialogSecondary" parent="android:style/Widget.Material.Button.Borderless">
+        <item name="android:background">@drawable/vexo_dialog_secondary</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:paddingLeft">14dp</item>
+        <item name="android:paddingRight">14dp</item>
+    </style>
+    <style name="VexoDialogPositive" parent="@style/VexoDialogSecondary">
+        <item name="android:background">@drawable/vexo_dialog_primary</item>
+        <item name="android:textColor">#121212</item>
     </style>
 </resources>
