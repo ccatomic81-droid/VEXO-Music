@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createHash, timingSafeEqual } from 'node:crypto';
 import { createService, rangeFor } from './service.mjs';
 import { createPublisher } from './publisher.mjs';
-import { ARTIFACTS, TEST23_ARTIFACTS, TEST23_PREFIX, PREVIOUS_ARTIFACTS, PREVIOUS_PREFIX, OLDER_ARTIFACTS, OLDER_PREFIX, LEGACY_ARTIFACTS, LEGACY_PREFIX, ARCHIVED_ARTIFACTS, ARCHIVED_PREFIX, TEST21_ARTIFACTS, TEST21_PREFIX, TEST20_ARTIFACTS, TEST20_PREFIX } from './artifacts.mjs';
+import { ARTIFACTS, TEST24_ARTIFACTS, TEST24_PREFIX, TEST23_ARTIFACTS, TEST23_PREFIX, PREVIOUS_ARTIFACTS, PREVIOUS_PREFIX, OLDER_ARTIFACTS, OLDER_PREFIX, LEGACY_ARTIFACTS, LEGACY_PREFIX, ARCHIVED_ARTIFACTS, ARCHIVED_PREFIX, TEST21_ARTIFACTS, TEST21_PREFIX, TEST20_ARTIFACTS, TEST20_PREFIX } from './artifacts.mjs';
 const data = {'VEXO-Music-0.10.0-dev.apk':new TextEncoder().encode('test signed APK bytes'),'VEXO-Music-0.10.0-dev-Source.zip':new Uint8Array([1,2,3]),'SHA256SUMS.txt':new TextEncoder().encode('test checksums'),'manifest.json':new TextEncoder().encode('{"channel":"testing"}')};
 const artifacts=Object.fromEntries(Object.entries(data).map(([k,v])=>[k,{size:v.length,sha256:createHash('sha256').update(v).digest('hex')}]));
 const prefix='testing/0.10.0-dev/';
@@ -49,11 +49,11 @@ test('range parser rejects malformed, multiple and unsafe integer ranges',()=>{
  assert.deepEqual(rangeFor('bytes=-5',20),{offset:15,length:5});
 });
 
-test("production publishing allowlist contains only APK and release information",()=>{assert.deepEqual(Object.keys(ARTIFACTS).sort(),["SHA256SUMS.txt","VEXO-Music-0.24.0-dev.apk","manifest.json"].sort());});
+test("production publishing allowlist contains only APK and release information",()=>{assert.deepEqual(Object.keys(ARTIFACTS).sort(),["SHA256SUMS.txt","VEXO-Music-0.25.0-dev.apk","manifest.json"].sort());});
 
 test('earlier opt-in APK addresses still resolve immutable archived versions',async()=>{
  const service=createService();
- for(const [name,files,prefix] of [['VEXO-Music-0.23.0-dev.apk',TEST23_ARTIFACTS,TEST23_PREFIX],['VEXO-Music-0.21.0-dev.apk',TEST21_ARTIFACTS,TEST21_PREFIX],['VEXO-Music-0.20.0-dev.apk',TEST20_ARTIFACTS,TEST20_PREFIX],['VEXO-Music-0.13.1-dev.apk',ARCHIVED_ARTIFACTS,ARCHIVED_PREFIX],['VEXO-Music-0.13.0-dev.apk',PREVIOUS_ARTIFACTS,PREVIOUS_PREFIX],['VEXO-Music-0.11.0-dev.apk',OLDER_ARTIFACTS,OLDER_PREFIX],['VEXO-Music-0.10.0-dev.apk',LEGACY_ARTIFACTS,LEGACY_PREFIX]]) {
+ for(const [name,files,prefix] of [['VEXO-Music-0.24.0-dev.apk',TEST24_ARTIFACTS,TEST24_PREFIX],['VEXO-Music-0.23.0-dev.apk',TEST23_ARTIFACTS,TEST23_PREFIX],['VEXO-Music-0.21.0-dev.apk',TEST21_ARTIFACTS,TEST21_PREFIX],['VEXO-Music-0.20.0-dev.apk',TEST20_ARTIFACTS,TEST20_PREFIX],['VEXO-Music-0.13.1-dev.apk',ARCHIVED_ARTIFACTS,ARCHIVED_PREFIX],['VEXO-Music-0.13.0-dev.apk',PREVIOUS_ARTIFACTS,PREVIOUS_PREFIX],['VEXO-Music-0.11.0-dev.apk',OLDER_ARTIFACTS,OLDER_PREFIX],['VEXO-Music-0.10.0-dev.apk',LEGACY_ARTIFACTS,LEGACY_PREFIX]]) {
   const seen=[];const env={RELEASES:{async head(key){seen.push(key);if(key===prefix+'manifest.json')return {};if(key===prefix+name)return {size:files[name].size,customMetadata:{sha256:files[name].sha256},httpEtag:'"archived"'};return null;}}};
   const r=await service.fetch(get('/releases/'+name,{method:'HEAD'}),env);assert.equal(r.status,200);assert.equal(Number(r.headers.get('Content-Length')),files[name].size);assert.ok(seen.every(key=>key.startsWith(prefix)));
  }

@@ -1,0 +1,47 @@
+{
+  "sourceCommit": "78ef2666e16618560793ad707eac7d4bae311264",
+  "workflowRun": 40465642903,
+  "apkSha256": "b5d35546e5f53d6d7353bb6e3a998f714aa9cc311a11a118c3df46b9cdd68e94",
+  "sameCertificate": true,
+  "signedPayloadMatchesUnsignedCandidate": true,
+  "androidChecks": {
+    "tests": 227,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 11,
+    "passed": 216
+  },
+  "liveChecks": {
+    "tests": 8,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 8
+  },
+  "publicChecks": [
+    "manifest",
+    "apk",
+    "page",
+    "range",
+    "head",
+    "old_apk",
+    "closed_writes",
+    "stable"
+  ],
+  "versionName": "0.25.0-dev",
+  "versionCode": 35,
+  "nonDebuggable": true,
+  "workerPublicationDisabled": true,
+  "workerBindingNames": [
+    "RELEASES"
+  ],
+  "nativeScreensReviewed": [
+    "discovery-mixes-home-320",
+    "discovery-mixes-home-393",
+    "discovery-trending-320",
+    "discovery-daily-320",
+    "tune-my-mix-320",
+    "tune-my-mix-large-320"
+  ],
+  "physicalPhoneTested": false
+}

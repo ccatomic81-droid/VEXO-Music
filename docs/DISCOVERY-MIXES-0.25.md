@@ -10,3 +10,5 @@ Implements the seven planned features using existing VEXO UI, encrypted local in
 - Learning records audible time, qualified manual skips and decaying positive signals. Failed playback and seek distance are excluded. Pause/reset controls remain in Smart. Cached personalized mixes are encrypted; reset learning clears derived caches.
 
 0.25.0-dev/code35 is an opt-in tester updating public 0.24.0/code34 with the original certificate. Public stable remains 0.24.0. Android/unit/native-layout, live provider and signed-download verification are required before test publication. Physical-device audio/Bluetooth/background acceptance remains for testers.
+
+Published test: https://vexo-music-testing.kavindukavishka785.workers.dev/ . Workflow 40465642903 passed 216 Android tests (eleven skipped), eight live discovery checks, both lint/build variants and security/dependency checks. Reviewed native Home/mix/Trending layouts and standard/large-text Tune My Mix; Save/Cancel remain fully visible while content scrolls. Public download hash, range/HEAD, original signing certificate and exact unsigned-candidate payload match verified. Stable stays 0.24.0/code34.
