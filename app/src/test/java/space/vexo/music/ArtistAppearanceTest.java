@@ -108,6 +108,7 @@ public class ArtistAppearanceTest {
   @Test
   public void deviceChoiceAndManualOverridesPersist() {
     Context c = RuntimeEnvironment.getApplication();
+    AppAppearance.save(c, 0);
     Configuration config = new Configuration(c.getResources().getConfiguration());
     config.uiMode = Configuration.UI_MODE_NIGHT_YES;
     Context night = c.createConfigurationContext(config);

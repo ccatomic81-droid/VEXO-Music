@@ -273,7 +273,7 @@ final class AccountPanel extends MusicSurface {
     if (editText != null) {
       editText.setText("");
     }
-    this.status.setTextColor(z ? Visuals.LIME : -19527);
+    this.status.setTextColor(z ? Visuals.LIME : (Visuals.light ? 0xffab2435 : 0xffffb3b9));
     this.status.setText(str);
     if (z) {
       this.creating = false;

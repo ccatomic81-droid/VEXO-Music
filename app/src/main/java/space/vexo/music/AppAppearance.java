@@ -11,9 +11,9 @@ final class AppAppearance {
   static final String[] LABELS = {"Follow device", "Dark", "Light"};
 
   static String choice(Context c) {
-    String value = c.getSharedPreferences("settings", 0).getString("appearance", "system");
+    String value = c.getSharedPreferences("settings", 0).getString("appearance", "dark");
     for (String allowed : VALUES) if (allowed.equals(value)) return value;
-    return "system";
+    return "dark";
   }
 
   static boolean light(Context c) {
