@@ -1,0 +1,60 @@
+{
+  "version": "0.26.1",
+  "versionCode": 41,
+  "sourceCommit": "5a5b0a4a6ad8ca058e1a1ee68aad60afa3b08a01",
+  "workflowRun": 40546636227,
+  "apkSha256": "1be0ba697faf7605a68123f4df4e8e597d03ffdfd7898104048c899a03a37108",
+  "sameCertificate": true,
+  "nonDebuggable": true,
+  "signedPayloadMatchesUnsignedCandidate": true,
+  "manifestSignatureVerified": true,
+  "androidChecks": {
+    "tests": 256,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 13,
+    "passed": 243
+  },
+  "liveChecks": {
+    "tests": 10,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 10
+  },
+  "publicChecks": [
+    "manifest",
+    "apk checksum",
+    "range",
+    "head",
+    "old public APK",
+    "closed writes"
+  ],
+  "physicalPhoneTested": false,
+  "nativeScreensReviewed": [
+    "home-dark",
+    "home-light",
+    "artist-circles"
+  ],
+  "workerPublicationDisabled": true,
+  "workerBindingNames": [
+    "RELEASES"
+  ],
+  "separateProviderArtistIdentitiesChecked": true,
+  "collaborationDeduplicationAndLegacyRepairChecked": true,
+  "structuredBandNamesPreserved": true,
+  "exactArtistPortraitMatchingChecked": true,
+  "livePortraitIdentities": {
+    "Kevin Smokio": "UCiowqN4I9txG35IQa5_KkHQ",
+    "Billie Eilish": "UCERrDZ8oN0U_n9MphMKERcg"
+  },
+  "livePortraitBytesDecoded": true,
+  "songCoversExcludedFromArtistPortraits": true,
+  "portraitCacheClearAndDataSaverChecked": true,
+  "dependencyAudit": {
+    "source": "https://api.osv.dev/v1/querybatch",
+    "resolved_packages": 127,
+    "findings": [],
+    "scope": "Known OSV advisories for resolved Maven versions; not a complete security audit"
+  }
+}

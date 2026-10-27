@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.26.1 — Artist identity and portrait hotfix (27 October 2026)
+
+- Fix repeated collaboration labels by retaining separate provider artist identities and merging repeated appearances.
+- Replace song-cover circles with exact artist portraits or readable initials. Repair legacy shortcuts automatically while preserving searches and structured band names.
+- Cache background portrait lookups, respect Data saver, support manual retry, and prevent cleared search data from returning through late photo callbacks.
+- Preserve multiple search references per artist and verify actual Kevin Smokio and Billie Eilish profile photos.
+- Publish version code 41 with the original signing certificate; retain existing themes, player and offline saving.
+
+
 ## 0.26.0 — Artist circles and appearance themes (27 October 2026)
 
 - Show circular artist shortcuts above Made for you from song searches; tap to find the artist’s songs.

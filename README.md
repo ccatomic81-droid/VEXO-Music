@@ -1,14 +1,14 @@
-# VEXO Music 0.26.0
+# VEXO Music 0.26.1
 
 Developer: **Kavindu Kavishka**.
 
-Public version **0.26.0** adds circular artist shortcuts above Made for you, using artist names and artwork from successful song searches. Tap a circle to search that artist’s songs. The shortcuts stay on your phone and clear with recent searches.
+Public version **0.26.1** fixes the artist shelf: collaborations use separate artist identities, repeated appearances merge into one shortcut, and real YouTube Music artist portraits replace song covers. Initials appear when no portrait is available. Existing shortcuts repair automatically without clearing recent searches.
 
-Choose **Settings → Appearance → Light, Dark or Follow device** for coordinated colors across the app, player, queue and custom dialogs. Dark remains the default. The player’s progress dot now stays fully round at both ends, with a 48 dp slider touch target.
+Artist circles remain above Made for you. Tap a circle to find songs by that artist. Photo metadata loads on a separate cancellable worker and is cached; Data saver skips new portrait lookups. Home Refresh & repair retries portrait metadata. Removing a recent search preserves artists referenced by other searches; Clear recent searches clears both and invalidates pending photo results.
 
-[Download VEXO Music 0.26.0](https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.26.0.apk), use Settings → Check for updates, or open the [GitHub release](https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.26.0). Install as an update without uninstalling. Version code 40 upgrades public 0.25.3/code39 with the original signing identity. See [release notes](release/notes-0.26.0.md) and [verification](release/verification-0.26.0.json).
+Choose **Settings → Appearance → Light, Dark or Follow device**. Dark remains the default. The complete round player progress dot, Global discovery, rounded VEXO logos, branded popups, animated update downloads and 500 MB offline saving remain.
 
-Global discovery, rounded VEXO logos, branded popups, animated update downloads and 500 MB offline saving remain. Third-party scanners may need a refresh to discard their own cached logo. Android owns permission and installation prompts.
+[Download VEXO Music 0.26.1](https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.26.1.apk), use Settings → Check for updates, or open the [GitHub release](https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.26.1). Install over the existing app without uninstalling. Version code 41 updates public 0.26.0/code40 with the original signing identity. See [release notes](release/notes-0.26.1.md) and [verification](release/verification-0.26.1.json).
 
 Search now shows real song names, artwork and artists while typing, with direct play controls. Home has quick collection tiles, horizontally scrolling music cards, regional picks and VEXO mood mixes. Full playlist pages support Play all, a one-shot shuffled queue, adding songs, renaming and deleting a playlist, and removing individual tracks.
 
