@@ -87,10 +87,12 @@ public class ArtistAppearanceTest {
           () -> {});
       TextView made = helper.text(root, "Made for you");
       assertNotNull(made);
-      ViewGroup homeBody = (ViewGroup) stories.getParent();
+      ViewGroup homeBody = home.body;
+      View artistBranch = stories;
+      while (artistBranch.getParent() != homeBody) artistBranch = (View) artistBranch.getParent();
       View personal = made;
       while (personal.getParent() != homeBody) personal = (View) personal.getParent();
-      assertTrue(homeBody.indexOfChild(stories) < homeBody.indexOfChild(personal));
+      assertTrue(homeBody.indexOfChild(artistBranch) < homeBody.indexOfChild(personal));
       assertNotNull(helper.find(stories, "Find songs by Billie Eilish"));
     }
     List<String> selected = new ArrayList<>();

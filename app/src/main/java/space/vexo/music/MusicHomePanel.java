@@ -23,7 +23,7 @@ import org.json.JSONObject;
 
 final class MusicHomePanel extends MusicSurface {
   private long avatarVersion;
-  private LinearLayout personalSlot, trendingShelf;
+  private LinearLayout personalSlot, trendingShelf, artistSlot;
   private TextView greeting;
   private final Map<String, LinearLayout> mixCards;
   private FrameLayout profileAvatar;
@@ -63,6 +63,17 @@ final class MusicHomePanel extends MusicSurface {
     default void smart() {}
 
     default void artist(String name) {}
+  }
+
+  void artists() {
+    if (artistSlot == null) return;
+    artistSlot.removeAllViews();
+    artistSlot.addView(
+        new ArtistStoriesPanel(
+            getContext(),
+            new SearchArtists(getContext()).visible(),
+            listener::artist,
+            listener::search));
   }
 
   void personalize() {
@@ -288,10 +299,11 @@ final class MusicHomePanel extends MusicSurface {
     gap(this.body, 2);
     this.body.addView(linearLayoutRow2);
     gap(this.body, 8);
-    if (!str3.equals("Playlists"))
-      body.addView(
-          new ArtistStoriesPanel(
-              context, new SearchArtists(context).entries(), listener::artist, listener::search));
+    if (!str3.equals("Playlists")) {
+      artistSlot = column();
+      body.addView(artistSlot);
+      artists();
+    }
     personalSlot = column();
     if (!str3.equals("Playlists")) body.addView(personalSlot);
     Map<String, List<View>> linkedHashMap = new LinkedHashMap<>();

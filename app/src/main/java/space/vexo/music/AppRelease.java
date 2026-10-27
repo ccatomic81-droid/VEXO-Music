@@ -7,11 +7,11 @@ import org.json.*;
 /** A release feed contains metadata only. Downloads always need a user tap. */
 final class AppRelease {
   static final String NOTES =
-      "• Your artists: circular shortcuts above Made for you, from your song searches.\n"
-          + "• Tap an artist to find their songs. Clear recent searches to clear the shortcuts.\n"
-          + "• Choose Dark, Light or Follow device in Settings → Appearance.\n"
-          + "• The player’s progress dot now stays fully round at both ends.\n"
-          + "• Install over your existing app to keep your music and settings.";
+      "• One artist per circle: collaborations now use separate artist identities.\n"
+          + "• Real YouTube Music artist photos where available, with initials as a fallback.\n"
+          + "• Existing artist shortcuts repair automatically; no need to clear searches.\n"
+          + "• Light and dark themes, the round progress dot and offline saving remain.\n"
+          + "• Install over your existing app to keep music and settings.";
   final int code;
   final String version, summary, url;
   String sha256 = "";

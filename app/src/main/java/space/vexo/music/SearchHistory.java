@@ -44,7 +44,12 @@ final class SearchHistory {
   }
 
   void clear() {
-    prefs.edit().remove("terms").remove("artists").apply();
+    prefs
+        .edit()
+        .remove("terms")
+        .remove("artists")
+        .putLong("artist_revision", prefs.getLong("artist_revision", 0) + 1)
+        .apply();
   }
 
   private void write(List<String> terms) {

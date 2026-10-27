@@ -134,6 +134,7 @@ final class MusicSearch {
     if (id.isEmpty()) id = video(row.optJSONObject("overlay"));
     if (!id.matches("[A-Za-z0-9_-]{11}") || title.isEmpty() || title.length() > 500) return null;
     LinkedHashSet<String> artists = new LinkedHashSet<>();
+    List<ArtistCredit> credits = new ArrayList<>();
     long duration = 0;
     String fallback = "";
     for (int i = 1; i < Math.min(columns.length(), 8); i++) {
@@ -146,8 +147,11 @@ final class MusicSearch {
         JSONObject run = runs.optJSONObject(j);
         JSONObject endpoint = run == null ? null : run.optJSONObject("navigationEndpoint");
         JSONObject browse = endpoint == null ? null : endpoint.optJSONObject("browseEndpoint");
-        if (browse != null && browse.optString("browseId").startsWith("UC"))
-          artists.add(run.optString("text").trim());
+        if (browse != null && browse.optString("browseId").startsWith("UC")) {
+          String artistName = run.optString("text").trim();
+          if (artists.add(artistName))
+            credits.add(new ArtistCredit(browse.optString("browseId"), artistName));
+        }
       }
     }
     JSONArray fixed = row.optJSONArray("fixedColumns");
@@ -162,11 +166,12 @@ final class MusicSearch {
     String artist = artists.isEmpty() ? fallback : String.join(", ", artists);
     if (artist.isEmpty() || artist.length() > 500 || duration < 1 || duration > 21600) return null;
     return new Track(
-        "https://www.youtube.com/watch?v=" + id,
-        title,
-        artist,
-        thumbnail(row.optJSONObject("thumbnail"), 0),
-        duration);
+            "https://www.youtube.com/watch?v=" + id,
+            title,
+            artist,
+            thumbnail(row.optJSONObject("thumbnail"), 0),
+            duration)
+        .withArtists(credits);
   }
 
   private static JSONObject column(JSONObject col) {
