@@ -1,4 +1,19 @@
 export const ARTIFACTS = {
+  "VEXO-Music-0.24.0-dev.apk": {
+    "sha256": "819e092fe917a9d8c42e7b5fedd65b2d9bcbc6c406d2ac63e77f9f54b877d132",
+    "size": 9082849
+  },
+  "SHA256SUMS.txt": {
+    "sha256": "14ca257f1c6989b318dbba6c8132aca11e851849966a5a24d849551fcd602373",
+    "size": 92
+  },
+  "manifest.json": {
+    "sha256": "ac25f30414f3669d6f05edc02abf3e2111c0873e347e66be27f04f45b02a85dc",
+    "size": 1309
+  }
+};
+export const PREFIX = "testing/0.24.0-dev/";
+export const TEST23_ARTIFACTS = {
   "VEXO-Music-0.23.0-dev.apk": {
     "sha256": "ee083772882d53fd3e3b088098bc0935c63595478c597cb55898007e1941b730",
     "size": 9082849
@@ -12,7 +27,7 @@ export const ARTIFACTS = {
     "size": 1250
   }
 };
-export const PREFIX = "testing/0.23.0-dev/";
+export const TEST23_PREFIX = "testing/0.23.0-dev/";
 export const TEST21_ARTIFACTS = {
   "VEXO-Music-0.21.0-dev.apk": {
     "sha256": "c1edf41510c1ade889fba3848439bcfa4a9d04bd73b2cbff1386f45fae46c6d8",

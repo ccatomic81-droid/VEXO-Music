@@ -1,0 +1,45 @@
+{
+  "sourceCommit": "c1aa9ee53f005b610da95c7a5d8557ae2caf3787",
+  "workflowRun": 40431610871,
+  "apkSha256": "819e092fe917a9d8c42e7b5fedd65b2d9bcbc6c406d2ac63e77f9f54b877d132",
+  "sameCertificate": true,
+  "signedPayloadMatchesUnsignedCandidate": true,
+  "androidChecks": {
+    "tests": 210,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 10,
+    "passed": 200
+  },
+  "liveChecks": {
+    "tests": 7,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 7
+  },
+  "publicChecks": [
+    "manifest",
+    "apk",
+    "page",
+    "range",
+    "head",
+    "old_apk",
+    "closed_writes",
+    "stable"
+  ],
+  "nativeScreensReviewed": [
+    "home-polished-320",
+    "home-polished-360",
+    "home-polished-393",
+    "now-playing-360",
+    "now-playing-large-320"
+  ],
+  "testerHostTests": 6,
+  "publicUpdateHostTests": 3,
+  "workerPublicationDisabled": true,
+  "workerBindingNames": [
+    "RELEASES"
+  ],
+  "physicalPhoneTested": false
+}
