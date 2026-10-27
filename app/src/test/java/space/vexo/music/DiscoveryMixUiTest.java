@@ -53,10 +53,19 @@ public class DiscoveryMixUiTest {
   }
   @Test public void savingTuningIsPerMixAndDoesNotStartAPlaybackSession()throws Exception{
     try (var activity = Robolectric.buildActivity(android.app.Activity.class).setup()) {
-    Context app=new android.view.ContextThemeWrapper(activity.get(),R.style.AppTheme);
+    Configuration config = new Configuration(activity.get().getResources().getConfiguration()); config.fontScale = 1.6f;
+    Context app=new android.view.ContextThemeWrapper(activity.get().createConfigurationContext(config),R.style.AppTheme);
     MixCatalogue.Mix daily=MixCatalogue.find("daily","LK");final boolean[] changed={false};
     AlertDialog dialog=MixTuner.show(app,daily,Runnable::run,()->changed[0]=true);
     Shadows.shadowOf(Looper.getMainLooper()).idle();
+    View decor=dialog.getWindow().getDecorView();
+    decor.measure(View.MeasureSpec.makeMeasureSpec(320,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(700,View.MeasureSpec.AT_MOST));
+    decor.layout(0,0,320,decor.getMeasuredHeight());
+    android.graphics.Bitmap image=android.graphics.Bitmap.createBitmap(320,decor.getHeight(),android.graphics.Bitmap.Config.ARGB_8888);
+    decor.draw(new android.graphics.Canvas(image));File dir=new File("build/ui-checks");dir.mkdirs();
+    try(var out=new FileOutputStream(new File(dir,"tune-my-mix-large-320.png"))){image.compress(android.graphics.Bitmap.CompressFormat.PNG,100,out);}image.recycle();
+    assertTrue(decor.getHeight()<=700);
+    assertTrue(dialog.getButton(AlertDialog.BUTTON_POSITIVE).getWidth()>0);
     dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick();Shadows.shadowOf(Looper.getMainLooper()).idle();
     assertTrue(changed[0]);assertNull(MixSession.active(app));
     assertNotNull(new SmartStore(app).preferences().optJSONObject("mix_tune:daily"));

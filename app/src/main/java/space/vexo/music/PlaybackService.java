@@ -159,7 +159,8 @@ public final class PlaybackService extends MediaSessionService {
       };
       java.util.List<Track> found = MixDiscovery.load(mix, interests, source,
           MixSession.country(this), System.currentTimeMillis(), exclude);
-      if (found.size() < 5 && (mix.id.equals("daily") || mix.id.equals("discover"))) {
+      if (found.size() < 5 && (mix.id.equals("daily") || mix.id.equals("discover"))
+          && MixDiscovery.Tuning.read(interests, mix.id).mood.isEmpty()) {
         java.util.List<Track> expanded = new java.util.ArrayList<>(found);
         try { expanded.addAll(source.related(seed)); } catch (Exception unavailable) { if (Thread.currentThread().isInterrupted()) throw new InterruptedException(); }
         found = MixDiscovery.select(mix, interests, expanded, MixDiscovery.Tuning.read(interests, mix.id),
@@ -644,6 +645,7 @@ public final class PlaybackService extends MediaSessionService {
                       }
                     }
                     if (command.customAction.equals(FAIR_QUEUE)) {
+                      MixSession.clear(PlaybackService.this);
                       getSharedPreferences("playback_state", 0)
                           .edit()
                           .putBoolean("fair_queue", true)

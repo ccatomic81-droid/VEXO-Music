@@ -33,7 +33,7 @@ final class MixDiscovery {
     String mood = tuning.mood.isEmpty() ? mix.intent : tuning.mood;
     String artist = interests.seeds.isEmpty() ? "" : interests.seeds.get(0).artist;
     artist = artist.substring(0, Math.min(80, artist.length()));
-    if (mix.id.equals("discover")) return language + " " + interests.preferences.optString("genres", "") + " songs discover new artists";
+    if (mix.id.equals("discover")) return language + " " + artist + " " + mood + " " + interests.preferences.optString("genres", "") + " songs";
     if (mix.id.equals("daily")) return language + " " + mood + " " + interests.preferences.optString("genres", "") + " songs";
     // One themed artist query plus the broad mood pool below keeps mood and interests together.
     return language + " " + artist + " " + mood + " songs";
@@ -43,7 +43,7 @@ final class MixDiscovery {
       String country, long now, Set<String> exclude) throws Exception {
     Tuning tuning = Tuning.read(interests, mix.id);
     List<Track> pool = new ArrayList<>();
-    boolean station = mix.id.equals("daily") || mix.id.equals("discover");
+    boolean station = (mix.id.equals("daily") || mix.id.equals("discover")) && tuning.mood.isEmpty();
     if (station) {
       // Rotate seed artists by local day, not on every redraw or play tap.
       List<Track> seeds = new ArrayList<>(interests.seeds);
@@ -62,11 +62,9 @@ final class MixDiscovery {
       try { pool.addAll(source.search(language + " " + (tuning.mood.isEmpty() ? mix.intent : tuning.mood) + " songs")); }
       catch (Exception e) { if (e instanceof InterruptedException) throw e; interrupted(); }
     }
-    if (mix.id.equals("daily")) pool.addAll(interests.favourites);
+    if (mix.id.equals("daily") && tuning.mood.isEmpty()) pool.addAll(interests.favourites);
     List<Track> result = select(mix, interests, pool, tuning, now, exclude, 30);
-    // Offline fallback only for familiar/daily mixes. Discovery never claims a known song is new.
-    if (result.isEmpty() && !mix.id.equals("discover") && !mix.id.equals("trending"))
-      result = select(mix, interests, interests.favourites, tuning, now, exclude, 30);
+    // The UI keeps the last successful cache offline; never relabel arbitrary favourites as a mood.
     return result;
   }
 

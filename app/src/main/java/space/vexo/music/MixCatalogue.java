@@ -116,6 +116,7 @@ final class MixCatalogue {
       JSONObject cache = new JSONObject(prefs.getString(country + ":" + mix.id, "{}"));
       if ((mix.id.equals("daily") || mix.id.equals("discover"))
           && !MixDiscovery.day(System.currentTimeMillis()).equals(cache.optString("day"))) return songs;
+      if (mix.id.equals("discover") && !scope(mix, country, System.currentTimeMillis()).equals(cache.optString("scope"))) return songs;
       JSONArray a = cache.getJSONArray("songs");
       for (int i = 0; i < a.length(); i++) songs.add(Track.from(a.getJSONObject(i)));
     } catch (Exception ignored) {

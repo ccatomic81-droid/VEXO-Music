@@ -85,4 +85,22 @@ public class MixDiscoveryTest {
     new SmartStore(app).feedback(song,"never");assertTrue(c.cached(daily,"LK").isEmpty());
   }
 
+  @Test public void explicitDailyMoodUsesTheThemedPoolInsteadOfUnrelatedStationSongs() throws Exception {
+    JSONObject prefs = new JSONObject().put("mix_tune:daily",new JSONObject().put("mood","upbeat workout"));
+    MusicInterests profile = interests(Arrays.asList(song("aaaaaaaaaaa","Sad song","Nova")),Collections.emptyList(),prefs,new JSONObject());
+    Track upbeat = song("bbbbbbbbbbb","Run with me","Orion");
+    List<Track> out = MixDiscovery.load(MixCatalogue.find("daily","LK"),profile,new PersonalDiscovery.Source() {
+      public List<Track> related(Track seed) { throw new AssertionError("An explicit mood must use the themed catalogue"); }
+      public List<Track> search(String query) { assertTrue(query.contains("upbeat workout"));return Arrays.asList(upbeat); }
+    },"LK",System.currentTimeMillis(),Collections.emptySet());
+    assertEquals(Arrays.asList(upbeat),out);
+  }
+
+  @Test public void newToYouCacheCannotKeepCallingARecentlyPlayedSongUnheard() {
+    android.content.Context app=RuntimeEnvironment.getApplication(); MixCatalogue cache=new MixCatalogue(app);
+    Track song=song("aaaaaaaaaaa","Home","Nova");MixCatalogue.Mix mix=MixCatalogue.find("discover","LK");
+    cache.save(mix,"LK",Arrays.asList(song));assertEquals(1,cache.cached(mix,"LK").size());
+    new LibraryStore(app).recent(song);assertTrue(cache.cached(mix,"LK").isEmpty());
+  }
+
 }
