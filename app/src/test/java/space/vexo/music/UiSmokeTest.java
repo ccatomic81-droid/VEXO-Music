@@ -141,6 +141,16 @@ public class UiSmokeTest {
         state.set(offline, "Saving “Private song fixture” for offline listening");
         findDescription(root, "Settings tab").performClick();
         assertNotNull(find(root, "Data saver"));
+        TextView autoSave = find(root, "Auto-save offline music");
+        assertNotNull(autoSave);
+        View autoSaveRow = (View) autoSave.getParent().getParent();
+        assertNotNull("Auto-save defaults on independently of data saver", find(autoSaveRow, "ON"));
+        autoSaveRow.performClick();
+        assertFalse(offline.enabled());
+        autoSaveRow = (View) find(root, "Auto-save offline music").getParent().getParent();
+        assertNotNull(find(autoSaveRow, "OFF"));
+        autoSaveRow.performClick();
+        assertTrue(offline.enabled());
         assertNotNull(
             "Settings must contain usage only while a song is saving",
             find(root, "0.0 MB / 500 MB · 0 saved songs"));

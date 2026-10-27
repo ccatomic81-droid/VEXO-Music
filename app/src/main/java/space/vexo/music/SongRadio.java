@@ -16,6 +16,16 @@ final class SongRadio {
   static void activate(Player player, Track seed) {
     player.setRepeatMode(Player.REPEAT_MODE_OFF);
     if (player.getCurrentMediaItem() != null) {
+      pruneRecommendations(player);
+      return;
+    }
+    player.setMediaItem(seed.mediaItem());
+    player.prepare();
+    player.play();
+  }
+
+  static void pruneRecommendations(Player player) {
+    if (player.getCurrentMediaItem() != null) {
       java.util.List<Integer> upcoming = QueuePolicy.order(player.getMediaItemCount(),
           player.getCurrentMediaItemIndex(), at -> player.getCurrentTimeline().getNextWindowIndex(
               at, Player.REPEAT_MODE_OFF, player.getShuffleModeEnabled()));
@@ -24,10 +34,6 @@ final class SongRadio {
       for (int i = player.getMediaItemCount() - 1; i >= 0; i--)
         if (future.contains(i) && Track.from(player.getMediaItemAt(i)).recommended)
           player.removeMediaItem(i);
-      return;
     }
-    player.setMediaItem(seed.mediaItem());
-    player.prepare();
-    player.play();
   }
 }

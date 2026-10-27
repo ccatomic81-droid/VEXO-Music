@@ -1,0 +1,22 @@
+{
+  "channel": "testing",
+  "version": "0.25.0-dev",
+  "versionName": "0.25.0-dev",
+  "versionCode": 35,
+  "packageName": "space.vexo.music.radio",
+  "downloadUrl": "https://vexo-music-testing.kavindukavishka785.workers.dev/releases/VEXO-Music-0.25.0-dev.apk",
+  "sha256": "b5d35546e5f53d6d7353bb6e3a998f714aa9cc311a11a118c3df46b9cdd68e94",
+  "sizeBytes": 9099233,
+  "sourceCommit": "78ef2666e16618560793ad707eac7d4bae311264",
+  "sourceUrl": "https://github.com/ccatomic81-droid/VEXO-Music/archive/78ef2666e16618560793ad707eac7d4bae311264.zip",
+  "signingCertificateSha256": "0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3",
+  "releaseNotes": "TikTok-inspired full-song Trending Music from public playlists/search; personalized mood mixes, private listening-interest learning, Daily Mix and New to you. Tune My Mix changes future automatic picks without disturbing current playback or manual queue. Continuous mix playback integrates with the existing VEXO player. YouTube connection stays optional.",
+  "minimumAndroidApi": 26,
+  "debugDevelopmentBuild": false,
+  "automaticTestUpdates": false,
+  "limitations": [
+    "Trending is sourced from public music playlists and search, not an official TikTok chart. New to you means unplayed in retained VEXO history, not verified new releases.",
+    "Physical-phone upgrade, audio, Bluetooth and background playback acceptance testing remains required.",
+    "The built-in updater checks the stable feed; install this tester build using its download page."
+  ]
+}

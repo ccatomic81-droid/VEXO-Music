@@ -30,6 +30,8 @@ public final class AutoplayManager {
 
   public interface Loader {
     List<Track> load(Track seed) throws Exception;
+
+    default List<Track> load(Track seed, List<Track> queueSnapshot) throws Exception { return load(seed); }
   }
 
   public interface Selector {
@@ -141,7 +143,7 @@ public final class AutoplayManager {
         () -> {
           List<Track> candidates;
           try {
-            candidates = loader.load(seed);
+            candidates = loader.load(seed, Collections.unmodifiableList(new ArrayList<>(tracks)));
           } catch (Exception e) {
             ui.execute(
                 () -> {

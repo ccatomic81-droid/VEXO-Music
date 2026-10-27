@@ -223,4 +223,20 @@ public class AutoplayManagerTest {
     tasks.remove().run();
     assertEquals("discovery", q.songs.get(2).title);
   }
+  @Test public void workerReceivesTheQueueSnapshotForItsRequest() {
+    Queue q = new Queue(); ArrayDeque<Runnable> tasks = new ArrayDeque<>();
+    List<Track> captured = new ArrayList<>();
+    AutoplayManager manager = new AutoplayManager(q, new AutoplayManager.Loader() {
+      public List<Track> load(Track seed) { throw new AssertionError("Snapshot overload required"); }
+      public List<Track> load(Track seed, List<Track> snapshot) {
+        captured.addAll(snapshot);
+        try { snapshot.clear(); fail("Snapshot must be immutable"); } catch (UnsupportedOperationException expected) { }
+        return Arrays.asList(song("new"));
+      }
+    }, tasks::add, Runnable::run, () -> true, Collections::emptyList, text -> {});
+    manager.check(); q.songs.add(song("manual-after-request")); tasks.remove().run();
+    assertEquals(2, captured.size()); assertEquals(4,q.songs.size());
+    assertEquals("manual-after-request",q.songs.get(2).title);
+  }
+
 }

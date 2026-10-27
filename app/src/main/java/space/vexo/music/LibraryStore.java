@@ -44,6 +44,7 @@ public final class LibraryStore {
     JSONArray a = new JSONArray();
     for (Track t : tracks) a.put(t.json());
     prefs.edit().putString(key, a.toString()).apply();
+    DiscoveryRevision.changed(context);
   }
 
   public synchronized boolean contains(String key, Track t) {

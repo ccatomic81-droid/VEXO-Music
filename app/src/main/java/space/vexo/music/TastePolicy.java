@@ -28,6 +28,9 @@ final class TastePolicy {
           key,
           new JSONObject()
               .put("artist", RadioPolicy.artist(t))
+              .put("track", t.json())
+              .put("listens", (old == null ? 0 : old.optInt("listens")) + (delta > 0 ? 1 : 0))
+              .put("skips", (old == null ? 0 : old.optInt("skips")) + (delta < 0 ? 1 : 0))
               .put("score", Math.max(-20, Math.min(20, previous + delta)))
               .put("at", now));
       while (state.length() > 300) {

@@ -1,3 +1,9 @@
+# 0.25.1-dev
+
+- Restore automatic offline song saving within the existing 500 MB limit.
+- Restore the Settings auto-save switch and apply it to the currently playing song.
+- Cover production save behavior, restart/offline replay, failure/retry, full storage and clearing.
+
 # Changelog
 
 ## 0.24.0 — Artwork, player and song-related radio (27 October 2026)

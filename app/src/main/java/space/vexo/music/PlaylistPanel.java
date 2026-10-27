@@ -24,6 +24,8 @@ final class PlaylistPanel extends MusicSurface {
     void save();
 
     void retry();
+
+    default void tune() {}
   }
 
   PlaylistPanel(
@@ -80,6 +82,13 @@ final class PlaylistPanel extends MusicSurface {
     body.addView(controls);
     gap(body, 12);
     if (mix) {
+      LinearLayout tuning = row();
+      tuning.addView(action("Tune My Mix", false, listener::tune), new LinearLayout.LayoutParams(0, -2, 1));
+      TextView refresh = action("Refresh mix", false, listener::retry);
+      refresh.setEnabled(!loading); refresh.setAlpha(loading ? .4f : 1);
+      LinearLayout.LayoutParams rp = new LinearLayout.LayoutParams(0, -2, 1);
+      rp.leftMargin = dp(10); tuning.addView(refresh, rp); body.addView(tuning);
+      gap(body, 10);
       TextView save = action("Save to your playlists", false, listener::save);
       save.setEnabled(!songs.isEmpty());
       save.setAlpha(songs.isEmpty() ? .4f : 1);
@@ -109,10 +118,7 @@ final class PlaylistPanel extends MusicSurface {
     if (!error.isEmpty()) {
       body.addView(text(error, 13, MUTED, false));
       gap(body, 8);
-      body.addView(action("Retry", false, listener::retry));
-      gap(body, 10);
-    } else if (mix && !loading) {
-      body.addView(action("Refresh mix", false, listener::retry));
+      if (!mix) body.addView(action("Retry", false, listener::retry));
       gap(body, 10);
     }
     if (songs.isEmpty() && !loading && error.isEmpty())
