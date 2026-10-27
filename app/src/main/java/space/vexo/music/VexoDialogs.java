@@ -41,6 +41,8 @@ final class VexoDialogs {
       brand.setGravity(Gravity.CENTER_VERTICAL);
       ImageView mark = new ImageView(c);
       mark.setImageResource(R.drawable.vexo_logo_v2);
+      mark.setBackground(round(android.graphics.Color.BLACK, dp(c, 8)));
+      mark.setClipToOutline(true);
       mark.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
       brand.addView(mark, new LinearLayout.LayoutParams(dp(c, 32), dp(c, 32)));
       TextView label = label(c, "VEXO MUSIC", 11, LIME);
@@ -90,6 +92,16 @@ final class VexoDialogs {
       int available = c.getResources().getDisplayMetrics().widthPixels - dp(c, 32);
       window.setLayout(Math.min(dp(c, 420), available), -2);
     }
+    // AlertDialog reserves the button panel's minimum height before measuring scrollable content.
+    // Reserve the complete touch target and its padding; vertical child margins get clipped there.
+    int buttonPanelId = c.getResources().getIdentifier("buttonPanel", "id", "android");
+    View footer = buttonPanelId == 0 ? null : dialog.findViewById(buttonPanelId);
+    if (footer instanceof ViewGroup) {
+      footer.setPadding(dp(c, 16), dp(c, 12), dp(c, 16), dp(c, 12));
+      ViewGroup.LayoutParams params = footer.getLayoutParams();
+      params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+      footer.setLayoutParams(params);
+    }
     TextView message = dialog.findViewById(android.R.id.message);
     if (message != null) {
       message.setTextColor(MUTED);
@@ -107,9 +119,13 @@ final class VexoDialogs {
       button.setTextSize(12);
       button.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
       button.setTextColor(primary ? BG : TEXT);
-      button.setMinWidth(0);
-      button.setMinimumWidth(0);
+      button.setMinWidth(dp(c, 72));
+      button.setMinimumWidth(dp(c, 72));
       button.setMinHeight(dp(c, 48));
+      button.setMinimumHeight(dp(c, 48));
+      button.setStateListAnimator(null);
+      button.setElevation(0);
+      button.setClipToOutline(false);
       button.setPadding(dp(c, 14), dp(c, 8), dp(c, 14), dp(c, 8));
       button.setBackground(
           new RippleDrawable(
@@ -118,9 +134,19 @@ final class VexoDialogs {
               null));
       if (button.getLayoutParams() instanceof LinearLayout.LayoutParams) {
         LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) button.getLayoutParams();
-        params.setMargins(dp(c, 4), dp(c, 8), dp(c, 4), dp(c, 10));
+        params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+        params.setMargins(dp(c, 4), 0, dp(c, 4), 0);
         button.setLayoutParams(params);
       }
+    }
+    if (footer instanceof ViewGroup && footer.getVisibility() != View.GONE) {
+      int width = window != null && window.getAttributes().width > 0
+          ? window.getAttributes().width
+          : Math.min(dp(c, 420), c.getResources().getDisplayMetrics().widthPixels - dp(c, 32));
+      footer.setMinimumHeight(0);
+      footer.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+          View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+      footer.setMinimumHeight(footer.getMeasuredHeight());
     }
     ListView list = dialog.getListView();
     if (list != null) {

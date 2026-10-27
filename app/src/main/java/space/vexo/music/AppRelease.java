@@ -7,11 +7,10 @@ import org.json.*;
 /** A release feed contains metadata only. Downloads always need a user tap. */
 final class AppRelease {
   static final String NOTES =
-      "• Consistent current VEXO icon across package details, launcher, startup and notifications.\n"
-          + "• Global music region for worldwide discovery and mixes.\n"
-          + "• Custom VEXO popups and in-app notices with branded cards and clear actions.\n"
-          + "• Animated update downloads and the 500 MB offline-saving fix remain.\n"
-          + "• Update over your existing app to keep your music and settings.";
+      "• Popup buttons now have complete rounded edges and full touch targets.\n"
+          + "• Rounded VEXO logo tiles in popups, notices and package branding.\n"
+          + "• Global music, custom popups, animated update downloads and offline saving remain.\n"
+          + "• Install over your existing app to keep your music and settings.";
   final int code;
   final String version, summary, url;
   String sha256 = "";
