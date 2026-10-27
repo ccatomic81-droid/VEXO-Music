@@ -16,7 +16,6 @@
         <item name="android:textColorPrimary">#17231B</item>
         <item name="android:textColorSecondary">#526158</item>
         <item name="android:windowLightStatusBar">true</item>
-        <item name="android:windowLightNavigationBar">true</item>
         <item name="android:statusBarColor">#F7F9F7</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowBackground">#F7F9F7</item>
