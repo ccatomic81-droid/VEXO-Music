@@ -245,10 +245,11 @@ final class MusicHomePanel extends MusicSurface {
                 }
               });
       textViewAction2.setTextSize(13);
-      textViewAction2.setPadding(dp(16), dp(6), dp(16), dp(6));
       textViewAction2.setMinHeight(dp(48));
       textViewAction2.setBackground(new android.graphics.drawable.InsetDrawable(
           Visuals.round(str6.equals(str3) ? Visuals.LIME : 0xff292929, dp(18)), 0, dp(6), 0, dp(6)));
+      // InsetDrawable supplies its own padding when installed; set label padding afterwards.
+      textViewAction2.setPadding(dp(16), dp(6), dp(16), dp(6));
       LinearLayout.LayoutParams layoutParams3 = new LinearLayout.LayoutParams(-2, -2);
       layoutParams3.setMargins(0, 0, dp(8.0f), 0);
       linearLayoutRow4.addView(textViewAction2, layoutParams3);

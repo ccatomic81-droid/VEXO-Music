@@ -67,6 +67,10 @@ public class HomePolishTest {
         }
         setup.capture(root, width, 800, "home-polished-" + width);
         assertNull(new SearchUiTest().text(root, "Start your radio"));
+        TextView all = new SearchUiTest().text(root, "All");
+        assertNotNull(all);
+        assertTrue("Filter labels need horizontal breathing room", all.getPaddingLeft() >= 16);
+        assertTrue("Filters keep accessible touch height", all.getHeight() >= 48);
         assertTrue(mini.getHeight() >= 58);
         int[] miniAt = new int[2]; mini.getLocationOnScreen(miniAt);
         assertEquals(8, miniAt[0]); assertEquals(width - 8, miniAt[0] + mini.getWidth());

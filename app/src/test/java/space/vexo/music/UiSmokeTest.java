@@ -114,7 +114,9 @@ public class UiSmokeTest {
       View nav = findDescription(root, "Settings tab");
       assertNotNull("Navigation labels should be readable", find((View) nav.getParent(), "Home"));
       assertNotNull(find((View) nav.getParent(), "Search"));
-      assertNotNull(findDescription(root, "Play Second example song"));
+      View song = findDescription(root, "Play Second example song by Artist");
+      assertNotNull(song);
+      assertTrue("The whole song card should play", song.isClickable());
       render(root, 360, 800, "home");
       assertNotNull(find(root, "Regional viral picks"));
       assertNotNull(find(root, "Regional YouTube search · not a ranked chart · Sri Lanka"));
