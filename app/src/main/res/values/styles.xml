@@ -1,5 +1,5 @@
 <resources>
-    <style name="AppTheme.Base" parent="android:style/Theme.Material.NoActionBar">
+    <style name="VexoBaseTheme" parent="android:style/Theme.Material.NoActionBar">
         <item name="android:fontFamily">sans</item>
         <item name="android:colorAccent">#1ED760</item>
         <item name="android:windowLightStatusBar">false</item>
@@ -8,7 +8,7 @@
         <item name="android:windowActionModeOverlay">true</item>
         <item name="android:windowBackground">#121212</item>
     </style>
-    <style name="AppTheme" parent="@style/AppTheme.Base" />
+    <style name="AppTheme" parent="@style/VexoBaseTheme" />
     <style name="VexoDialogTheme" parent="android:style/Theme.Material.Dialog.Alert">
         <item name="android:fontFamily">sans</item>
         <item name="android:colorAccent">#1ED760</item>
