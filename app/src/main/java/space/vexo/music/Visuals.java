@@ -7,13 +7,36 @@ import android.view.View;
 import android.widget.ImageView;
 
 public final class Visuals {
-  public static final int BG = 0xff121212,
+  // Updated on the UI thread before rebuilding the activity; every surface reads this palette.
+  public static boolean light;
+  public static int BG = 0xff121212,
       PANEL = 0xff181818,
       TEXT = Color.WHITE,
       MUTED = 0xffb3b3b3,
       ACCENT = 0xff1ed760,
       LIME = ACCENT,
       PURPLE = ACCENT;
+  public static int CONTROL = 0xff292929,
+      BORDER = 0xff3b4540,
+      DIALOG = 0xff202322,
+      SELECTED = 0xff203c2a,
+      PLAYER_MID = 0xff191d1a,
+      MINI = 0xff283b32;
+
+  static void appearance(boolean value) {
+    light = value;
+    BG = value ? 0xfff7f9f7 : 0xff121212;
+    PANEL = value ? 0xffeef1ee : 0xff181818;
+    TEXT = value ? 0xff17231b : Color.WHITE;
+    MUTED = value ? 0xff526158 : 0xffb3b3b3;
+    ACCENT = LIME = PURPLE = value ? 0xff087d35 : 0xff1ed760;
+    CONTROL = value ? 0xffe1e8e2 : 0xff292929;
+    BORDER = value ? 0xffb6c6bb : 0xff3b4540;
+    DIALOG = value ? 0xfffbfdfb : 0xff202322;
+    SELECTED = value ? 0xffd4eddb : 0xff203c2a;
+    PLAYER_MID = value ? 0xffedf3ee : 0xff191d1a;
+    MINI = value ? 0xffd9ecdf : 0xff283b32;
+  }
 
   public static GradientDrawable round(int color, float radius) {
     GradientDrawable d = new GradientDrawable();
@@ -47,7 +70,7 @@ public final class Visuals {
       float x = b.left + w / 2, y = b.top + h / 2;
       paint.setStyle(Paint.Style.STROKE);
       paint.setStrokeWidth(Math.max(1, r * .012f));
-      paint.setColor(0xff535353);
+      paint.setColor(MUTED);
       canvas.drawCircle(x, y, r * .32f, paint);
       canvas.drawCircle(x, y, r * .24f, paint);
       paint.setStyle(Paint.Style.FILL);
@@ -398,13 +421,7 @@ public final class Visuals {
       float w = getWidth(), h = getHeight();
       p.setShader(
           new LinearGradient(
-              0,
-              0,
-              w,
-              h,
-              new int[] {0xff242424, 0xff181818, 0xff121212},
-              null,
-              Shader.TileMode.CLAMP));
+              0, 0, w, h, new int[] {CONTROL, PANEL, BG}, null, Shader.TileMode.CLAMP));
       c.drawRoundRect(0, 0, w, h, 28, 28, p);
       p.setShader(null);
       c.save();

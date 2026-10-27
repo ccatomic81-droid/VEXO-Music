@@ -79,7 +79,7 @@ final class YouTubeConnection implements AutoCloseable {
   void show() {
     if (closed) return;
     if (dialog == null || !dialog.isShowing()) {
-      dialog = new Dialog(activity, android.R.style.Theme_Material_NoActionBar);
+      dialog = new Dialog(activity, Visuals.light ? R.style.VexoLightTheme : R.style.VexoBaseTheme);
       draw();
       dialog.show();
     } else draw();

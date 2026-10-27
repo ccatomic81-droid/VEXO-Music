@@ -16,7 +16,7 @@ final class VexoDialogs {
     private CharSequence title;
 
     Builder(Context context) {
-      super(context, R.style.VexoDialogTheme);
+      super(context, light ? R.style.VexoDialogLightTheme : R.style.VexoDialogTheme);
     }
 
     @Override
@@ -77,8 +77,8 @@ final class VexoDialogs {
     Context c = dialog.getContext();
     Window window = dialog.getWindow();
     if (window != null) {
-      android.graphics.drawable.GradientDrawable background = round(0xff202322, dp(c, 26));
-      background.setStroke(dp(c, 1), 0xff37443b);
+      android.graphics.drawable.GradientDrawable background = round(DIALOG, dp(c, 26));
+      background.setStroke(dp(c, 1), BORDER);
       window.setBackgroundDrawable(background);
       window.getDecorView().setPadding(0, 0, 0, 0);
       for (String panel :
@@ -88,7 +88,7 @@ final class VexoDialogs {
         if (view != null) view.setBackgroundColor(android.graphics.Color.TRANSPARENT);
       }
       window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
-      window.setDimAmount(.72f);
+      window.setDimAmount(light ? .50f : .72f);
       int available = c.getResources().getDisplayMetrics().widthPixels - dp(c, 32);
       window.setLayout(Math.min(dp(c, 420), available), -2);
     }
@@ -130,7 +130,7 @@ final class VexoDialogs {
       button.setBackground(
           new RippleDrawable(
               ColorStateList.valueOf(0x30ffffff),
-              round(primary ? LIME : 0xff343a36, dp(c, 24)),
+              round(primary ? LIME : CONTROL, dp(c, 24)),
               null));
       if (button.getLayoutParams() instanceof LinearLayout.LayoutParams) {
         LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) button.getLayoutParams();
@@ -140,11 +140,13 @@ final class VexoDialogs {
       }
     }
     if (footer instanceof ViewGroup && footer.getVisibility() != View.GONE) {
-      int width = window != null && window.getAttributes().width > 0
-          ? window.getAttributes().width
-          : Math.min(dp(c, 420), c.getResources().getDisplayMetrics().widthPixels - dp(c, 32));
+      int width =
+          window != null && window.getAttributes().width > 0
+              ? window.getAttributes().width
+              : Math.min(dp(c, 420), c.getResources().getDisplayMetrics().widthPixels - dp(c, 32));
       footer.setMinimumHeight(0);
-      footer.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+      footer.measure(
+          View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
           View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
       footer.setMinimumHeight(footer.getMeasuredHeight());
     }
@@ -152,7 +154,7 @@ final class VexoDialogs {
     if (list != null) {
       list.setDivider(null);
       list.setDividerHeight(dp(c, 4));
-      list.setSelector(round(0xff314538, dp(c, 12)));
+      list.setSelector(round(SELECTED, dp(c, 12)));
       list.setPadding(dp(c, 12), dp(c, 4), dp(c, 12), dp(c, 8));
       list.setOnHierarchyChangeListener(
           new android.view.ViewGroup.OnHierarchyChangeListener() {

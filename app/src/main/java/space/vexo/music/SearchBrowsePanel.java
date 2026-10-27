@@ -95,7 +95,7 @@ final class SearchBrowsePanel extends LinearLayout {
           if (column == 0) params.rightMargin = dp(12);
           if (index < categories.size()) {
             MusicCategory category = categories.get(index);
-            TextView card = text(category.name, 16, TEXT, true);
+            TextView card = text(category.name, 16, android.graphics.Color.WHITE, true);
             card.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
             card.setPadding(dp(14), dp(16), dp(14), dp(16));
             card.setMinHeight(dp(92));

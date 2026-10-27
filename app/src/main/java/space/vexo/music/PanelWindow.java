@@ -85,7 +85,7 @@ final class PanelWindow {
     if (Build.VERSION.SDK_INT >= 29) window.setNavigationBarContrastEnforced(false);
     WindowInsetsControllerCompat controller =
         WindowCompat.getInsetsController(window, window.getDecorView());
-    controller.setAppearanceLightStatusBars(false);
-    controller.setAppearanceLightNavigationBars(false);
+    controller.setAppearanceLightStatusBars(Visuals.light);
+    controller.setAppearanceLightNavigationBars(Visuals.light);
   }
 }

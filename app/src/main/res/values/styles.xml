@@ -9,6 +9,33 @@
         <item name="android:windowBackground">#121212</item>
     </style>
     <style name="AppTheme" parent="@style/VexoBaseTheme" />
+    <style name="VexoLightTheme" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:colorAccent">#087D35</item>
+        <item name="android:colorControlActivated">#087D35</item>
+        <item name="android:textColorPrimary">#17231B</item>
+        <item name="android:textColorSecondary">#526158</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:statusBarColor">#F7F9F7</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowBackground">#F7F9F7</item>
+        <item name="android:windowActionModeOverlay">true</item>
+    </style>
+    <style name="VexoDialogLightTheme" parent="android:style/Theme.Material.Light.Dialog.Alert">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:colorAccent">#087D35</item>
+        <item name="android:colorControlActivated">#087D35</item>
+        <item name="android:textColorPrimary">#17231B</item>
+        <item name="android:textColorSecondary">#526158</item>
+        <item name="android:colorBackground">#FBFDFB</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:backgroundDimAmount">0.50</item>
+        <item name="android:buttonBarPositiveButtonStyle">@style/VexoDialogPositive</item>
+        <item name="android:buttonBarNegativeButtonStyle">@style/VexoDialogSecondary</item>
+        <item name="android:buttonBarNeutralButtonStyle">@style/VexoDialogSecondary</item>
+        <item name="android:windowMinWidthMajor">0dp</item>
+        <item name="android:windowMinWidthMinor">0dp</item>
+    </style>
     <style name="VexoDialogTheme" parent="android:style/Theme.Material.Dialog.Alert">
         <item name="android:fontFamily">sans</item>
         <item name="android:colorAccent">#1ED760</item>
