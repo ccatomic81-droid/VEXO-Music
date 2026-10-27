@@ -3530,18 +3530,18 @@ public final class MainActivity extends ComponentActivity {
         this::chooseRegion);
     setting(
         body,
-        "Offline playback authorization",
-        "Imported audio works offline. New online saves need provider authorization.",
-        false,
+        "Auto-save offline music",
+        "Save songs while listening · up to 500 MB · uses internet data",
+        true,
+        OfflineLibrary.get(this).enabled(),
         () -> {
-          new AlertDialog.Builder(this)
-              .setTitle("Authorized offline music")
-              .setMessage(
-                  "Your imported audio and existing saved music stay available. This source has no"
-                      + " verified download entitlement, so new online saves are disabled. A"
-                      + " licensed provider must authorize downloads before this can be enabled.")
-              .setPositiveButton("Close", null)
-              .show();
+          boolean enabled = !OfflineLibrary.get(this).enabled();
+          getSharedPreferences("settings", 0).edit().putBoolean("auto_save", enabled).apply();
+          if (!enabled) OfflineLibrary.get(this).cancel();
+          if (controller != null)
+            controller.sendCustomCommand(
+                new SessionCommand(PlaybackService.OFFLINE_SETTINGS, Bundle.EMPTY), Bundle.EMPTY);
+          render();
         });
     offlineSummary = text(offlineDescription(), 12, MUTED, false);
     offlineSummary.setPadding(dp(12), dp(4), dp(12), dp(16));
@@ -3909,6 +3909,12 @@ public final class MainActivity extends ComponentActivity {
 
   private void setting(
       LinearLayout parent, String title, String detail, boolean toggle, Runnable action) {
+    setting(parent, title, detail, toggle,
+        getSharedPreferences("settings", 0).getBoolean("data_saver", false), action);
+  }
+
+  private void setting(
+      LinearLayout parent, String title, String detail, boolean toggle, boolean on, Runnable action) {
     LinearLayout r = row();
     r.setPadding(dp(16), dp(16), dp(8), dp(16));
     r.setBackground(round(PANEL, dp(18)));
@@ -3920,7 +3926,6 @@ public final class MainActivity extends ComponentActivity {
     labels.addView(description);
     r.addView(labels, new LinearLayout.LayoutParams(0, -2, 1));
     if (toggle) {
-      boolean on = getSharedPreferences("settings", 0).getBoolean("data_saver", false);
       TextView value = text(on ? "ON" : "OFF", 12, on ? LIME : MUTED, true);
       value.setPadding(dp(12), 0, dp(8), 0);
       r.addView(value);

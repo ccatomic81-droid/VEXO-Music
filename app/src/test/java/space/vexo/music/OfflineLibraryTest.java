@@ -32,7 +32,7 @@ public class OfflineLibraryTest {
     for (int i = 0; i < audio.length; i++) audio[i] = (byte) (i % 251);
     File directory = Files.createTempDirectory("vexo-offline").toFile();
     OfflineLibrary first =
-        new OfflineLibrary(context, () -> new ByteArrayDataSource(audio), directory, 100_000, true);
+        new OfflineLibrary(context, () -> new ByteArrayDataSource(audio), directory, 100_000);
     first.request(song);
     first.awaitIdle();
     assertTrue(first.status(), first.complete(song.url));
@@ -70,7 +70,7 @@ public class OfflineLibraryTest {
     File directory = Files.createTempDirectory("vexo-budget").toFile();
     OfflineLibrary library =
         new OfflineLibrary(
-            context, () -> new ByteArrayDataSource(new byte[32_000]), directory, 1000, true);
+            context, () -> new ByteArrayDataSource(new byte[32_000]), directory, 1000);
     try {
       library.request(song);
       library.awaitIdle();
@@ -98,6 +98,70 @@ public class OfflineLibraryTest {
       library.request(song);
       assertTrue(library.saved().isEmpty());
       assertEquals(0, library.bytes());
+    } finally {
+      library.close();
+    }
+  }
+
+  @Test
+  public void fullStorageKeepsExistingSongsAndClearMakesRoom() throws Exception {
+    OfflineLibrary library = new OfflineLibrary(context,
+        () -> new ByteArrayDataSource(new byte[32_000]),
+        Files.createTempDirectory("vexo-full").toFile(), 40_000);
+    Track second = new Track("https://example.com/second.mp3", "Second", "Artist", "", 3);
+    try {
+      library.request(song);
+      library.awaitIdle();
+      library.request(song);
+      assertEquals(1, library.saved().size());
+      library.request(second);
+      library.awaitIdle();
+      assertTrue(library.complete(song.url));
+      assertFalse(library.complete(second.url));
+      assertEquals(32_000, library.bytes());
+      assertEquals(1, library.saved().size());
+      library.clear();
+      library.awaitIdle();
+      assertEquals(0, library.bytes());
+      assertTrue(library.saved().isEmpty());
+      library.request(second);
+      library.awaitIdle();
+      assertTrue(library.status(), library.complete(second.url));
+    } finally {
+      library.close();
+    }
+  }
+
+  @Test
+  public void failedSaveCanRetryAndToggleCanResumeSaving() throws Exception {
+    java.util.concurrent.atomic.AtomicBoolean fail = new java.util.concurrent.atomic.AtomicBoolean(true);
+    OfflineLibrary library = new OfflineLibrary(context,
+        () -> new DataSource() {
+          final ByteArrayDataSource data = new ByteArrayDataSource(new byte[32_000]);
+          boolean readOnce;
+          @Override public void addTransferListener(TransferListener listener) { data.addTransferListener(listener); }
+          @Override public long open(DataSpec spec) throws IOException { return data.open(spec); }
+          @Override public android.net.Uri getUri() { return data.getUri(); }
+          @Override public void close() throws IOException { data.close(); }
+          @Override public int read(byte[] buffer, int offset, int length) throws IOException {
+            if (fail.get() && readOnce) throw new IOException("Connection lost");
+            readOnce = true;
+            return data.read(buffer, offset, Math.min(length, 4096));
+          }
+        }, Files.createTempDirectory("vexo-retry").toFile(), 100_000);
+    try {
+      library.request(song);
+      library.awaitIdle();
+      assertEquals(0, library.bytes());
+      assertTrue(library.saved().isEmpty());
+      context.getSharedPreferences("settings", 0).edit().putBoolean("auto_save", false).commit();
+      fail.set(false);
+      library.request(song);
+      assertTrue(library.saved().isEmpty());
+      context.getSharedPreferences("settings", 0).edit().putBoolean("auto_save", true).commit();
+      library.request(song);
+      library.awaitIdle();
+      assertTrue(library.status(), library.complete(song.url));
     } finally {
       library.close();
     }

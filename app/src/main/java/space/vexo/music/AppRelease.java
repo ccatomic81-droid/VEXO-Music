@@ -7,7 +7,8 @@ import org.json.*;
 /** A release feed contains metadata only. Downloads always need a user tap. */
 final class AppRelease {
   static final String NOTES =
-      "• TikTok-inspired Trending Music with full-song playback and clear source labels.\n"
+      "• Fixed automatic offline saving with the 500 MB storage limit and an on/off control.\n"
+          + "• TikTok-inspired Trending Music with full-song playback and clear source labels.\n"
           + "• Personalized mood mixes, a Daily Mix and New to you discovery.\n"
           + "• Tune My Mix controls for familiarity, language, mood and recent-song avoidance.\n"
           + "• On-device learning from audible listening and manual skips, with privacy controls.\n"
