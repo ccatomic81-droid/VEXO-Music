@@ -24,6 +24,8 @@ final class PlaylistPanel extends MusicSurface {
     void save();
 
     void retry();
+
+    default void tune() {}
   }
 
   PlaylistPanel(
@@ -80,6 +82,8 @@ final class PlaylistPanel extends MusicSurface {
     body.addView(controls);
     gap(body, 12);
     if (mix) {
+      body.addView(action("Tune My Mix", false, listener::tune));
+      gap(body, 10);
       TextView save = action("Save to your playlists", false, listener::save);
       save.setEnabled(!songs.isEmpty());
       save.setAlpha(songs.isEmpty() ? .4f : 1);

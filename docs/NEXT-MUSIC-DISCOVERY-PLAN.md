@@ -1,6 +1,6 @@
 # Planned VEXO music discovery features
 
-Status: planning only, after the 0.24 public release. This list does not claim implementation or a delivery date.
+Status: implemented for the 0.25 tester; verification and tester publication are in progress. See DISCOVERY-MIXES-0.25.md for behavior, sourcing and limitations.
 
 - TikTok-inspired Trending Music
 - Personalized Mixes for Your Mood

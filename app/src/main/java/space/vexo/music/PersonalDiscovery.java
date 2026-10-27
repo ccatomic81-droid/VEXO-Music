@@ -8,6 +8,8 @@ final class PersonalDiscovery {
     List<Track> related(Track track) throws Exception;
 
     List<Track> search(String query) throws Exception;
+
+    default List<Track> trending(String query) throws Exception { return search(query); }
   }
 
   static List<Track> load(MusicInterests interests, Source source) throws InterruptedException {

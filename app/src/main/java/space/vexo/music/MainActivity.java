@@ -74,7 +74,7 @@ public final class MainActivity extends ComponentActivity {
                 });
           });
   private boolean clockRegistered;
-  private int discoveryEpoch;
+  private volatile int discoveryEpoch;
   private Future<?> homeTask;
   private final BroadcastReceiver clockChanged =
       new BroadcastReceiver() {
@@ -400,6 +400,7 @@ public final class MainActivity extends ComponentActivity {
     if (homePanel != null) {
       homePanel.personalize();
       loadPersonal(false);
+      main.postDelayed(this::prefetchHomeMixes, 600);
     }
     if (!clockRegistered) {
       IntentFilter filter = new IntentFilter(Intent.ACTION_TIME_TICK);
@@ -1035,6 +1036,10 @@ public final class MainActivity extends ComponentActivity {
                 MainActivity.this.play(songs, index);
               }
 
+              public void mixPlay(MixCatalogue.Mix mix, List<Track> songs, int index) {
+                MainActivity.this.play(songs, index, false, mix.id);
+              }
+
               public void filter(String value) {
                 homeFilter = value;
                 render();
@@ -1193,59 +1198,80 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private void prefetchHomeMixes() {
-    try {
-      org.json.JSONObject smart = new SmartStore(this).preferences();
-      if (smart.optBoolean("focus") || smart.optBoolean("hide:Mood mixes")) return;
-    } catch (IllegalStateException unavailable) {
-      /* Existing Home remains available. */
-    }
-
-    if (destroyed || !tab.equals("Home") || !activeMix.isEmpty() || !activeCollection.isEmpty())
-      return;
+    if (destroyed || !tab.equals("Home") || !activeMix.isEmpty() || !activeCollection.isEmpty()) return;
+    try { if (new SmartStore(this).preferences().optBoolean("focus")) return; }
+    catch (IllegalStateException unavailable) { return; }
     String country = RegionPolicy.current(this);
-    final int epoch = discoveryEpoch;
-    List<MixCatalogue.Mix> mixes = MixCatalogue.mixes(country);
-    for (MixCatalogue.Mix mix : mixes.subList(0, Math.min(3, mixes.size()))) {
-      String key = country + ":" + mix.id;
-      if (mixCatalogue.fresh(mix, country, System.currentTimeMillis())
-          || attemptedMixes.contains(key)) continue;
-      attemptedMixes.add(key);
-      prefetchingMixes.add(key);
-      mixIo.execute(
-          () -> {
-            List<Track> songs = Collections.emptyList();
-            boolean failed = false;
-            try {
-              songs = MixCatalogue.songs(OnlineMusic.preview(mix.query, country));
-              if (songs.isEmpty()) failed = true;
-              // Cache only after the foreground generation check below.
-            } catch (Exception error) {
-              failed = true;
-              if (!Thread.currentThread().isInterrupted())
-                AppDiagnostics.record(this, "mix_refresh", error);
-            }
-            List<Track> found = songs;
-            boolean unavailable = failed;
-            main.post(
-                () -> {
-                  if (destroyed
-                      || epoch != discoveryEpoch
-                      || !country.equals(RegionPolicy.current(this))) return;
-                  prefetchingMixes.remove(key);
-                  if (!unavailable) mixCatalogue.save(mix, country, found);
-                  if (homePanel != null && !unavailable) homePanel.updateMix(mix, found);
-                  else if (!unavailable) invalidateTab("Home");
-                  if (activeMix.equals(mix.id)) {
-                    mixLoading = false;
-                    mixError =
-                        unavailable
-                            ? "Couldn’t refresh this mix. Check your connection and try again."
-                            : "";
-                    render();
-                  }
-                });
-          });
+    List<MixCatalogue.Mix> mixes = new ArrayList<>(MixCatalogue.discovery());
+    mixes.add(MixCatalogue.trending());
+    List<MixCatalogue.Mix> moods = MixCatalogue.mixes(country);
+    mixes.addAll(moods.subList(0, Math.min(2, moods.size())));
+    for (MixCatalogue.Mix mix : mixes) {
+      if (mixIo.getQueue().size() > 8) break;
+      scheduleMix(mix, false, false);
     }
+  }
+
+  private void scheduleMix(MixCatalogue.Mix mix, boolean force, boolean foreground) {
+    final String country = RegionPolicy.current(this);
+    final String scope = mixCatalogue.scope(mix, country, System.currentTimeMillis());
+    final String key = country + ":" + mix.id + ":" + scope;
+    if (!force && mixCatalogue.fresh(mix, country, System.currentTimeMillis())) return;
+    if (prefetchingMixes.contains(key)) {
+      if (foreground) { mixLoading = true; render(); }
+      return;
+    }
+    if (!foreground && attemptedMixes.contains(key)) return;
+    if (attemptedMixes.size() > 128) attemptedMixes.clear();
+    attemptedMixes.add(key); prefetchingMixes.add(key);
+    final int epoch = discoveryEpoch;
+    if (foreground) { mixLoading = true; mixError = ""; render(); }
+    mixIo.execute(() -> {
+      List<Track> songs = Collections.emptyList(); boolean failed = false;
+      try {
+        MusicInterests interests = MusicInterests.read(this);
+        songs = MixDiscovery.load(mix, interests, new PersonalDiscovery.Source() {
+          public List<Track> related(Track track) throws Exception { return OnlineMusic.relatedPreview(track); }
+          public List<Track> trending(String query) throws Exception { return TrendingMusic.load(query, country); }
+          public List<Track> search(String query) throws Exception { return OnlineMusic.preview(query, country); }
+        }, country, System.currentTimeMillis(), Collections.emptySet());
+        failed = songs.isEmpty();
+        if (!failed && epoch == discoveryEpoch && scope.equals(mixCatalogue.scope(mix, country, System.currentTimeMillis())))
+          mixCatalogue.save(mix, country, songs, scope);
+      } catch (Exception error) {
+        failed = true;
+        if (!Thread.currentThread().isInterrupted()) AppDiagnostics.record(this, "mix_refresh", error);
+      }
+      final List<Track> found = songs; final boolean unavailable = failed;
+      main.post(() -> {
+        prefetchingMixes.remove(key);
+        if (destroyed || epoch != discoveryEpoch || !country.equals(RegionPolicy.current(this))) return;
+        if (!scope.equals(mixCatalogue.scope(mix, country, System.currentTimeMillis()))) {
+          if (activeMix.equals(mix.id)) { mixLoading = false; loadMix(false); }
+          return;
+        }
+        if (homePanel != null && !unavailable) homePanel.updateMix(mix, found);
+        else if (!unavailable) invalidateTab("Home");
+        if (activeMix.equals(mix.id)) {
+          mixLoading = false;
+          mixError = unavailable ? (mix.id.equals("discover") ? "No unseen songs found yet. Try different interests or refresh later." : "Couldn’t find fresh songs. Saved picks stay available; try Refresh.") : "";
+          render();
+        }
+      });
+    });
+  }
+
+  private void tuneMix(MixCatalogue.Mix mix) {
+    MixTuner.show(this, mix, io, () -> {
+      if (destroyed) return;
+      discardInactivePages();
+      if (controller != null) {
+        Bundle args = new Bundle(); args.putString("mix_id", mix.id);
+        controller.sendCustomCommand(new SessionCommand(PlaybackService.MIX_CHANGED, Bundle.EMPTY), args);
+      }
+      if (activeMix.equals(mix.id)) { mixLoading = false; loadMix(true); }
+      else { render(); prefetchHomeMixes(); }
+    });
   }
 
   private void chooseRegion() {
@@ -2342,6 +2368,10 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private void play(List<Track> tracks, int index, boolean songOnly) {
+    play(tracks, index, songOnly, activeMix);
+  }
+
+  private void play(List<Track> tracks, int index, boolean songOnly, String discoveryMix) {
     if (controller == null) {
       message("Player is connecting. Try again in a moment.");
       return;
@@ -2360,10 +2390,13 @@ public final class MainActivity extends ComponentActivity {
     List<MediaItem> queue = new ArrayList<>();
     int first = Math.max(0, index - 10),
         end = Math.min(tracks.size(), first + QueuePolicy.MAX_ITEMS);
-    for (Track t : tracks.subList(first, end)) queue.add(t.mediaItem());
+    for (int at = first; at < end; at++)
+      queue.add(tracks.get(at).mediaItem(!discoveryMix.isEmpty() && at != index));
     Bundle queueArgs = new Bundle();
     queueArgs.putString("track", tracks.get(index).json().toString());
     queueArgs.putBoolean("play_song", songOnly);
+    queueArgs.putString("discovery_mix", songOnly ? "" : discoveryMix);
+    queueArgs.putString("discovery_country", RegionPolicy.current(this));
     queueArgs.putString(
         "session_query",
         !songOnly && tab.equals("Search") && searchCategory != null
@@ -2579,47 +2612,9 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private void loadMix(boolean force) {
-    if (activeMix.isEmpty() || mixLoading) return;
-    String country = RegionPolicy.current(this);
-    MixCatalogue.Mix mix = MixCatalogue.find(activeMix, country);
-    if (mix == null) return;
-    if (!force && mixCatalogue.fresh(mix, country, System.currentTimeMillis())) return;
-    if (prefetchingMixes.contains(country + ":" + mix.id)) {
-      mixLoading = true;
-      render();
-      return;
-    }
-    mixLoading = true;
-    mixError = "";
-    int generation = ++mixGeneration;
-    render();
-    io.execute(
-        () -> {
-          try {
-            List<Track> songs = MixCatalogue.songs(OnlineMusic.regionalSearch(mix.query, country));
-            if (songs.isEmpty()) throw new java.io.IOException("No songs in this mix");
-            main.post(
-                () -> {
-                  if (destroyed
-                      || generation != mixGeneration
-                      || !country.equals(RegionPolicy.current(this))) return;
-                  mixCatalogue.save(mix, country, songs);
-                  mixLoading = false;
-                  mixError = "";
-                  if (activeMix.equals(mix.id)) render();
-                });
-          } catch (Exception e) {
-            if (!Thread.currentThread().isInterrupted())
-              AppDiagnostics.record(this, "mix_refresh", e);
-            main.post(
-                () -> {
-                  if (destroyed || generation != mixGeneration) return;
-                  mixLoading = false;
-                  mixError = "Couldn’t refresh this mix. Check your connection and try again.";
-                  if (activeMix.equals(mix.id)) render();
-                });
-          }
-        });
+    if (activeMix.isEmpty() || mixLoading && !force) return;
+    MixCatalogue.Mix mix = MixCatalogue.find(activeMix, RegionPolicy.current(this));
+    if (mix != null) scheduleMix(mix, force, true);
   }
 
   private void renderCollection() {
@@ -2638,14 +2633,8 @@ public final class MainActivity extends ComponentActivity {
         && homeFeed != null
         && homeFeed.country.equals(country)) songs = MixCatalogue.songs(homeFeed.tracks);
     if (isMix && personalInterests != null) {
-      try {
-        songs =
-            personalInterests.rank(
-                SmartPolicy.rank(songs, new SmartStore(this), store.tracks("history"), false),
-                false);
-      } catch (IllegalStateException unavailable) {
-        /* Keep catalogue mixes usable. */
-      }
+      songs = new ArrayList<>(songs);
+      songs.removeIf(personalInterests::blocked);
     }
     List<Track> collection = new ArrayList<>(songs);
     boolean editable = activeCollection.startsWith("playlist:");
@@ -2653,7 +2642,7 @@ public final class MainActivity extends ComponentActivity {
         new PlaylistPanel(
             this,
             isMix ? mix.name : collectionTitle,
-            isMix ? mix.detail : "Your music, together.",
+            isMix ? mixCatalogue.description(mix, country) : "Your music, together.",
             collection,
             isMix,
             editable,
@@ -2715,9 +2704,9 @@ public final class MainActivity extends ComponentActivity {
                 showCollection(name, "playlist:" + name);
               }
 
-              public void retry() {
-                loadMix(true);
-              }
+              public void retry() { loadMix(true); }
+
+              public void tune() { if (mix != null) tuneMix(mix); }
             });
     content.addView(panel, new LinearLayout.LayoutParams(-1, 0, 1));
   }
@@ -2832,6 +2821,8 @@ public final class MainActivity extends ComponentActivity {
     invalidatePersonal();
     if (destroyed) return;
     discoveryEpoch++;
+    DiscoveryRevision.changed(this);
+    for (MixCatalogue.Mix mix : MixCatalogue.discovery()) mixCatalogue.tuned(mix);
     mixIo.getQueue().clear();
     homeGeneration++;
     mixGeneration++;

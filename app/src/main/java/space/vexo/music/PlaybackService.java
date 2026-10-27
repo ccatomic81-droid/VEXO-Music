@@ -28,6 +28,7 @@ public final class PlaybackService extends MediaSessionService {
       java.util.concurrent.Executors.newFixedThreadPool(2);
   public static final String FAIR_QUEUE = "space.vexo.music.FAIR_QUEUE";
   public static final String MANUAL_QUEUE = "space.vexo.music.MANUAL_QUEUE";
+  public static final String MIX_CHANGED = "space.vexo.music.MIX_CHANGED";
   public static final String START_RADIO = "space.vexo.music.START_RADIO";
   public static final String HIDE_RADIO = "space.vexo.music.HIDE_RADIO";
   private AutoplayManager autoplay;
@@ -43,6 +44,7 @@ public final class PlaybackService extends MediaSessionService {
 
   private void startRadio(Track seed) {
     if (!RadioPolicy.music(seed)) return;
+    MixSession.clear(this);
     try {
       SmartStore smart = new SmartStore(this);
       smart.preference("session_query", "");
@@ -160,6 +162,7 @@ public final class PlaybackService extends MediaSessionService {
       };
 
   private void clearUpcoming() {
+    MixSession.clear(this);
     autoplay.suspend();
     int index = player.getCurrentMediaItemIndex();
     if (index >= 0 && index < player.getMediaItemCount()) {
@@ -207,6 +210,7 @@ public final class PlaybackService extends MediaSessionService {
     player.setPlaybackSpeed(
         Math.max(.5f, Math.min(2f, getSharedPreferences("settings", 0).getFloat("speed", 1f))));
     QueueStore.Snapshot restored = new QueueStore(this).read();
+    if (restored.tracks.isEmpty()) MixSession.clear(this);
     if (!restored.tracks.isEmpty()) {
       java.util.List<MediaItem> items = new java.util.ArrayList<>();
       for (Track t : restored.tracks) items.add(t.mediaItem(t.recommended));
@@ -278,6 +282,37 @@ public final class PlaybackService extends MediaSessionService {
               }
             },
             seed -> {
+              MixCatalogue.Mix mix = MixSession.active(this);
+              if (mix != null) {
+                MusicInterests interests = MusicInterests.read(this);
+                java.util.Set<String> exclude = new java.util.HashSet<>();
+                // Snapshot is supplied on the player thread through queue's recent history below.
+                for (Track track : new QueueStore(this).read().tracks) {
+                  exclude.add(QueuePolicy.identity(track.url)); exclude.add(RadioPolicy.songKey(track));
+                }
+                PersonalDiscovery.Source source = new PersonalDiscovery.Source() {
+                  public java.util.List<Track> related(Track track) throws Exception { return OnlineMusic.relatedPreview(track); }
+                  public java.util.List<Track> trending(String query) throws Exception { return TrendingMusic.load(query, MixSession.country(PlaybackService.this)); }
+                  public java.util.List<Track> search(String query) throws Exception {
+                    OnlineMusic.Results page = OnlineMusic.search(query, MixSession.country(PlaybackService.this));
+                    java.util.List<Track> found = new java.util.ArrayList<>(page.tracks);
+                    if (page.next != null && found.size() < 60) {
+                      try { found.addAll(OnlineMusic.more(page).tracks); }
+                      catch (Exception unavailable) { if (Thread.currentThread().isInterrupted()) throw new InterruptedException(); }
+                    }
+                    return found;
+                  }
+                };
+                java.util.List<Track> found = MixDiscovery.load(mix, interests, source,
+                    MixSession.country(this), System.currentTimeMillis(), exclude);
+                if (found.size() < 5 && (mix.id.equals("daily") || mix.id.equals("discover"))) {
+                  java.util.List<Track> expanded = new java.util.ArrayList<>(found);
+                  try { expanded.addAll(source.related(seed)); } catch (Exception unavailable) { if (Thread.currentThread().isInterrupted()) throw new InterruptedException(); }
+                  found = MixDiscovery.select(mix, interests, expanded, MixDiscovery.Tuning.read(interests, mix.id),
+                      System.currentTimeMillis(), exclude, 30);
+                }
+                return found;
+              }
               Track anchor = radioStore.anchor();
               if (anchor == null) anchor = seed;
               java.util.List<Track> candidates =
@@ -311,10 +346,11 @@ public final class PlaybackService extends MediaSessionService {
             value ->
                 getSharedPreferences("playback_state", 0)
                     .edit()
-                    .putString("autoplay_status", radioStore.describe() + "\n" + value)
+                    .putString("autoplay_status", (MixSession.active(this) == null ? radioStore.describe() : "Mix · " + MixSession.active(this).name) + "\n" + value)
                     .apply(),
-            (seed, candidates, now, history) ->
-                smartSelect(
+            (seed, candidates, now, history) -> {
+              if (MixSession.active(this) != null) return MixQueue.select(candidates, now, history, 10);
+              return smartSelect(
                     radioStore.anchor() == null ? seed : radioStore.anchor(),
                     seed,
                     candidates,
@@ -323,7 +359,8 @@ public final class PlaybackService extends MediaSessionService {
                     new LibraryStore(this).tracks("favourites"),
                     radioStore.hidden(),
                     radioStore.mode(),
-                    10));
+                    10);
+            });
     autoplay.newQueue();
     if (getSharedPreferences("playback_state", 0).getBoolean("fair_queue", false))
       autoplay.suspend();
@@ -483,6 +520,7 @@ public final class PlaybackService extends MediaSessionService {
                                 .add(new SessionCommand(OFFLINE_SETTINGS, Bundle.EMPTY))
                                 .add(new SessionCommand(CROSSFADE_CHANGED, Bundle.EMPTY))
                                 .add(new SessionCommand(NEW_QUEUE, Bundle.EMPTY))
+                                .add(new SessionCommand(MIX_CHANGED, Bundle.EMPTY))
                                 .add(new SessionCommand(AUTOPLAY_CHANGED, Bundle.EMPTY))
                                 .add(new SessionCommand(CLEAR_UPCOMING, Bundle.EMPTY))
                                 .add(new SessionCommand(CLEAR_QUEUE, Bundle.EMPTY))
@@ -607,7 +645,17 @@ public final class PlaybackService extends MediaSessionService {
                       return Futures.immediateFuture(
                           new SessionResult(SessionResult.RESULT_SUCCESS));
                     }
+                    if (command.customAction.equals(MIX_CHANGED)) {
+                      MixCatalogue.Mix active = MixSession.active(PlaybackService.this);
+                      if (active != null && active.id.equals(args.getString("mix_id"))) {
+                        autoplay.suspend();
+                        SongRadio.pruneRecommendations(player);
+                        autoplay.newQueue(); autoplay.check();
+                      }
+                      return Futures.immediateFuture(new SessionResult(SessionResult.RESULT_SUCCESS));
+                    }
                     if (command.customAction.equals(NEW_QUEUE)) {
+                      MixSession.set(PlaybackService.this, args.getString("discovery_mix", ""), args.getString("discovery_country", ""));
                       try {
                         new SmartStore(PlaybackService.this)
                             .preference("session_query", args.getString("session_query", ""));
@@ -652,6 +700,7 @@ public final class PlaybackService extends MediaSessionService {
                           new SessionResult(SessionResult.RESULT_SUCCESS));
                     }
                     if (command.customAction.equals(CLEAR_QUEUE)) {
+                      MixSession.clear(PlaybackService.this);
                       autoplay.suspend();
                       player.stop();
                       player.clearMediaItems();

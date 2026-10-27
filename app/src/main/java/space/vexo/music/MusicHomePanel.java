@@ -23,10 +23,13 @@ import org.json.JSONObject;
 
 final class MusicHomePanel extends MusicSurface {
   private long avatarVersion;
-  private LinearLayout personalSlot;
+  private LinearLayout personalSlot, trendingShelf;
   private TextView greeting;
   private final Map<String, LinearLayout> mixCards;
   private FrameLayout profileAvatar;
+  private final MixCatalogue catalogue;
+  private final String country;
+  private final Listener listener;
 
   interface Listener {
     void collection(String str, String str2);
@@ -40,6 +43,8 @@ final class MusicHomePanel extends MusicSurface {
     void mix(MixCatalogue.Mix mix);
 
     void play(List<Track> list, int i);
+
+    default void mixPlay(MixCatalogue.Mix mix, List<Track> songs, int index) { play(songs, index); }
 
     void profile();
 
@@ -94,6 +99,14 @@ final class MusicHomePanel extends MusicSurface {
   }
 
   void updateMix(MixCatalogue.Mix mix, List<Track> list) {
+    if (mix.id.equals("trending") && trendingShelf != null) {
+      trendingShelf.removeAllViews();
+      for (int i = 0; i < Math.min(6, list.size()); i++) {
+        final int at = i;
+        songCard(trendingShelf, list.get(i), () -> listener.mixPlay(mix, list, at));
+      }
+      return;
+    }
     LinearLayout linearLayout = this.mixCards.get(mix.id);
     if (linearLayout == null || list.isEmpty()) {
       return;
@@ -113,6 +126,9 @@ final class MusicHomePanel extends MusicSurface {
       String str3,
       final Listener listener) {
     super(context);
+    this.catalogue = mixCatalogue;
+    this.country = str;
+    this.listener = listener;
     boolean zEnabled;
     boolean z2;
     JSONObject jSONObject;
@@ -449,6 +465,23 @@ final class MusicHomePanel extends MusicSurface {
                   || regionalFeed.tracks.isEmpty())
               ? false
               : true;
+      MixCatalogue.Mix trending = MixCatalogue.trending();
+      section("Trending Music", "Explore", () -> listener.mix(trending));
+      body.addView(text("TikTok-inspired · full songs", 12, Visuals.MUTED, false));
+      gap(body, 12);
+      LinearLayout trendingCards = shelf();
+      trendingShelf = trendingCards;
+      List<Track> trendSongs = mixCatalogue.cached(trending, str);
+      if (trendSongs.isEmpty()) {
+        card(trendingCards, trending.name, trending.detail, trendSongs, trending.color, () -> listener.mix(trending));
+        mixCards.put(trending.id, (LinearLayout) trendingCards.getChildAt(0));
+      } else {
+        for (int trend = 0; trend < Math.min(6, trendSongs.size()); trend++) {
+          final int at = trend;
+          songCard(trendingCards, trendSongs.get(at), () -> listener.mixPlay(trending, trendSongs, at));
+        }
+      }
+      gap(body, 26);
       String str9 = (z4 && regionalFeed.ranked) ? "Trending near you" : "Regional viral picks";
       String str10 = z ? "Updating…" : "Refresh";
       Objects.requireNonNull(listener);
@@ -601,6 +634,13 @@ final class MusicHomePanel extends MusicSurface {
             part.text(
                 "Showing saved music. Refresh to try discovery again.", 12, Visuals.MUTED, false));
       }
+    }
+    part.gap(part.body, 20);
+    part.section("Your daily soundtrack", null, null);
+    LinearLayout dailyCards = part.shelf();
+    for (MixCatalogue.Mix mix : MixCatalogue.discovery()) {
+      part.card(dailyCards, mix.name, mix.detail, catalogue.cached(mix, country), mix.color, () -> listener.mix(mix));
+      mixCards.put(mix.id, (LinearLayout) dailyCards.getChildAt(dailyCards.getChildCount() - 1));
     }
     part.gap(part.body, 20);
     while (part.body.getChildCount() > 0) {

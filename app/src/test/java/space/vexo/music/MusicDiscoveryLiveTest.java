@@ -12,6 +12,26 @@ import org.robolectric.annotation.Config;
 @Config(sdk = 35)
 public class MusicDiscoveryLiveTest {
   @Test
+  public void trendingAndPersonalizedMixesReturnActualSongsWithoutAccountLogin() throws Exception {
+    Assume.assumeTrue("1".equals(System.getenv("VEXO_MUSIC_LIVE_TEST")));
+    Track seed = OnlineMusic.preview("Ed Sheeran Perfect", "LK").stream().filter(RadioPolicy::music).findFirst().orElseThrow();
+    MusicInterests interests = MusicInterests.of(Arrays.asList(seed), Collections.emptyList(), Collections.emptyList(),
+        YouTubeTaste.Snapshot.empty(), new org.json.JSONObject().put("language", "English"), new org.json.JSONObject(), Collections.emptySet());
+    PersonalDiscovery.Source source = new PersonalDiscovery.Source() {
+      public List<Track> related(Track t) throws Exception { return OnlineMusic.relatedPreview(t); }
+      public List<Track> search(String q) throws Exception { return OnlineMusic.preview(q, "LK"); }
+      public List<Track> trending(String q) throws Exception { return TrendingMusic.load(q, "LK"); }
+    };
+    for (String id : new String[]{"daily", "calm", "trending", "discover"}) {
+      List<Track> songs = MixDiscovery.load(MixCatalogue.find(id, "LK"), interests, source, "LK", System.currentTimeMillis(), Collections.emptySet());
+      assertTrue("Expected playable mix: " + id, songs.size() >= 2);
+      assertTrue(songs.stream().allMatch(RadioPolicy::music));
+      if (id.equals("discover")) assertTrue(songs.stream().noneMatch(t -> RadioPolicy.songKey(t).equals(RadioPolicy.songKey(seed))));
+      System.out.println("Live " + id + ": " + songs.size() + " real tracks");
+    }
+  }
+
+  @Test
   public void selectedSongRadioProducesDistinctRelatedQueueWithoutSearchResults() throws Exception {
     Assume.assumeTrue("1".equals(System.getenv("VEXO_MUSIC_LIVE_TEST")));
     Track seed = OnlineMusic.preview("Ed Sheeran Perfect", "LK").stream()

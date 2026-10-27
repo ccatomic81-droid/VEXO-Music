@@ -24,12 +24,14 @@ final class SmartStore {
   private static final Object LOCK = new Object();
   private final android.content.SharedPreferences prefs;
   private final Codec codec;
+  private final Context context;
 
   SmartStore(Context context) {
     this(context, new DeviceCodec());
   }
 
   SmartStore(Context context, Codec codec) {
+    this.context = context.getApplicationContext();
     prefs = context.getSharedPreferences("smart_private_v1", Context.MODE_PRIVATE);
     this.codec = codec;
   }
@@ -104,6 +106,7 @@ final class SmartStore {
               "vault:" + bucket,
               codec.encode(new JSONObject().put("bucket", bucket).put("data", data).toString()))
           .commit()) throw new java.io.IOException("Storage full");
+      if (bucket.equals("taste") || bucket.equals("session") || bucket.equals("feedback") || bucket.equals("preferences")) DiscoveryRevision.changed(context);
     } catch (Exception e) {
       throw new IllegalStateException(
           "Could not save private music data. Free storage and try again.", e);
@@ -362,6 +365,7 @@ final class SmartStore {
       preference("learning_cleared_at", System.currentTimeMillis());
       write("taste", new JSONObject());
       write("session", new JSONObject());
+      MixCatalogue.clearDerived(context);
     }
   }
 

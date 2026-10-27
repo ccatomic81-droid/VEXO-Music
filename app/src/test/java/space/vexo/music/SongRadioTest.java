@@ -38,6 +38,21 @@ public class SongRadioTest {
   }
 
   @Test
+  public void tuningPrunesAutomaticSongsWithoutChangingPositionPauseOrRepeat() {
+    Context context = RuntimeEnvironment.getApplication();
+    CrossfadePlayer player = new CrossfadePlayer(context, new DefaultDataSource.Factory(context));
+    try {
+      Track current = AutoplayManagerTest.song("current"), manual = AutoplayManagerTest.song("manual");
+      player.setMediaItems(Arrays.asList(current.mediaItem(), manual.mediaItem(), AutoplayManagerTest.song("old-auto").mediaItem(true)), 0, 49234);
+      player.pause(); player.setRepeatMode(Player.REPEAT_MODE_ALL);
+      SongRadio.pruneRecommendations(player);
+      assertEquals(2, player.getMediaItemCount());assertEquals(manual.url, player.getMediaItemAt(1).mediaId);
+      assertEquals(49234, player.getCurrentPosition());assertFalse(player.getPlayWhenReady());
+      assertEquals(Player.REPEAT_MODE_ALL, player.getRepeatMode());
+    } finally { player.release(); }
+  }
+
+  @Test
   public void selectedSearchSongReplacesOldResultsAndStartsAtTheBeginning() {
     Context context = RuntimeEnvironment.getApplication();
     CrossfadePlayer player = new CrossfadePlayer(context, new DefaultDataSource.Factory(context));

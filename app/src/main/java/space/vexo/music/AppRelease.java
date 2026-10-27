@@ -7,13 +7,12 @@ import org.json.*;
 /** A release feed contains metadata only. Downloads always need a user tap. */
 final class AppRelease {
   static final String NOTES =
-      "• Artwork reloads after repair, retries temporary failures and uses song thumbnail fallbacks.\n"
-          + "• Session-aware music discovery with optional YouTube imports.\n"
-          + "• Manual queue priority, recommendation labels and shuffle-safe Play next.\n"
-          + "• Simpler Home with your greeting, profile and compact collection cards.\n"
-          + "• Cleaner Search with vertical recent searches and a rounded search field.\n"
-          + "• Clearer navigation with all five destinations retained.\n"
-          + "• MindRadio, Pure Song, Smart Experience, crossfade and offline music remain.\n"
+      "• TikTok-inspired Trending Music with full-song playback and clear source labels.\n"
+          + "• Personalized mood mixes, a Daily Mix and New to you discovery.\n"
+          + "• Tune My Mix controls for familiarity, language, mood and recent-song avoidance.\n"
+          + "• On-device learning from audible listening and manual skips, with privacy controls.\n"
+          + "• Continuous mix playback and smart queue refills; your song and manual queue stay put.\n"
+          + "• Existing VEXO player, crossfade, MindRadio, PureSong and offline features remain.\n"
           + "• Update over your existing VEXO app to keep your music and settings.";
   final int code;
   final String version, summary, url;

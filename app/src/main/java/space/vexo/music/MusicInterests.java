@@ -42,6 +42,18 @@ final class MusicInterests {
     add(all, liked, 28);
     add(all, imported, 24);
     add(all, playlists, 14);
+    if (!preferences.optBoolean("pause_history") && preferences.optBoolean("learn_listening", true)) {
+      List<Track> learnedSeeds = new ArrayList<>();
+      Iterator<String> learnedKeys = this.learned.keys();
+      while (learnedKeys.hasNext()) {
+        JSONObject entry = this.learned.optJSONObject(learnedKeys.next());
+        if (entry != null && entry.optJSONObject("track") != null && entry.optDouble("score") > 0
+            && System.currentTimeMillis() - entry.optLong("at") < 90 * 86400000L)
+          learnedSeeds.add(Track.from(entry.optJSONObject("track")));
+      }
+      learnedSeeds.sort((a,b) -> Integer.compare(TastePolicy.bonus(b, this.learned, System.currentTimeMillis()), TastePolicy.bonus(a, this.learned, System.currentTimeMillis())));
+      add(all, learnedSeeds.subList(0, Math.min(30, learnedSeeds.size())), 10);
+    }
     if (!preferences.optBoolean("pause_history") && preferences.optBoolean("learn_listening", true))
       add(all, history.subList(0, Math.min(20, history.size())), 8);
     favourites = new ArrayList<>(liked);

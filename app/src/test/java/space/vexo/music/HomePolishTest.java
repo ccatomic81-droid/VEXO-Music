@@ -77,7 +77,7 @@ public class HomePolishTest {
         LinearLayout slot = (LinearLayout) field(panel, "personalSlot");
         HorizontalScrollView shelf = null;
         for (int i = 0; i < slot.getChildCount(); i++)
-          if (slot.getChildAt(i) instanceof HorizontalScrollView) shelf = (HorizontalScrollView) slot.getChildAt(i);
+          if (shelf == null && slot.getChildAt(i) instanceof HorizontalScrollView) shelf = (HorizontalScrollView) slot.getChildAt(i);
         assertNotNull(shelf);
         LinearLayout cards = (LinearLayout) shelf.getChildAt(0);
         assertTrue("Both covers must fit without clipping the second", cards.getChildAt(1).getRight() <= shelf.getWidth());
