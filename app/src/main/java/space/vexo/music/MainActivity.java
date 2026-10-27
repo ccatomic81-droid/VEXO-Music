@@ -475,6 +475,8 @@ public final class MainActivity extends ComponentActivity {
     mixIo.shutdownNow();
     mixGeneration++;
     if (updateDialog != null) updateDialog.dismiss();
+    if (updateTransfer != null) updateTransfer.cancel();
+    if (updateProgressDialog != null) updateProgressDialog.dismiss();
     OfflineLibrary.get(this).removeListener(offlineChanged);
     searchGeneration++;
     cancelSearchWork();
@@ -3811,6 +3813,14 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private boolean updateDownloading;
+  private UpdateInstaller.Transfer updateTransfer;
+  private Dialog updateProgressDialog;
+
+  private void closeUpdateProgress() {
+    if (updateProgressDialog != null) updateProgressDialog.dismiss();
+    updateProgressDialog = null;
+    updateTransfer = null;
+  }
 
   private void downloadVerifiedUpdate(AppRelease release) {
     if (updateDownloading) {
@@ -3822,15 +3832,33 @@ public final class MainActivity extends ComponentActivity {
       return;
     }
     updateDownloading = true;
-    message("Downloading and verifying the VEXO update…");
+    Dialog progressDialog = new Dialog(this, android.R.style.Theme_Material_NoActionBar);
+    UpdateProgressPanel panel = new UpdateProgressPanel(this, release.version, () -> {
+      if (updateTransfer != null) updateTransfer.cancel();
+      progressDialog.dismiss();
+      message("Update download cancelled");
+    });
+    UpdateInstaller.Transfer transfer = new UpdateInstaller.Transfer((downloaded, total, verifying) ->
+        main.post(() -> {
+          if (!destroyed && updateTransfer != null && !updateTransfer.cancelled && progressDialog.isShowing())
+            panel.progress(downloaded, total, verifying);
+        }));
+    updateTransfer = transfer;
+    updateProgressDialog = progressDialog;
+    progressDialog.setCancelable(false);
+    progressDialog.setCanceledOnTouchOutside(false);
+    PanelWindow.content(progressDialog, panel);
+    progressDialog.show();
+    PanelWindow.expand(progressDialog);
     io.execute(
         () -> {
           try {
-            java.io.File file = UpdateInstaller.prepare(this, release);
+            java.io.File file = UpdateInstaller.prepare(this, release, transfer);
             main.post(
                 () -> {
                   updateDownloading = false;
-                  if (destroyed || isFinishing()) return;
+                  closeUpdateProgress();
+                  if (destroyed || isFinishing() || transfer.cancelled) return;
                   new AlertDialog.Builder(this)
                       .setTitle("Verified update ready")
                       .setMessage(
@@ -3869,14 +3897,18 @@ public final class MainActivity extends ComponentActivity {
                       .show();
                 });
           } catch (Exception error) {
-            AppDiagnostics.record(this, "verified_update", error);
+            if (!transfer.cancelled) AppDiagnostics.record(this, "verified_update", error);
             main.post(
                 () -> {
                   updateDownloading = false;
-                  if (!destroyed)
-                    message(
-                        "Update verification failed. Existing app and data were kept. Try again"
-                            + " later.");
+                  closeUpdateProgress();
+                  if (destroyed || isFinishing() || transfer.cancelled) return;
+                  new AlertDialog.Builder(this)
+                      .setTitle("Update couldn’t finish")
+                      .setMessage("Check your connection and try again. Your existing app, music and settings are safe.")
+                      .setNegativeButton("Later", null)
+                      .setPositiveButton("Retry", (d, w) -> downloadVerifiedUpdate(release))
+                      .show();
                 });
           }
         });

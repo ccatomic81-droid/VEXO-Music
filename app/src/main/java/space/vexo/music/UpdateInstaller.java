@@ -14,7 +14,53 @@ import okhttp3.*;
  * installer.
  */
 final class UpdateInstaller {
+  interface Progress {
+    void changed(long downloaded, long total, boolean verifying);
+  }
+
+  static final class Transfer {
+    final Progress progress;
+    volatile boolean cancelled;
+    private Call call;
+    private long lastReport;
+
+    Transfer(Progress progress) {
+      this.progress = progress;
+    }
+
+    synchronized void cancel() {
+      cancelled = true;
+      if (call != null) call.cancel();
+    }
+
+    synchronized void attach(Call call) throws InterruptedIOException {
+      this.call = call;
+      if (cancelled) call.cancel();
+      check();
+    }
+
+    void check() throws InterruptedIOException {
+      if (cancelled || Thread.currentThread().isInterrupted())
+        throw new InterruptedIOException("Update cancelled");
+    }
+
+    void report(long downloaded, long total, boolean verifying) throws InterruptedIOException {
+      check();
+      long now = android.os.SystemClock.elapsedRealtime();
+      if (progress != null
+          && (downloaded == 0 || downloaded == total || verifying || now - lastReport >= 100)) {
+        lastReport = now;
+        progress.changed(downloaded, total, verifying);
+      }
+    }
+  }
+
   static File prepare(Context context, AppRelease release) throws Exception {
+    return prepare(context, release, new Transfer(null));
+  }
+
+  static File prepare(Context context, AppRelease release, Transfer transfer) throws Exception {
+    transfer.check();
     File directory = new File(context.getCacheDir(), "verified-updates");
     if (!directory.isDirectory() && !directory.mkdirs())
       throw new IOException("Update storage unavailable");
@@ -26,8 +72,10 @@ final class UpdateInstaller {
             .followSslRedirects(false)
             .callTimeout(3, java.util.concurrent.TimeUnit.MINUTES)
             .build();
-    if (!target.isFile() || !matches(target, release)) download(release, client, target);
+    if (!target.isFile() || !matches(target, release)) download(release, client, target, transfer);
+    transfer.report(release.size, release.size, true);
     verifyArchive(context, target, release);
+    transfer.check();
     return target;
   }
 
@@ -43,6 +91,12 @@ final class UpdateInstaller {
   }
 
   static void download(AppRelease release, OkHttpClient client, File target) throws Exception {
+    download(release, client, target, new Transfer(null));
+  }
+
+  static void download(AppRelease release, OkHttpClient client, File target, Transfer transfer)
+      throws Exception {
+    transfer.check();
     if (!release.authenticated
         || release.size < 1
         || release.size > ReleaseSecurity.MAX_APK
@@ -63,8 +117,10 @@ final class UpdateInstaller {
     try {
       MessageDigest digest = MessageDigest.getInstance("SHA-256");
       long total = 0;
-      try (Response response =
-          client.newCall(new Request.Builder().url(release.url).build()).execute()) {
+      Call call = client.newCall(new Request.Builder().url(release.url).build());
+      transfer.attach(call);
+      transfer.report(0, release.size, false);
+      try (Response response = call.execute()) {
         if (response.code() != 200
             || response.body() == null
             || !response.request().url().equals(url))
@@ -77,16 +133,20 @@ final class UpdateInstaller {
           byte[] b = new byte[16384];
           int n;
           while ((n = in.read(b)) != -1) {
+            transfer.check();
             total += n;
             if (total > release.size) throw new IOException("Update exceeds signed size");
             out.write(b, 0, n);
             digest.update(b, 0, n);
+            transfer.report(total, release.size, false);
           }
           out.getFD().sync();
         }
       }
+      transfer.report(total, release.size, true);
       if (total != release.size || !release.sha256.equals(ReleaseSecurity.hex(digest.digest())))
         throw new IOException("Downloaded update failed integrity verification");
+      transfer.check();
       if (!temporary.renameTo(target)) throw new IOException("Could not finish verified download");
     } finally {
       if (temporary.isFile()) temporary.delete();
