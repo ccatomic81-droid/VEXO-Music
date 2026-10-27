@@ -56,5 +56,8 @@
     "findings": [],
     "scope": "Known OSV advisories for resolved Maven versions; not a complete security audit"
   },
-  "guavaAndroidVersion": "33.7.2-android"
+  "guavaAndroidVersion": "33.7.2-android",
+  "githubRelease": "https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.26.0",
+  "githubReleaseWorkflow": 40543355031,
+  "githubReleasePublished": true
 }
