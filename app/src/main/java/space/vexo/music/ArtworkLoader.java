@@ -94,8 +94,8 @@ final class ArtworkLoader {
     // Keep the outline independent of Glide's mutable placeholder bounds.
     if (view.getBackground() == null)
       view.setBackground(Visuals.round(Visuals.PANEL,
-          8 * view.getResources().getDisplayMetrics().density));
-    view.setScaleType(ImageView.ScaleType.FIT_CENTER);
+          6 * view.getResources().getDisplayMetrics().density));
+    view.setScaleType(ImageView.ScaleType.CENTER_CROP);
     view.setClipToOutline(true);
     start(view, load);
   }
@@ -118,7 +118,7 @@ final class ArtworkLoader {
     for (int i = sources.size() - 1; i >= 0; i--) {
       final boolean last = i == sources.size() - 1;
       RequestBuilder<Bitmap> next = Glide.with(view).asBitmap().load(sources.get(i))
-          .override(size, size).fitCenter().dontAnimate()
+          .override(size, size).transform(new CoverArtwork()).dontAnimate()
           .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
           .placeholder(load.placeholder).error(load.placeholder)
           .listener(new RequestListener<Bitmap>() {

@@ -25,7 +25,7 @@ class MusicSurface extends ScrollView {
     setClipToPadding(false);
     LinearLayout linearLayoutColumn = column();
     this.body = linearLayoutColumn;
-    linearLayoutColumn.setPadding(dp(20.0f), dp(14.0f), dp(20.0f), dp(28.0f));
+    linearLayoutColumn.setPadding(dp(16), dp(8), dp(16), dp(24));
     addView(linearLayoutColumn);
   }
 
@@ -69,7 +69,7 @@ class MusicSurface extends ScrollView {
     if (z) {
       textViewText.setBackground(Visuals.round(Visuals.LIME, dp(24.0f)));
     } else {
-      Glass.apply(textViewText, 22.0f, false);
+      textViewText.setBackground(Visuals.round(0xff292929, dp(24)));
     }
     textViewText.setOnClickListener(
         new View.OnClickListener() {
@@ -84,9 +84,9 @@ class MusicSurface extends ScrollView {
   void section(String str, String str2, final Runnable runnable) {
     LinearLayout linearLayoutRow = row();
     linearLayoutRow.addView(
-        text(str, 21, Visuals.TEXT, true), new LinearLayout.LayoutParams(0, -2, 1.0f));
+        text(str, 22, Visuals.TEXT, true), new LinearLayout.LayoutParams(0, -2, 1.0f));
     if (str2 != null) {
-      TextView textViewText = text(str2, 12, Visuals.LIME, true);
+      TextView textViewText = text(str2, 12, Visuals.MUTED, true);
       textViewText.setGravity(17);
       textViewText.setPadding(dp(8.0f), dp(14.0f), 0, dp(14.0f));
       textViewText.setMinHeight(dp(48.0f));
@@ -100,7 +100,7 @@ class MusicSurface extends ScrollView {
       linearLayoutRow.addView(textViewText);
     }
     this.body.addView(linearLayoutRow);
-    gap(this.body, 12);
+    gap(this.body, 8);
   }
 
   FrameLayout cover(String str, List<Track> list, int i, int i2) {
@@ -109,7 +109,7 @@ class MusicSurface extends ScrollView {
     FrameLayout frameLayout = new FrameLayout(getContext());
     GradientDrawable gradientDrawable =
         new GradientDrawable(GradientDrawable.Orientation.TL_BR, new int[] {i2, -14670285});
-    gradientDrawable.setCornerRadius(dp(12.0f));
+    gradientDrawable.setCornerRadius(dp(6));
     frameLayout.setBackground(gradientDrawable);
     frameLayout.setClipToOutline(true);
     Iterator<Track> it = list.iterator();
@@ -146,7 +146,27 @@ class MusicSurface extends ScrollView {
   }
 
   LinearLayout shelf() {
-    HorizontalScrollView horizontalScrollView = new HorizontalScrollView(getContext());
+    HorizontalScrollView horizontalScrollView = new HorizontalScrollView(getContext()) {
+      @Override protected void onMeasure(int w, int h) {
+        int available = MeasureSpec.getSize(w) - getPaddingLeft() - getPaddingRight();
+        int side = Math.min(dp(176), Math.max(dp(96), (available - dp(12)) / 2));
+        if (getChildCount() > 0 && getChildAt(0) instanceof LinearLayout) {
+          LinearLayout cards = (LinearLayout) getChildAt(0);
+          for (int i = 0; i < cards.getChildCount(); i++) {
+            View card = cards.getChildAt(i);
+            android.view.ViewGroup.LayoutParams cp = card.getLayoutParams();
+            cp.width = side;
+            if (card instanceof LinearLayout && ((LinearLayout) card).getChildCount() > 0) {
+              View cover = ((LinearLayout) card).getChildAt(0);
+              android.view.ViewGroup.LayoutParams art = cover.getLayoutParams();
+              art.width = side;
+              art.height = side;
+            }
+          }
+        }
+        super.onMeasure(w, h);
+      }
+    };
     horizontalScrollView.setHorizontalScrollBarEnabled(false);
     horizontalScrollView.setClipToPadding(false);
     LinearLayout linearLayoutRow = row();
@@ -198,7 +218,7 @@ class MusicSurface extends ScrollView {
         });
     LinearLayout.LayoutParams layoutParams =
         new LinearLayout.LayoutParams(dp((float) iShelfCardSize), -2);
-    layoutParams.setMargins(0, 0, dp(14.0f), 0);
+    layoutParams.setMargins(0, 0, dp(12), 0);
     linearLayout.addView(linearLayoutColumn, layoutParams);
   }
 }

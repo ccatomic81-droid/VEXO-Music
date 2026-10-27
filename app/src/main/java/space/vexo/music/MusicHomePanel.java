@@ -63,7 +63,7 @@ final class MusicHomePanel extends MusicSurface {
     TextView textView = this.greeting;
     if (textView != null) {
       if (userProfile.complete()) {
-        str = userProfile.greeting() + ", " + userProfile.name();
+        str = userProfile.greeting() + ", " + userProfile.name().split(" ", 2)[0];
       } else {
         str = "Made for your day.";
       }
@@ -137,18 +137,14 @@ final class MusicHomePanel extends MusicSurface {
           }
         });
     LinearLayout heading = column();
-    TextView brand = text("VEXO MUSIC", 10, Visuals.MUTED, true);
-    brand.setLetterSpacing(.12f);
-    heading.addView(brand);
-    gap(heading, 6);
-    this.greeting = text("", 26, Visuals.TEXT, true);
-    this.greeting.setMaxLines(3);
+    this.greeting = text("", 22, Visuals.TEXT, true);
+    this.greeting.setMaxLines(2);
     this.greeting.setEllipsize(TextUtils.TruncateAt.END);
     heading.addView(this.greeting);
-    linearLayoutRow.addView(heading, new LinearLayout.LayoutParams(0, -2, 1));
-    LinearLayout.LayoutParams avatarParams = new LinearLayout.LayoutParams(dp(48), dp(48));
-    avatarParams.leftMargin = dp(12);
+    LinearLayout.LayoutParams avatarParams = new LinearLayout.LayoutParams(dp(40), dp(40));
+    avatarParams.rightMargin = dp(12);
     linearLayoutRow.addView(this.profileAvatar, avatarParams);
+    linearLayoutRow.addView(heading, new LinearLayout.LayoutParams(0, -2, 1));
     String str4 = RegionPolicy.name(str) + " ▾";
     Objects.requireNonNull(listener);
     TextView textViewAction =
@@ -162,7 +158,11 @@ final class MusicHomePanel extends MusicSurface {
               }
             });
     textViewAction.setTextSize(11.0f);
-    textViewAction.setPadding(dp(10.0f), dp(12.0f), dp(10.0f), dp(12.0f));
+    textViewAction.setPadding(0, dp(8), dp(8), dp(8));
+    textViewAction.setBackground(null);
+    textViewAction.setTextColor(Visuals.MUTED);
+    textViewAction.setMinHeight(dp(48));
+    textViewAction.setGravity(android.view.Gravity.START | android.view.Gravity.CENTER_VERTICAL);
     textViewAction.setMaxWidth(dp(108.0f));
     textViewAction.setMaxLines(2);
     textViewAction.setContentDescription("Change music region. Current: " + RegionPolicy.name(str));
@@ -178,7 +178,7 @@ final class MusicHomePanel extends MusicSurface {
           }
         });
     this.body.addView(linearLayoutRow);
-    gap(this.body, 16);
+    gap(this.body, 8);
     try {
       zEnabled = new PureSong(new SmartStore(context)).enabled();
     } catch (IllegalStateException unused) {
@@ -190,14 +190,14 @@ final class MusicHomePanel extends MusicSurface {
     linearLayoutRow3.setGravity(17);
     linearLayoutRow3.setMinimumHeight(dp(48.0f));
     linearLayoutRow3.setPadding(dp(12.0f), 0, dp(14.0f), 0);
-    linearLayoutRow3.setBackground(Visuals.round(zEnabled ? -14338778 : Visuals.PANEL, dp(24.0f)));
+    linearLayoutRow3.setBackground(null);
     linearLayoutRow3.setSelected(zEnabled);
     linearLayoutRow3.addView(
         new Visuals.Icon(context, "intro", zEnabled ? Visuals.LIME : Visuals.MUTED),
-        new LinearLayout.LayoutParams(dp(28.0f), dp(28.0f)));
+        new LinearLayout.LayoutParams(dp(20), dp(20)));
     TextView textViewText2 =
         text(
-            zEnabled ? "Intros ON" : "Intros OFF",
+            zEnabled ? "Skip intros" : "Intros off",
             12,
             zEnabled ? Visuals.LIME : Visuals.MUTED,
             true);
@@ -225,7 +225,6 @@ final class MusicHomePanel extends MusicSurface {
     linearLayoutRow2.addView(linearLayoutRow3);
     linearLayoutRow2.addView(icon, new LinearLayout.LayoutParams(dp(48), dp(48)));
     personalize();
-    gap(this.body, 18);
     HorizontalScrollView horizontalScrollView = new HorizontalScrollView(context);
     horizontalScrollView.setHorizontalScrollBarEnabled(false);
     LinearLayout linearLayoutRow4 = row();
@@ -245,6 +244,11 @@ final class MusicHomePanel extends MusicSurface {
                   listener.filter(str6);
                 }
               });
+      textViewAction2.setTextSize(13);
+      textViewAction2.setPadding(dp(16), dp(6), dp(16), dp(6));
+      textViewAction2.setMinHeight(dp(48));
+      textViewAction2.setBackground(new android.graphics.drawable.InsetDrawable(
+          Visuals.round(str6.equals(str3) ? Visuals.LIME : 0xff292929, dp(18)), 0, dp(6), 0, dp(6)));
       LinearLayout.LayoutParams layoutParams3 = new LinearLayout.LayoutParams(-2, -2);
       layoutParams3.setMargins(0, 0, dp(8.0f), 0);
       linearLayoutRow4.addView(textViewAction2, layoutParams3);
@@ -255,9 +259,9 @@ final class MusicHomePanel extends MusicSurface {
     String str7 = str5;
     horizontalScrollView.addView(linearLayoutRow4);
     this.body.addView(horizontalScrollView);
-    gap(this.body, 12);
+    gap(this.body, 2);
     this.body.addView(linearLayoutRow2);
-    gap(this.body, 16);
+    gap(this.body, 8);
     personalSlot = column();
     if (!str3.equals("Playlists")) body.addView(personalSlot);
     Map<String, List<View>> linkedHashMap = new LinkedHashMap<>();
@@ -571,8 +575,7 @@ final class MusicHomePanel extends MusicSurface {
     personalSlot.setVisibility(View.VISIBLE);
     MusicSurface part = new MusicSurface(getContext());
     part.section("Made for you", loading ? "Updating…" : "Refresh", refresh);
-    part.body.addView(part.text(interests.description(), 12, Visuals.MUTED, false));
-    part.gap(part.body, 12);
+
     if (songs.isEmpty()) {
       part.body.addView(
           part.text(
@@ -590,8 +593,7 @@ final class MusicHomePanel extends MusicSurface {
         final int position = i;
         songCard(cards, songs.get(i), () -> play.play(songs, position));
       }
-      part.gap(part.body, 12);
-      part.body.addView(part.action("Start your radio", true, radio));
+
       if (failed) {
         part.gap(part.body, 8);
         part.body.addView(
@@ -599,7 +601,7 @@ final class MusicHomePanel extends MusicSurface {
                 "Showing saved music. Refresh to try discovery again.", 12, Visuals.MUTED, false));
       }
     }
-    part.gap(part.body, 24);
+    part.gap(part.body, 20);
     while (part.body.getChildCount() > 0) {
       View child = part.body.getChildAt(0);
       part.body.removeViewAt(0);
@@ -794,21 +796,6 @@ final class MusicHomePanel extends MusicSurface {
     LinearLayout linearLayoutColumn = column();
     FrameLayout frameLayoutCover =
         cover(track.title, Collections.singletonList(track), shelfCardSize(), -12165769);
-    Visuals.Icon icon = new Visuals.Icon(getContext(), "play", Visuals.BG);
-    icon.setGlyphSize(18);
-    icon.setBackground(Visuals.round(Visuals.LIME, dp(18)));
-    FrameLayout.LayoutParams layoutParams =
-        new FrameLayout.LayoutParams(dp(36.0f), dp(36.0f), 8388693);
-    layoutParams.setMargins(0, 0, dp(8.0f), dp(8.0f));
-    frameLayoutCover.addView(icon, layoutParams);
-    icon.setContentDescription("Play " + track.title);
-    icon.setOnClickListener(
-        new View.OnClickListener() {
-          @Override // android.view.View.OnClickListener
-          public final void onClick(View view) {
-            runnable.run();
-          }
-        });
     linearLayoutColumn.addView(frameLayoutCover);
     gap(linearLayoutColumn, 9);
     TextView textViewText = text(track.title, 14, Visuals.TEXT, true);
@@ -817,7 +804,7 @@ final class MusicHomePanel extends MusicSurface {
     linearLayoutColumn.addView(textViewText);
     gap(linearLayoutColumn, 5);
     TextView textViewText2 = text(track.artist, 12, Visuals.MUTED, false);
-    textViewText2.setMaxLines(2);
+    textViewText2.setMaxLines(1);
     textViewText2.setEllipsize(TextUtils.TruncateAt.END);
     linearLayoutColumn.addView(textViewText2);
     linearLayoutColumn.setOnClickListener(
@@ -830,7 +817,7 @@ final class MusicHomePanel extends MusicSurface {
     linearLayoutColumn.setContentDescription("Play " + track.title + " by " + track.artist);
     LinearLayout.LayoutParams layoutParams2 =
         new LinearLayout.LayoutParams(dp((float) shelfCardSize()), -2);
-    layoutParams2.setMargins(0, 0, dp(14.0f), 0);
+    layoutParams2.setMargins(0, 0, dp(12), 0);
     linearLayout.addView(linearLayoutColumn, layoutParams2);
   }
 }

@@ -64,7 +64,7 @@ public class ArtworkLoaderTest {
   }
 
   @Test
-  public void wideAndPortraitArtworkFitsWithoutCroppingOrStretching() throws Exception {
+  public void wideAndPortraitArtworkFillsSquareCoversWithoutStretching() throws Exception {
     for (int[] dimensions : new int[][] {{320, 180}, {180, 320}}) {
       Bitmap source = Bitmap.createBitmap(dimensions[0], dimensions[1], Bitmap.Config.ARGB_8888);
       source.eraseColor(Color.BLUE);
@@ -84,13 +84,18 @@ public class ArtworkLoaderTest {
       Visuals.artwork(target, "https://covers.example/fit-" + System.nanoTime() + ".png");
       await(target, Color.BLUE);
       Bitmap actual = ((BitmapDrawable) target.getDrawable()).getBitmap();
-      assertEquals((float) dimensions[0] / dimensions[1],
-          (float) actual.getWidth() / actual.getHeight(), .02f);
-      assertEquals(Color.RED, actual.getPixel(1, actual.getHeight() / 2));
-      assertEquals(Color.RED, actual.getPixel(actual.getWidth() - 2, actual.getHeight() / 2));
-      assertEquals(Color.RED, actual.getPixel(actual.getWidth() / 2, 1));
-      assertEquals(Color.RED, actual.getPixel(actual.getWidth() / 2, actual.getHeight() - 2));
-      assertEquals(ImageView.ScaleType.FIT_CENTER, target.getScaleType());
+      assertEquals(128, actual.getWidth());
+      assertEquals(128, actual.getHeight());
+      assertEquals(Color.BLUE, actual.getPixel(64, 64));
+      // Uniform scaling crops only the longer axis; the short-axis edges remain.
+      if (dimensions[0] > dimensions[1]) {
+        assertEquals(Color.RED, actual.getPixel(64, 1));
+        assertEquals(Color.RED, actual.getPixel(64, 126));
+      } else {
+        assertEquals(Color.RED, actual.getPixel(1, 64));
+        assertEquals(Color.RED, actual.getPixel(126, 64));
+      }
+      assertEquals(ImageView.ScaleType.CENTER_CROP, target.getScaleType());
       source.recycle();
     }
   }

@@ -23,6 +23,20 @@ public final class NowPlayingPanel extends LinearLayout {
   public final SeekBar seek;
   public final View cover;
   public final ScrollView scroll;
+  private android.graphics.Bitmap tintedArtwork;
+
+  private void tint(int color) {
+    setBackground(new android.graphics.drawable.GradientDrawable(
+        android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
+        new int[] {color, 0xff191d1a, BG}));
+  }
+
+  static String statusSummary(String value) {
+    if (value == null) return "";
+    int line = value.indexOf('\n');
+    String message = line >= 0 ? value.substring(line + 1) : value;
+    return message.replace("Autoplay on · related songs follow your queue", "Related songs follow · View queue");
+  }
 
   private int dp(int n) {
     return Math.round(n * getResources().getDisplayMetrics().density);
@@ -59,13 +73,12 @@ public final class NowPlayingPanel extends LinearLayout {
   public NowPlayingPanel(Context c, Actions actions) {
     super(c);
     setOrientation(VERTICAL);
-    setBackgroundColor(BG);
+    tint(0xff263c33);
     LinearLayout top = row();
     top.setPadding(dp(12), dp(2), dp(12), dp(2));
-    top.setBackgroundColor(BG);
-    top.setElevation(dp(2));
+    top.setBackgroundColor(android.graphics.Color.TRANSPARENT);
     top.addView(icon("down", TEXT, actions));
-    TextView heading = text("NOW PLAYING", 11, LIME, true);
+    TextView heading = text("NOW PLAYING", 11, TEXT, true);
     heading.setGravity(Gravity.CENTER);
     heading.setLetterSpacing(.12f);
     top.addView(heading, new LayoutParams(0, -2, 1));
@@ -87,7 +100,7 @@ public final class NowPlayingPanel extends LinearLayout {
         };
     body.setOrientation(VERTICAL);
     body.setGravity(Gravity.CENTER_HORIZONTAL);
-    body.setPadding(dp(24), dp(12), dp(24), dp(24));
+    body.setPadding(dp(24), dp(16), dp(24), dp(20));
     scroll.addView(body, new FrameLayout.LayoutParams(-1, -2, Gravity.CENTER_HORIZONTAL));
     addView(scroll, new LayoutParams(-1, 0, 1));
     FrameLayout artwork =
@@ -98,7 +111,7 @@ public final class NowPlayingPanel extends LinearLayout {
           protected void onSizeChanged(int w, int h, int oldW, int oldH) {
             super.onSizeChanged(w, h, oldW, oldH);
             clip.reset();
-            clip.addRoundRect(0, 0, w, h, dp(18), dp(18), android.graphics.Path.Direction.CW);
+            clip.addRoundRect(0, 0, w, h, dp(8), dp(8), android.graphics.Path.Direction.CW);
           }
 
           @Override
@@ -122,22 +135,34 @@ public final class NowPlayingPanel extends LinearLayout {
                 MeasureSpec.makeMeasureSpec(side, MeasureSpec.EXACTLY));
           }
         };
-    artwork.setBackground(round(PANEL, dp(18)));
+    artwork.setBackground(round(PANEL, dp(8)));
+    artwork.setElevation(dp(8));
     artwork.setClipToOutline(true);
     artwork.setOutlineProvider(
         new ViewOutlineProvider() {
           @Override
           public void getOutline(View view, Outline outline) {
-            outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), dp(18));
+            outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), dp(8));
           }
         });
-    art = new ImageView(c);
+    art = new ImageView(c) {
+      @Override public void setImageDrawable(android.graphics.drawable.Drawable drawable) {
+        super.setImageDrawable(drawable);
+        if (drawable instanceof android.graphics.drawable.BitmapDrawable) {
+          android.graphics.Bitmap image = ((android.graphics.drawable.BitmapDrawable) drawable).getBitmap();
+          if (image != tintedArtwork) {
+            tintedArtwork = image;
+            tint(ArtworkPalette.shade(image));
+          }
+        }
+      }
+    };
     art.setContentDescription("Album artwork");
-    art.setScaleType(ImageView.ScaleType.FIT_CENTER);
+    art.setScaleType(ImageView.ScaleType.CENTER_CROP);
     artwork.addView(art, new FrameLayout.LayoutParams(-1, -1));
     body.addView(artwork, new LayoutParams(-1, -2));
     cover = artwork;
-    gap(body, 22);
+    gap(body, 24);
     LinearLayout titles = row();
     titles.setGravity(Gravity.TOP);
     LinearLayout copy = new LinearLayout(c);
@@ -146,7 +171,7 @@ public final class NowPlayingPanel extends LinearLayout {
     title.setMaxLines(2);
     title.setEllipsize(TextUtils.TruncateAt.END);
     artist = text("", 14, MUTED, false);
-    artist.setMaxLines(2);
+    artist.setMaxLines(1);
     artist.setEllipsize(TextUtils.TruncateAt.END);
     copy.addView(title);
     gap(copy, 8);
@@ -158,13 +183,13 @@ public final class NowPlayingPanel extends LinearLayout {
     fp.topMargin = -dp(6);
     titles.addView(favourite, fp);
     body.addView(titles, new LayoutParams(-1, -2));
-    gap(body, 14);
+    gap(body, 8);
     seek = new SeekBar(c);
     seek.setMax(1000);
-    seek.setPadding(dp(8), 0, dp(8), 0);
+    seek.setPadding(dp(2), 0, dp(2), 0);
     seek.setContentDescription("Song position");
-    seek.setProgressTintList(android.content.res.ColorStateList.valueOf(LIME));
-    seek.setThumbTintList(android.content.res.ColorStateList.valueOf(LIME));
+    seek.setProgressTintList(android.content.res.ColorStateList.valueOf(TEXT));
+    seek.setThumbTintList(android.content.res.ColorStateList.valueOf(TEXT));
     seek.setOnSeekBarChangeListener(
         new SeekBar.OnSeekBarChangeListener() {
           public void onStartTrackingTouch(SeekBar s) {
@@ -181,34 +206,33 @@ public final class NowPlayingPanel extends LinearLayout {
         });
     body.addView(seek, new LayoutParams(-1, dp(40)));
     LinearLayout times = row();
-    times.setPadding(dp(8), 0, dp(8), 0);
+    times.setPadding(dp(2), 0, dp(2), 0);
     elapsed = text("0:00", 12, MUTED, false);
     duration = text("--:--", 12, MUTED, false);
     times.addView(elapsed, new LayoutParams(0, -2, 1));
     times.addView(duration);
     body.addView(times, new LayoutParams(-1, -2));
-    gap(body, 18);
+    gap(body, 10);
     TransportControls transport = new TransportControls(c);
     transport.setGravity(Gravity.CENTER);
     shuffle = icon("shuffle", MUTED, actions);
     transport.addView(shuffle);
     transport.addView(icon("previous", TEXT, actions));
     play = icon("play", BG, actions);
-    play.setGlyphSize(44);
-    play.setBackground(round(LIME, dp(48)));
+    play.setGlyphSize(36);
+    play.setBackground(round(TEXT, dp(40)));
     transport.addView(play);
     transport.addView(icon("next", TEXT, actions));
     repeat = icon("repeat", MUTED, actions);
     transport.addView(repeat);
-    body.addView(transport, new LayoutParams(-1, dp(80)));
+    body.addView(transport, new LayoutParams(-1, dp(72)));
     gap(body, 14);
     LinearLayout tools = row();
     tools.addView(icon("timer", MUTED, actions), new LayoutParams(0, dp(48), 1));
     speed = text("1×", 13, TEXT, true);
     speed.setGravity(Gravity.CENTER);
     speed.setMinHeight(dp(48));
-    speed.setBackground(
-        new android.graphics.drawable.InsetDrawable(round(PANEL, dp(14)), dp(4), 0, dp(4), 0));
+
     speed.setContentDescription("Playback speed");
     speed.setFocusable(true);
     speed.setOnClickListener(v -> actions.action("speed"));
@@ -219,11 +243,16 @@ public final class NowPlayingPanel extends LinearLayout {
     body.addView(tools, new LayoutParams(-1, -2));
     gap(body, 14);
     radioStatus = text("", 12, MUTED, false);
-    radioStatus.setMaxLines(4);
+    radioStatus.setMaxLines(2);
     radioStatus.setEllipsize(TextUtils.TruncateAt.END);
-    radioStatus.setPadding(dp(2), dp(14), dp(2), 0);
+    radioStatus.setPadding(dp(12), dp(10), dp(12), dp(10));
+    radioStatus.setMinHeight(dp(48));
+    radioStatus.setGravity(Gravity.CENTER_VERTICAL);
+    radioStatus.setBackground(round(0x28101010, dp(8)));
+    radioStatus.setContentDescription("View radio queue");
+    radioStatus.setOnClickListener(v -> actions.action("queue"));
     body.addView(radioStatus, new LayoutParams(-1, -2));
-    gap(body, 12);
+    gap(body, 8);
     state = text("", 11, MUTED, false);
     state.setGravity(Gravity.CENTER);
     body.addView(state, new LayoutParams(-1, -2));

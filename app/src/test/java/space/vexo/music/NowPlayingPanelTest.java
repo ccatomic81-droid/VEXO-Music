@@ -46,8 +46,7 @@ public class NowPlayingPanelTest {
     p.seek.setProgress(640);
     p.play.set("pause", Visuals.BG);
     p.favourite.set("liked", Visuals.LIME);
-    p.radioStatus.setText(
-        "Radio · Rathinamo (Female Version) · Balanced\nRelated songs follow your queue");
+    p.radioStatus.setText("Related songs follow · View queue");
     p.state.setText("Saved offline");
     Bitmap thumbnail = Bitmap.createBitmap(480, 270, Bitmap.Config.ARGB_8888);
     Canvas c = new Canvas(thumbnail);
@@ -67,7 +66,7 @@ public class NowPlayingPanelTest {
     c.drawCircle(240, 135, 70, paint);
     paint.setColor(Visuals.BG);
     c.drawCircle(240, 135, 24, paint);
-    p.art.setImageBitmap(thumbnail);
+    p.art.setImageBitmap(CoverArtwork.render(thumbnail, new com.bumptech.glide.load.engine.bitmap_recycle.BitmapPoolAdapter(), 320, 320));
     p.measure(
         View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
         View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY));
@@ -87,18 +86,19 @@ public class NowPlayingPanelTest {
   }
 
   @Test
-  public void realPlayerFitsFullArtworkAndKeepsEssentialControls() throws Exception {
+  public void realPlayerFillsArtworkFrameAndKeepsEssentialControls() throws Exception {
     for (int width : new int[] {320, 360, 420}) {
       List<String> actions = new ArrayList<>();
       NowPlayingPanel p = panel(width, 800, 1f, actions);
       assertEquals(p.cover.getWidth(), p.cover.getHeight());
       assertEquals(p.cover.getWidth(), p.art.getWidth());
       assertEquals(p.cover.getHeight(), p.art.getHeight());
-      RectF fitted = new RectF(0, 0, 480, 270);
+      RectF fitted = new RectF(0, 0, 320, 320);
       p.art.getImageMatrix().mapRect(fitted);
       assertTrue("Full image must fit horizontally", fitted.left >= -.1f && fitted.right <= p.art.getWidth() + .1f);
       assertTrue("Full image must fit vertically", fitted.top >= -.1f && fitted.bottom <= p.art.getHeight() + .1f);
-      assertEquals(480f / 270f, fitted.width() / fitted.height(), .01f);
+      assertEquals(1f, fitted.width() / fitted.height(), .01f);
+      assertEquals(p.art.getWidth(), fitted.width(), .1f);
       ViewGroup tools = (ViewGroup) p.speed.getParent();
       float previous = -1, delta = -1;
       for (int i = 0; i < tools.getChildCount(); i++) {
