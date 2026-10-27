@@ -57,6 +57,9 @@ dependencies {
     implementation 'androidx.credentials:credentials-play-services-auth:1.3.0'
     implementation 'com.google.android.libraries.identity.googleid:googleid:1.1.1'
     constraints {
+        implementation('com.google.guava:guava:33.7.2-android') {
+            because 'Patched Android release for GHSA-xxph-c9ww-hj94'
+        }
         implementation('org.jsoup:jsoup:1.23.2') {
             because 'Patched release for GHSA-65r4-943x-97jj and GHSA-pmhh-3w7g-xqp8'
         }
