@@ -45,7 +45,7 @@ public class DeviceMusicAccessTest {
   @Config(sdk = 32)
   public void olderAndroidRequestsLegacyAudioLibraryAccess() {
     assertEquals(Manifest.permission.READ_EXTERNAL_STORAGE, DeviceMusicAccess.permission());
-    try (var c = Robolectric.buildActivity(Activity.class).setup()) {
+    try (var c = Robolectric.buildActivity(Activity.class).create().start().resume()) {
       int[] requests = {0};
       DeviceMusicAccess.request(
           c.get(), () -> requests[0]++, () -> fail("Must ask first"), () -> {});
