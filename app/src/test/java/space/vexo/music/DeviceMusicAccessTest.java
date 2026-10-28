@@ -117,7 +117,7 @@ public class DeviceMusicAccessTest {
       helper.find(root, "Library tab").performClick();
       assertNotNull(helper.text(root, "Choose files"));
       helper.text(root, "Import device music").performClick();
-      var request = Shadows.shadowOf(c.get()).getLastRequestedPermissionRequest();
+      var request = Shadows.shadowOf(c.get()).getLastRequestedPermission();
       assertNotNull(request);
       assertArrayEquals(
           new String[] {Manifest.permission.READ_MEDIA_AUDIO}, request.requestedPermissions);
