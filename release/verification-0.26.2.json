@@ -1,0 +1,62 @@
+{
+  "version": "0.26.2",
+  "versionCode": 42,
+  "sourceCommit": "6feafb806673c8efec8fcff61d1ae672257ca5b1",
+  "workflowRun": 40626212092,
+  "apkSha256": "eb69a850da61116bf4c1542e185074de530a61d137355b83c43cb7372d616ad9",
+  "sameCertificate": true,
+  "nonDebuggable": true,
+  "signedPayloadMatchesUnsignedCandidate": true,
+  "manifestSignatureVerified": true,
+  "androidChecks": {
+    "tests": 262,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 13,
+    "passed": 249
+  },
+  "liveChecks": {
+    "tests": 10,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 10
+  },
+  "publicChecks": [
+    "manifest",
+    "apk checksum",
+    "range",
+    "head",
+    "old public APK",
+    "closed writes"
+  ],
+  "physicalPhoneTested": false,
+  "nativeScreensReviewed": [
+    "home-dark",
+    "library",
+    "library-large-text"
+  ],
+  "workerPublicationDisabled": true,
+  "workerBindingNames": [
+    "RELEASES"
+  ],
+  "artistGapDp": {
+    "before": 30,
+    "after": 24,
+    "circleDiameter": 76
+  },
+  "deviceMusicPermissionTests": {
+    "android13Plus": true,
+    "android12LegacyPermission": true,
+    "grantedAccess": true,
+    "blockedAccessSettings": true,
+    "selectedFileFallback": true,
+    "actualLibraryAction": true
+  },
+  "dependencyAudit": {
+    "source": "https://api.osv.dev/v1/querybatch",
+    "resolved_packages": 127,
+    "findings": [],
+    "scope": "Known OSV advisories for resolved Maven versions; not a complete security audit"
+  }
+}

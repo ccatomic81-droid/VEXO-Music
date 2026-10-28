@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.26.2 — Artist spacing and device music access (28 October 2026)
+
+- Reduce artist-circle gaps from 30 dp to 24 dp while retaining their size and label width.
+- Make Import device music the primary Phone library and local-search empty-state action, asking for audio access and scanning after grant.
+- Handle permission rationale and blocked access, retain selected-file import, and refresh music after permission changes in Android settings.
+- Publish version code 42 with the original signing identity; preserve current artist, theme and playback features.
+
+
 ## 0.26.1 — Artist identity and portrait hotfix (27 October 2026)
 
 - Fix repeated collaboration labels by retaining separate provider artist identities and merging repeated appearances.
