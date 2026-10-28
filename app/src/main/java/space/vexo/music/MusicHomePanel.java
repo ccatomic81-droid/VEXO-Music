@@ -67,13 +67,19 @@ final class MusicHomePanel extends MusicSurface {
 
   void artists() {
     if (artistSlot == null) return;
+    int offset =
+        artistSlot.getChildCount() > 0 && artistSlot.getChildAt(0) instanceof ArtistStoriesPanel
+            ? ((ArtistStoriesPanel) artistSlot.getChildAt(0)).scrollPosition()
+            : 0;
     artistSlot.removeAllViews();
-    artistSlot.addView(
+    ArtistStoriesPanel panel =
         new ArtistStoriesPanel(
             getContext(),
             new SearchArtists(getContext()).visible(),
             listener::artist,
-            listener::search));
+            listener::search);
+    artistSlot.addView(panel);
+    panel.restoreScroll(offset);
   }
 
   void personalize() {

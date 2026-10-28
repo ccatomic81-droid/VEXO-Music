@@ -2263,7 +2263,7 @@ public final class MainActivity extends ComponentActivity {
               : shelf.equals("Offline") ? "Offline songs appear here" : "Nothing here yet",
           shelf.equals("Phone")
               ? "Allow music and audio access to show songs on this device, or choose individual"
-                    + " files."
+                  + " files."
               : shelf.equals("Offline")
                   ? "Play online music with Auto-save on. Complete saves will be available without"
                       + " internet."
@@ -3844,6 +3844,7 @@ public final class MainActivity extends ComponentActivity {
                         + "Search suggestions, searches and online playback contact YouTube. Recent"
                         + " search terms and artist shortcuts stay on this phone and can be cleared"
                         + " in Settings. Update checks contact the built-in VEXO release service."
+                        + " Opening lyrics sends the song title, artist and duration to LRCLIB."
                         + " Artwork is loaded from the source shown by YouTube. Favourites,"
                         + " playlists and listening history are stored on this device. No analytics"
                         + " server is used.\n\n"
@@ -4248,6 +4249,52 @@ public final class MainActivity extends ComponentActivity {
             : new Object[] {Math.max(0, seconds) / 60, Math.max(0, seconds) % 60});
   }
 
+  private void showLyrics() {
+    if (controller == null || controller.getCurrentMediaItem() == null) return;
+    Dialog dialog = new Dialog(this, light ? R.style.VexoLightTheme : R.style.VexoBaseTheme);
+    dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+    LyricsPanel panel =
+        new LyricsPanel(
+            this,
+            main,
+            io,
+            new LyricsPanel.Playback() {
+              public Track track() {
+                return controller == null || controller.getCurrentMediaItem() == null
+                    ? null
+                    : Track.from(controller.getCurrentMediaItem());
+              }
+
+              public long position() {
+                return controller == null ? 0 : controller.getCurrentPosition();
+              }
+
+              public long duration() {
+                return controller == null ? 0 : controller.getDuration();
+              }
+
+              public void seek(long position) {
+                if (controller != null && controller.isCurrentMediaItemSeekable())
+                  controller.seekTo(position);
+              }
+
+              public void close() {
+                dialog.dismiss();
+              }
+            });
+    PanelWindow.content(dialog, panel);
+    // PanelWindow supplies safe-area handling; restore the lyrics artwork-inspired gradient.
+    panel.setBackground(
+        new android.graphics.drawable.GradientDrawable(
+            android.graphics.drawable.GradientDrawable.Orientation.TL_BR,
+            light
+                ? new int[] {0xffe4f2ea, 0xfff5f5f0, 0xffe2ece7}
+                : new int[] {0xff21372f, 0xff302c38, 0xff111615}));
+    dialog.setOnDismissListener(d -> panel.stop());
+    dialog.show();
+    PanelWindow.expand(dialog);
+  }
+
   private void showPlayer() {
     if (controller == null || controller.getCurrentMediaItem() == null) return;
     if (playerDialog != null && playerDialog.isShowing()) return;
@@ -4260,6 +4307,9 @@ public final class MainActivity extends ComponentActivity {
                 switch (name) {
                   case "down":
                     playerDialog.dismiss();
+                    break;
+                  case "lyrics":
+                    showLyrics();
                     break;
                   case "queue":
                     showQueue();
