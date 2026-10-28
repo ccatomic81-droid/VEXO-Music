@@ -184,13 +184,17 @@ public final class MainActivity extends ComponentActivity {
   private TextView playerTitle, playerArtist, playerElapsed, playerDuration, playerState;
   private SeekBar seek;
   private Icon playerPlay, playerLike, playerShuffle, playerRepeat;
-  private boolean dragging = false;
+  private boolean dragging = false, audioAccess;
   private final ActivityResultLauncher<String> permission =
       registerForActivityResult(
           new ActivityResultContracts.RequestPermission(),
           granted -> {
-            if (granted) scanPhone();
-            else message("Audio permission was declined. You can still use Import audio.");
+            audioAccess = granted;
+            scanPhone();
+            if (!granted)
+              message(
+                  "Music access was not allowed. Tap Import device music to retry, or Choose"
+                      + " files.");
           });
   private final ActivityResultLauncher<String[]> importer =
       registerForActivityResult(
@@ -383,6 +387,7 @@ public final class MainActivity extends ComponentActivity {
                 }
               }
             });
+    audioAccess = DeviceMusicAccess.granted(this);
     scanPhone();
     loadHome(false);
     if (!activeMix.isEmpty()) loadMix(false);
@@ -404,6 +409,11 @@ public final class MainActivity extends ComponentActivity {
     if (AppAppearance.light(this) != Visuals.light) {
       recreate();
       return;
+    }
+    boolean granted = DeviceMusicAccess.granted(this);
+    if (granted != audioAccess) {
+      audioAccess = granted;
+      scanPhone();
     }
     if (notificationPrompt != null) notificationPrompt.resume();
     main.removeCallbacks(tick);
@@ -1727,9 +1737,9 @@ public final class MainActivity extends ComponentActivity {
       if (filtered.isEmpty())
         empty(
             "Your music, anywhere",
-            "Scan your audio library or import selected files.",
-            "Import audio",
-            this::importAudio);
+            "Allow access to find the music on this phone, or choose files in your library.",
+            "Import device music",
+            this::requestScan);
       else addList(filtered, null);
     }
     updateSearchChrome();
@@ -2227,8 +2237,9 @@ public final class MainActivity extends ComponentActivity {
     if (shelf.equals("Phone")) {
       LinearLayout actions = row();
       actions.addView(
-          button("Scan phone", this::requestScan), new LinearLayout.LayoutParams(0, -2, 1));
-      TextView imp = button("Import audio", this::importAudio);
+          button("Import device music", this::requestScan),
+          new LinearLayout.LayoutParams(0, -2, 1));
+      TextView imp = button("Choose files", this::importAudio);
       imp.setTextColor(TEXT);
       imp.setBackground(round(PANEL, dp(18)));
       LinearLayout.LayoutParams ip = new LinearLayout.LayoutParams(0, -2, 1);
@@ -2251,14 +2262,15 @@ public final class MainActivity extends ComponentActivity {
               ? "Bring your music along"
               : shelf.equals("Offline") ? "Offline songs appear here" : "Nothing here yet",
           shelf.equals("Phone")
-              ? "Allow access to audio files, or import only the songs you choose."
+              ? "Allow music and audio access to show songs on this device, or choose individual"
+                    + " files."
               : shelf.equals("Offline")
                   ? "Play online music with Auto-save on. Complete saves will be available without"
                       + " internet."
                   : "Play a song or save a favourite to start your collection.",
-          shelf.equals("Phone") ? "Import audio" : "Find music",
+          shelf.equals("Phone") ? "Import device music" : "Find music",
           () -> {
-            if (shelf.equals("Phone")) importAudio();
+            if (shelf.equals("Phone")) requestScan();
             else {
               tab = "Search";
               render();
@@ -2272,12 +2284,11 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private void requestScan() {
-    String p =
-        Build.VERSION.SDK_INT >= 33
-            ? Manifest.permission.READ_MEDIA_AUDIO
-            : Manifest.permission.READ_EXTERNAL_STORAGE;
-    if (checkSelfPermission(p) == PackageManager.PERMISSION_GRANTED) scanPhone();
-    else permission.launch(p);
+    DeviceMusicAccess.request(
+        this,
+        () -> permission.launch(DeviceMusicAccess.permission()),
+        this::scanPhone,
+        this::importAudio);
   }
 
   private void scanPhone() {
@@ -2286,10 +2297,7 @@ public final class MainActivity extends ComponentActivity {
         () -> {
           LinkedHashMap<String, Track> found = new LinkedHashMap<>();
           for (Track t : store.tracks("imports")) found.put(t.url, t);
-          String p =
-              Build.VERSION.SDK_INT >= 33
-                  ? Manifest.permission.READ_MEDIA_AUDIO
-                  : Manifest.permission.READ_EXTERNAL_STORAGE;
+          String p = DeviceMusicAccess.permission();
           if (checkSelfPermission(p) == PackageManager.PERMISSION_GRANTED) {
             String[] projection = {
               MediaStore.Audio.Media._ID,
