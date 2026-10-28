@@ -29,6 +29,7 @@ final class LyricsPanel extends LinearLayout {
   private final Handler main;
   private final ExecutorService io;
   private final TextView title, subtitle, status;
+  private final ImageView artwork;
   private final ScrollView scroll;
   private final LinearLayout linesView;
   private final List<TextView> views = new ArrayList<>();
@@ -61,6 +62,11 @@ final class LyricsPanel extends LinearLayout {
     LinearLayout header = new LinearLayout(c);
     header.setGravity(Gravity.CENTER_VERTICAL);
     header.setPadding(dp(20), dp(10), dp(12), dp(10));
+    artwork = new ImageView(c);
+    artwork.setContentDescription("Album artwork");
+    LayoutParams artParams = new LayoutParams(dp(48), dp(48));
+    artParams.rightMargin = dp(12);
+    header.addView(artwork, artParams);
     LinearLayout labels = new LinearLayout(c);
     labels.setOrientation(VERTICAL);
     title = text("Lyrics", 19, TEXT, true);
@@ -162,6 +168,7 @@ final class LyricsPanel extends LinearLayout {
     int request = ++generation;
     title.setText(track.title);
     subtitle.setText(track.artist);
+    Visuals.artwork(artwork, track);
     status.setText("Loading lyrics…");
     lines = Collections.emptyList();
     views.clear();

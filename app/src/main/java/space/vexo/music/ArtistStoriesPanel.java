@@ -13,6 +13,16 @@ import java.util.function.Consumer;
 
 /** Story-sized shortcuts with verified artist portraits or readable initials. */
 final class ArtistStoriesPanel extends LinearLayout {
+  private HorizontalScrollView storiesScroll;
+
+  int scrollPosition() {
+    return storiesScroll.getScrollX();
+  }
+
+  void restoreScroll(int position) {
+    storiesScroll.post(() -> storiesScroll.scrollTo(position, 0));
+  }
+
   ArtistStoriesPanel(
       Context c, List<SearchArtists.Artist> artists, Consumer<String> open, Runnable search) {
     super(c);
@@ -53,6 +63,7 @@ final class ArtistStoriesPanel extends LinearLayout {
         };
     scroll.setSmoothScrollingEnabled(true);
     scroll.setOverScrollMode(View.OVER_SCROLL_NEVER);
+    storiesScroll = scroll;
     scroll.setHorizontalScrollBarEnabled(false);
     LinearLayout row = new LinearLayout(c);
     row.setGravity(Gravity.TOP);
