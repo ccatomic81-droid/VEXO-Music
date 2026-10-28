@@ -257,6 +257,15 @@ public final class NowPlayingPanel extends LinearLayout {
     tools.addView(icon("more", MUTED, actions), new LayoutParams(0, dp(48), 1));
     body.addView(tools, new LayoutParams(-1, -2));
     gap(body, 14);
+    TextView lyrics = text("♪   Lyrics", 15, TEXT, true);
+    lyrics.setGravity(Gravity.CENTER_VERTICAL);
+    lyrics.setPadding(dp(16), 0, dp(16), 0);
+    lyrics.setMinHeight(dp(52));
+    lyrics.setBackground(round(PANEL, dp(12)));
+    lyrics.setFocusable(true);
+    lyrics.setOnClickListener(v -> actions.action("lyrics"));
+    body.addView(lyrics, new LayoutParams(-1, -2));
+    gap(body, 14);
     radioStatus = text("", 12, MUTED, false);
     radioStatus.setMaxLines(2);
     radioStatus.setEllipsize(TextUtils.TruncateAt.END);

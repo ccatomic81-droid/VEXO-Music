@@ -33,7 +33,26 @@ final class ArtistStoriesPanel extends LinearLayout {
             MUTED);
     detail.setPadding(0, dp(6), 0, dp(14));
     addView(detail);
-    HorizontalScrollView scroll = new HorizontalScrollView(c);
+    HorizontalScrollView scroll =
+        new HorizontalScrollView(c) {
+          private float startX, startY;
+
+          @Override
+          public boolean onInterceptTouchEvent(android.view.MotionEvent event) {
+            if (event.getActionMasked() == android.view.MotionEvent.ACTION_DOWN) {
+              startX = event.getX();
+              startY = event.getY();
+            }
+            if (event.getActionMasked() == android.view.MotionEvent.ACTION_MOVE
+                && Math.abs(event.getX() - startX) > Math.abs(event.getY() - startY)
+                && Math.abs(event.getX() - startX)
+                    > android.view.ViewConfiguration.get(getContext()).getScaledTouchSlop())
+              getParent().requestDisallowInterceptTouchEvent(true);
+            return super.onInterceptTouchEvent(event);
+          }
+        };
+    scroll.setSmoothScrollingEnabled(true);
+    scroll.setOverScrollMode(View.OVER_SCROLL_NEVER);
     scroll.setHorizontalScrollBarEnabled(false);
     LinearLayout row = new LinearLayout(c);
     row.setGravity(Gravity.TOP);
@@ -78,6 +97,15 @@ final class ArtistStoriesPanel extends LinearLayout {
       name.setEllipsize(TextUtils.TruncateAt.END);
       name.setPadding(dp(2), dp(9), dp(2), dp(6));
       card.addView(name, new LayoutParams(-1, -2));
+      card.setOnTouchListener(
+          (v, event) -> {
+            if (event.getActionMasked() == android.view.MotionEvent.ACTION_DOWN)
+              v.animate().scaleX(.96f).scaleY(.96f).setDuration(120).start();
+            else if (event.getActionMasked() == android.view.MotionEvent.ACTION_UP
+                || event.getActionMasked() == android.view.MotionEvent.ACTION_CANCEL)
+              v.animate().scaleX(1f).scaleY(1f).setDuration(180).start();
+            return false;
+          });
       card.setOnClickListener(v -> open.accept(artist.name));
       LayoutParams params = new LayoutParams(dp(96), -2);
       params.rightMargin = dp(4);
