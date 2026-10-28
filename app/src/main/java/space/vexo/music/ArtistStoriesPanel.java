@@ -80,7 +80,7 @@ final class ArtistStoriesPanel extends LinearLayout {
       card.addView(name, new LayoutParams(-1, -2));
       card.setOnClickListener(v -> open.accept(artist.name));
       LayoutParams params = new LayoutParams(dp(96), -2);
-      params.rightMargin = dp(10);
+      params.rightMargin = dp(4);
       row.addView(card, params);
     }
     if (artists.isEmpty()) {
