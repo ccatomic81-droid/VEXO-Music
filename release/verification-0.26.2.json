@@ -58,5 +58,8 @@
     "resolved_packages": 127,
     "findings": [],
     "scope": "Known OSV advisories for resolved Maven versions; not a complete security audit"
-  }
+  },
+  "githubRelease": "https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.26.2",
+  "githubReleaseWorkflow": 40627016431,
+  "githubReleasePublished": true
 }
