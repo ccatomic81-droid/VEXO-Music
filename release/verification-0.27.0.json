@@ -1,0 +1,39 @@
+{
+  "version": "0.27.0",
+  "versionCode": 43,
+  "sourceCommit": "107bda8d55330a0de0a6ed4cfc818613a9c304cf",
+  "workflowRun": 40630806340,
+  "apkSha256": "29b6abd3600824b0a4612f7d21e2393ff24e3225a010e06ff7ef55fc961beff2",
+  "sameCertificate": true,
+  "nonDebuggable": true,
+  "signedPayloadMatchesUnsignedCandidate": true,
+  "manifestSignatureVerified": true,
+  "androidChecks": {
+    "tests": 264,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 13,
+    "passed": 251
+  },
+  "liveChecks": {
+    "tests": 10,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 10
+  },
+  "publicChecks": [
+    "manifest",
+    "apk checksum",
+    "range",
+    "head",
+    "old public APK",
+    "closed writes"
+  ],
+  "physicalPhoneTested": false,
+  "lyricsProviderLiveTested": false,
+  "workerPublicationDisabled": true,
+  "workerBindingNames": [
+    "RELEASES"
+  ]
+}

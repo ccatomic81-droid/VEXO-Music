@@ -1,12 +1,12 @@
-# VEXO Music 0.26.2
+# VEXO Music 0.27.0
 
 Developer: **Kavindu Kavishka**.
 
-Public version **0.26.2** brings artist circles a little closer together and adds a clear **Library → Phone → Import device music** action. It asks for Android music/audio access and loads songs after permission is granted. Blocked access offers Android settings, and the library refreshes when access changes on return. **Choose files** remains available for individually selected audio files.
+Public version **0.27.0** adds a lyrics screen to Now Playing. When timed lyrics are available, the current line follows playback and tapping a line seeks to it. Untimed lyrics, instrumental tracks and missing matches have clear states. Song title, artist and duration are sent to LRCLIB when lyrics are opened; lyrics need an internet connection and availability varies.
 
-The artist row keeps its circle size, artist portraits and readable labels. Existing artist identity repair, Light/Dark/Follow device themes, the round player progress dot, Global discovery, branded popups, animated update downloads and 500 MB offline saving remain.
+Artist circles scroll more smoothly and retain their position while portraits refresh. Existing device music import, Light/Dark themes, Global discovery, branded popups, update downloads and offline saving remain.
 
-[Download VEXO Music 0.26.2](https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.26.2.apk), use Settings → Check for updates, or open the [GitHub release](https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.26.2). Install over the existing app without uninstalling. Version code 42 updates public 0.26.1/code41 with the original signing identity. See [release notes](release/notes-0.26.2.md) and [verification](release/verification-0.26.2.json).
+[Download VEXO Music 0.27.0](https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.27.0.apk), use Settings → Check for updates, or open the [GitHub release](https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.27.0). Install over the existing app without uninstalling. Version code 43 uses the original signing identity. See [release notes](release/notes-0.27.0.md) and [verification](release/verification-0.27.0.json).
 
 Search now shows real song names, artwork and artists while typing, with direct play controls. Home has quick collection tiles, horizontally scrolling music cards, regional picks and VEXO mood mixes. Full playlist pages support Play all, a one-shot shuffled queue, adding songs, renaming and deleting a playlist, and removing individual tracks.
 

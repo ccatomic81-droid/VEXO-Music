@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.27.0 — Synced lyrics and smoother artists (28 October 2026)
+
+- Add on-demand LRCLIB lyrics, line-by-line synchronization, tap-to-seek and untimed, unavailable and instrumental states.
+- Disclose provider lookup data and keep the screen responsive when a song changes.
+- Improve horizontal artist gesture handling and keep the artist row position across portrait updates.
+- Publish version code 43 with the original signing identity.
+
+
 ## 0.26.2 — Artist spacing and device music access (28 October 2026)
 
 - Reduce artist-circle gaps from 30 dp to 24 dp while retaining their size and label width.

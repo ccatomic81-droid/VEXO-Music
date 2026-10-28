@@ -1,6 +1,6 @@
 # App updates and releases
 
-Current public release: **0.26.2 / code 42**. It updates public 0.26.1/code41 in place with the original signing identity. Includes closer artist circles and a permission-based Import device music action. The manifest is signed. Use Settings → Check for updates; Android still requires approval to install. See `release/public-0.26.2.json` and `release/verification-0.26.2.json`.
+Current public release: **0.27.0 / code 43**. It updates public 0.26.2 in place with the original signing identity. Adds on-demand LRCLIB lyrics and smoother artist scrolling. Lyrics require internet access and may be unavailable for some tracks. The manifest is signed. Use Settings → Check for updates; Android still requires approval to install. See `release/public-0.27.0.json` and `release/verification-0.27.0.json`.
 
 In 0.25.1, Get update opens an animated foreground download panel showing real percentage and MB transferred. Verification is a separate phase. Cancel stops the HTTP transfer and removes its partial file; Retry starts a new attempt after a connection or verification failure. A cached, already verified APK can be reused. Cancel remains visible while large-text content scrolls. Destroying the activity cancels its transfer. Older installed apps retain their existing update UI until this version is installed.
 

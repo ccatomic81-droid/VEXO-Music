@@ -1,0 +1,14 @@
+{
+  "applicationId": "space.vexo.music.radio",
+  "versionCode": 43,
+  "versionName": "0.27.0",
+  "summary": "Follow synced lyrics as the song plays and tap a line to seek. Artist circles scroll more smoothly and retain their position while portraits update. Lyrics availability varies; opening lyrics sends the song title, artist and duration to LRCLIB. Install over your existing app to keep your music and settings.",
+  "downloadUrl": "https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.27.0.apk",
+  "sourceUrl": "https://github.com/ccatomic81-droid/VEXO-Music/archive/107bda8d55330a0de0a6ed4cfc818613a9c304cf.zip",
+  "sourceCommit": "107bda8d55330a0de0a6ed4cfc818613a9c304cf",
+  "size": 9152648,
+  "sha256": "29b6abd3600824b0a4612f7d21e2393ff24e3225a010e06ff7ef55fc961beff2",
+  "certificateSha256": "0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3",
+  "signedPayload": "eyJmb3JtYXQiOiJ2ZXhvLXJlbGVhc2UtdjEiLCJhcHBsaWNhdGlvbklkIjoic3BhY2UudmV4by5tdXNpYy5yYWRpbyIsInZlcnNpb25Db2RlIjo0MywidmVyc2lvbk5hbWUiOiIwLjI3LjAiLCJzdW1tYXJ5IjoiRm9sbG93IHN5bmNlZCBseXJpY3MgYXMgdGhlIHNvbmcgcGxheXMgYW5kIHRhcCBhIGxpbmUgdG8gc2Vlay4gQXJ0aXN0IGNpcmNsZXMgc2Nyb2xsIG1vcmUgc21vb3RobHkgYW5kIHJldGFpbiB0aGVpciBwb3NpdGlvbiB3aGlsZSBwb3J0cmFpdHMgdXBkYXRlLiBMeXJpY3MgYXZhaWxhYmlsaXR5IHZhcmllczsgb3BlbmluZyBseXJpY3Mgc2VuZHMgdGhlIHNvbmcgdGl0bGUsIGFydGlzdCBhbmQgZHVyYXRpb24gdG8gTFJDTElCLiBJbnN0YWxsIG92ZXIgeW91ciBleGlzdGluZyBhcHAgdG8ga2VlcCB5b3VyIG11c2ljIGFuZCBzZXR0aW5ncy4iLCJkb3dubG9hZFVybCI6Imh0dHBzOi8vdmV4by1tdXNpYy11cGRhdGVzLmthdmluZHVrYXZpc2hrYTc4NS53b3JrZXJzLmRldi9yZWxlYXNlcy9WRVhPLU11c2ljLTAuMjcuMC5hcGsiLCJzaXplIjo5MTUyNjQ4LCJzaGEyNTYiOiIyOWI2YWJkMzYwMDgyNGIwYTQ2MTJmN2QyMWUyMzkzZmYyNGUzMjI1YTAxMGUwNmZmN2VmNTVmYzk2MWJlZmYyIiwiY2VydGlmaWNhdGVTaGEyNTYiOiIwYjMxYzUwOTA0NTY3Mzg5YjcyM2UyM2FkNjA0M2IyZDJmYzY2MzVjMzBkZmRiM2VkNWVmM2Y5YmE5NzI3ZWYzIiwic291cmNlQ29tbWl0IjoiMTA3YmRhOGQ1NTMzMGEwZGUwYTZlZDRjZmM4MTg2MTNhOWMzMDRjZiJ9",
+  "releaseSignature": "DmR6jFdwIAtWyz9umOZBuUYlpFSupwLlvRl4gyfXPre2gyBs+oBaUbWPv2sYbb/7gUKcyj3m4aLpc+EnWMddxOuR01g89lSwX7jaR18MuCs/CY46mT1qK1XyblT7oqCboH9bQKttCZCXXqLvdKT8Zc0XSh4q/j3NkVpAuwyqKL4mu5zLJOaKeYFRJOMPJkg0uLDFp8pXonjDxNboibeEUuF+9EoruR/S8xRS1YBkl3CXJY1oTZf0acjflg+rzCdmVc2CQ02yyWzz91aHolK1rwELQEzHTleQ8AF43EA0enwJdtKaEVTYpQhTeel3Q6ANcwWPvg11p2U7LECi8RzISA=="
+}
