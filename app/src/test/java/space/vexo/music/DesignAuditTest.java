@@ -17,6 +17,18 @@ import org.robolectric.annotation.*;
 public class DesignAuditTest {
   @After public void reset() { Visuals.appearance(false); }
 
+  @Test public void emptyArtistPromptLeavesRoomForRecommendations() throws Exception {
+    List<String> actions = new ArrayList<>();
+    ArtistStoriesPanel panel = new ArtistStoriesPanel(RuntimeEnvironment.getApplication(), Collections.emptyList(), actions::add, () -> actions.add("search"));
+    new ArtistAppearanceTest().capture(panel, 288, 120, "audit-empty-artists");
+    View find = new SearchUiTest().description(panel, "Find artists by searching songs");
+    assertTrue(find.getHeight() >= 48);
+    assertTrue(find.performClick());
+    assertEquals(Arrays.asList("search"), actions);
+    panel.measure(View.MeasureSpec.makeMeasureSpec(288, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+    assertTrue("Empty prompt should not push music off Home", panel.getMeasuredHeight() <= 110);
+  }
+
   @Test public void libraryHasOneImportActionAndAnAccessibleFileAlternative() throws Exception {
     new UiSmokeTest().isolateUiFromMediaService();
     for (float scale : new float[] {1, 1.6f}) {
@@ -36,7 +48,8 @@ public class DesignAuditTest {
           TextView choose = finder.text(root, "Choose files");
           choose.requestRectangleOnScreen(new android.graphics.Rect(0, 0, choose.getWidth(), choose.getHeight()), true);
           assertTrue("File picker target remains usable", choose.getHeight() >= 48);
-          finder.text(root, "Playlists").performClick();
+          View libraryHeader = (View) finder.text(root, "Your library").getParent();
+          finder.text(libraryHeader, "Playlists").performClick();
           assertEquals(1, count(root, "Create a playlist"));
           assertEquals(0, count(root, "+  Create playlist"));
           finder.description(root, "Settings tab").performClick();
