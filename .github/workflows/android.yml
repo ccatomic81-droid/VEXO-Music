@@ -11,7 +11,7 @@ permissions:
 jobs:
   device-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
@@ -39,6 +39,7 @@ jobs:
           arch: x86_64
           profile: pixel_2
           disable-animations: true
+          emulator-boot-timeout: 240
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot-save -memory 2048
           script: bash tools/device-smoke.sh
       - uses: actions/upload-artifact@v4
