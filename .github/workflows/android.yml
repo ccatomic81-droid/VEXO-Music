@@ -40,15 +40,7 @@ jobs:
           profile: pixel_2
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot-save -memory 2048
-          script: |
-            adb shell wm size 960x1920
-            adb shell wm density 480
-            bash gradlew --no-daemon connectedDebugAndroidTest
-            mkdir -p device-smoke
-            adb pull /sdcard/Android/data/space.vexo.music.radio/files/device-smoke device-smoke/screenshots
-            adb shell settings put system font_scale 1.6
-            bash gradlew --no-daemon connectedDebugAndroidTest
-            adb pull /sdcard/Android/data/space.vexo.music.radio/files/device-smoke device-smoke/screenshots-large
+          script: bash tools/device-smoke.sh
       - uses: actions/upload-artifact@v4
         if: always()
         with:

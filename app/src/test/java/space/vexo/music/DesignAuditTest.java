@@ -88,7 +88,7 @@ public class DesignAuditTest {
     return n;
   }
   private int descriptions(View v, String value) {
-    int n = value.contentEquals(v.getContentDescription()) ? 1 : 0;
+    int n = v.getContentDescription()!=null && value.contentEquals(v.getContentDescription()) ? 1 : 0;
     if (v instanceof ViewGroup) for (int i = 0; i < ((ViewGroup)v).getChildCount(); i++) n += descriptions(((ViewGroup)v).getChildAt(i), value);
     return n;
   }

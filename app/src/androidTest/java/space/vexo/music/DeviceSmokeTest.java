@@ -106,7 +106,7 @@ public class DeviceSmokeTest {
     return n;
   }
   private static View findDescription(View v, String label) {
-    if(label.contentEquals(v.getContentDescription()))return v;
+    if(v.getContentDescription()!=null && label.contentEquals(v.getContentDescription()))return v;
     if(v instanceof ViewGroup)for(int i=0;i<((ViewGroup)v).getChildCount();i++){View found=findDescription(((ViewGroup)v).getChildAt(i),label);if(found!=null)return found;}
     return null;
   }
