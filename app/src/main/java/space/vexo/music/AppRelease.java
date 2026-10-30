@@ -7,11 +7,11 @@ import org.json.*;
 /** A release feed contains metadata only. Downloads always need a user tap. */
 final class AppRelease {
   static final String NOTES =
-      "• Artist circles sit a little closer together.\n"
-          + "• Import device music asks for audio access and loads your phone’s music.\n"
-          + "• Clear permission recovery and automatic refresh after enabling access in Settings.\n"
-          + "• Choose files remains available for individual audio files.\n"
-          + "• Install over your existing app to keep music and settings.";
+      "• Settings are grouped into profile, playback, library and support.\n"
+          + "• Clearer navigation icons and a simpler empty library.\n"
+          + "• Up next counts only the songs after your current track.\n"
+          + "• Small-screen and large-text layout improvements.\n"
+          + "• Design test build · install over your existing app to keep your music.";
   final int code;
   final String version, summary, url;
   String sha256 = "";

@@ -28,7 +28,7 @@ public final class QueuePanel extends LinearLayout {
     default void retry() {}
   }
 
-  private final TextView summary, status, retry;
+  private final TextView summary, status, retry, clearUpcoming, clearQueue;
   private final Switch toggle;
   private final Songs adapter = new Songs();
   private final Actions actions;
@@ -89,12 +89,12 @@ public final class QueuePanel extends LinearLayout {
     summary.setPadding(0, dp(6), 0, dp(16));
     addView(summary);
     LinearLayout buttons = row();
-    TextView keep = action("Clear upcoming", actions::clearUpcoming);
-    TextView clear = action("Clear queue", actions::clearAll);
+    clearUpcoming = action("Clear upcoming", actions::clearUpcoming);
+    clearQueue = action("Clear queue", actions::clearAll);
     LayoutParams left = new LayoutParams(0, -1, 1);
     left.setMargins(0, 0, dp(8), 0);
-    buttons.addView(keep, left);
-    buttons.addView(clear, new LayoutParams(0, -1, 1));
+    buttons.addView(clearUpcoming, left);
+    buttons.addView(clearQueue, new LayoutParams(0, -1, 1));
     addView(buttons);
     LinearLayout automatic = row();
     automatic.setPadding(dp(2), dp(12), 0, dp(4));
@@ -108,6 +108,10 @@ public final class QueuePanel extends LinearLayout {
     toggle = new Switch(c);
     toggle.setContentDescription("Autoplay related songs");
     toggle.setMinHeight(dp(48));
+    toggle.setThumbTintList(android.content.res.ColorStateList.valueOf(TEXT));
+    toggle.setTrackTintList(new android.content.res.ColorStateList(
+        new int[][] {new int[] {android.R.attr.state_checked}, new int[] {}},
+        new int[] {LIME, CONTROL}));
     toggle.setChecked(autoplay);
     toggle.setOnCheckedChangeListener(
         (v, value) -> {
@@ -132,13 +136,18 @@ public final class QueuePanel extends LinearLayout {
     songs = new ArrayList<>(tracks);
     current = index;
     this.playing = playing;
+    int upcoming = Math.max(0, songs.size() - Math.max(0, index + 1));
     summary.setText(
         songs.isEmpty()
             ? "Your queue is empty"
             : (playing ? "Now playing" : "Ready to play")
                 + " · "
-                + Math.max(0, songs.size() - 1)
-                + " songs up next");
+                + upcoming
+                + (upcoming == 1 ? " song up next" : " songs up next"));
+    clearUpcoming.setEnabled(upcoming > 0);
+    clearUpcoming.setAlpha(upcoming > 0 ? 1 : .4f);
+    clearQueue.setEnabled(!songs.isEmpty());
+    clearQueue.setAlpha(songs.isEmpty() ? .4f : 1);
     status(message);
     adapter.notifyDataSetChanged();
   }
