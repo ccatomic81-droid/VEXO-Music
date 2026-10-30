@@ -596,7 +596,9 @@ public final class MainActivity extends ComponentActivity {
       if (last.getPaddingBottom() != bottom)
         last.setPadding(
             last.getPaddingLeft(), last.getPaddingTop(), last.getPaddingRight(), bottom);
-      ((ViewGroup) last).setClipToPadding(false);
+      // RecyclerView requests layout even when setClipToPadding receives its current value.
+      // This callback also runs after layout, so avoid scheduling another frame needlessly.
+      if (((ViewGroup) last).getClipToPadding()) ((ViewGroup) last).setClipToPadding(false);
     }
   }
 

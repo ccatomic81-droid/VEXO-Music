@@ -17,6 +17,32 @@ import org.robolectric.annotation.*;
 public class DesignAuditTest {
   @After public void reset() { Visuals.appearance(false); }
 
+  @Test public void unchangedDockSpacingDoesNotScheduleAnotherRecyclerLayout() throws Exception {
+    new UiSmokeTest().isolateUiFromMediaService();
+    try (var a = Robolectric.buildActivity(MainActivity.class).setup()) {
+      MainActivity activity = a.get();
+      var field = MainActivity.class.getDeclaredField("content"); field.setAccessible(true);
+      LinearLayout content = (LinearLayout) field.get(activity);
+      CountingList list = new CountingList(activity);
+      list.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(activity));
+      list.setClipToPadding(false);
+      content.removeAllViews(); content.addView(list, new LinearLayout.LayoutParams(-1, 0, 1));
+      View root = activity.findViewById(android.R.id.content);
+      new ArtistAppearanceTest().capture(root, 320, 640, "audit-library-idle");
+      var update = MainActivity.class.getDeclaredMethod("updateDockSpace"); update.setAccessible(true);
+      update.invoke(activity);
+      list.tracking = true; list.requests = 0;
+      update.invoke(activity); update.invoke(activity);
+      assertEquals("Unchanged dock must allow the Library to become idle", 0, list.requests);
+    }
+  }
+
+  private static final class CountingList extends androidx.recyclerview.widget.RecyclerView {
+    boolean tracking; int requests;
+    CountingList(Context c) { super(c); }
+    @Override public void requestLayout() { if (tracking) requests++; super.requestLayout(); }
+  }
+
   @Test public void emptyArtistPromptLeavesRoomForRecommendations() throws Exception {
     List<String> actions = new ArrayList<>();
     ArtistStoriesPanel panel = new ArtistStoriesPanel(RuntimeEnvironment.getApplication(), Collections.emptyList(), actions::add, () -> actions.add("search"));

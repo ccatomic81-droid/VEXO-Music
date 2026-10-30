@@ -29,7 +29,8 @@ public class DeviceSmokeTest {
     UpdateChecker updates = new UpdateChecker(context);
     updates.automatic(false);
     updates.seen(BuildConfig.VERSION_CODE);
-    context.getSharedPreferences("settings", 0).edit().putString("region", "LK").commit();
+    context.getSharedPreferences("settings", 0).edit().putString("region", "LK")
+        .putBoolean(NotificationPermissionPrompt.SEEN, true).commit();
   }
 
   @Test public void navigateInBothThemesAndPlayLocalAudio() throws Exception {
@@ -111,7 +112,9 @@ public class DeviceSmokeTest {
     return null;
   }
   private static void clickDescription(View root, String label) {
-    View v=findDescription(root,label);assertNotNull("Missing control: "+label,v);assertTrue(v.performClick());
+    View v=findDescription(root,label);assertNotNull("Missing control: "+label,v);
+    assertTrue("Control must be visible: "+label,v.isShown());
+    assertTrue(v.performClick());
   }
   private void shot(String name) throws IOException {
     InstrumentationRegistry.getInstrumentation().waitForIdleSync();

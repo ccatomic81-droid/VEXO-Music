@@ -11,6 +11,7 @@ final class AppRelease {
           + "• Clearer navigation icons and a simpler empty library.\n"
           + "• Up next counts only the songs after your current track.\n"
           + "• Small-screen and large-text layout improvements.\n"
+          + "• Fixed repeated Library layout work after the player closes.\n"
           + "• Design test build · install over your existing app to keep your music.";
   final int code;
   final String version, summary, url;
