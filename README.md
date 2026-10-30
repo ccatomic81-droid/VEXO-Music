@@ -2,6 +2,8 @@
 
 Developer: **Kavindu Kavishka**.
 
+Opt-in design test **0.28.0-dev (44)**: [tester download](https://vexo-music-testing.kavindukavishka785.workers.dev/). Cleaner grouped Settings, compact Home artist prompt, simpler Library actions and corrected Up next counts. See the [design audit](docs/design-audit-0.28.0-dev.md).
+
 Public version **0.27.0** adds a lyrics screen to Now Playing. When timed lyrics are available, the current line follows playback and tapping a line seeks to it. Untimed lyrics, instrumental tracks and missing matches have clear states. Song title, artist and duration are sent to LRCLIB when lyrics are opened; lyrics need an internet connection and availability varies.
 
 Artist circles scroll more smoothly and retain their position while portraits refresh. Existing device music import, Light/Dark themes, Global discovery, branded popups, update downloads and offline saving remain.

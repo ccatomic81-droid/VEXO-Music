@@ -1,0 +1,35 @@
+{
+  "verifiedAt": "2026-10-30T18:55:11.622149+00:00",
+  "versionName": "0.28.0-dev",
+  "versionCode": 44,
+  "sourceCommit": "1edccc6701705f5c78400dd551a074c9463921ea",
+  "downloadUrl": "https://vexo-music-testing.kavindukavishka785.workers.dev/releases/VEXO-Music-0.28.0-dev.apk",
+  "sha256": "f57ae83ad9bc38d55d64ed7c6d62729223ecf91a60fbb963b29fb5204650c4ac",
+  "sizeBytes": 9152648,
+  "signingCertificateSha256": "0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3",
+  "debuggable": false,
+  "ciRun": "https://github.com/ccatomic81-droid/VEXO-Music/actions/runs/41109575382",
+  "regression": {
+    "passed": 255,
+    "skipped": 13,
+    "failed": 0
+  },
+  "liveDiscoveryRadio": {
+    "passed": 10,
+    "failed": 0
+  },
+  "android15": {
+    "normalText": "passed",
+    "fontScale160": "passed",
+    "localPlaybackPositionAndPause": "passed"
+  },
+  "serviceTests": 21,
+  "publicChecks": {
+    "fullDownloadHash": "passed",
+    "head": "passed",
+    "byteRange": "passed",
+    "previousTest25": "passed",
+    "writesDisabled": "passed",
+    "stableFeedUnchanged": "passed"
+  }
+}
