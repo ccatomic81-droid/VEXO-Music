@@ -85,10 +85,10 @@ jobs:
       - name: Package APK
         run: |
           mkdir -p dist
-          cp app/build/outputs/apk/debug/app-debug.apk dist/VEXO-Music-0.28.0-dev.apk
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose dist/VEXO-Music-0.28.0-dev.apk
-          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging dist/VEXO-Music-0.28.0-dev.apk | grep "versionCode='44' versionName='0.28.0-dev'"
-          sha256sum dist/VEXO-Music-0.28.0-dev.apk > dist/SHA256SUMS.txt
+          cp app/build/outputs/apk/debug/app-debug.apk dist/VEXO-Music-0.28.0.apk
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose dist/VEXO-Music-0.28.0.apk
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging dist/VEXO-Music-0.28.0.apk | grep "versionCode='45' versionName='0.28.0'"
+          sha256sum dist/VEXO-Music-0.28.0.apk > dist/SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
           name: VEXO-Music-CI-Test-APK
@@ -97,11 +97,11 @@ jobs:
       - name: Package unsigned production candidate
         run: |
           mkdir -p release-candidate
-          cp app/build/outputs/apk/release/app-release-unsigned.apk release-candidate/VEXO-Music-0.28.0-dev-unsigned.apk
-          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging release-candidate/VEXO-Music-0.28.0-dev-unsigned.apk > release-candidate/badging.txt
-          grep "versionCode='44' versionName='0.28.0-dev'" release-candidate/badging.txt
+          cp app/build/outputs/apk/release/app-release-unsigned.apk release-candidate/VEXO-Music-0.28.0-unsigned.apk
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging release-candidate/VEXO-Music-0.28.0-unsigned.apk > release-candidate/badging.txt
+          grep "versionCode='45' versionName='0.28.0'" release-candidate/badging.txt
           if grep -q 'application-debuggable' release-candidate/badging.txt; then exit 1; fi
-          (cd release-candidate && sha256sum VEXO-Music-0.28.0-dev-unsigned.apk > SHA256SUMS.txt)
+          (cd release-candidate && sha256sum VEXO-Music-0.28.0-unsigned.apk > SHA256SUMS.txt)
       - uses: actions/upload-artifact@v4
         with:
           name: VEXO-Music-Production-Candidate

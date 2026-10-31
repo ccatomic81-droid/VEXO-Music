@@ -12,7 +12,7 @@ final class AppRelease {
           + "• Up next counts only the songs after your current track.\n"
           + "• Small-screen and large-text layout improvements.\n"
           + "• Fixed repeated Library layout work after the player closes.\n"
-          + "• Design test build · install over your existing app to keep your music.";
+          + "• Install over your existing app to keep your music and settings.";
   final int code;
   final String version, summary, url;
   String sha256 = "";
