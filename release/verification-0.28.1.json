@@ -1,0 +1,32 @@
+{
+  "verifiedAt": "2026-10-31T04:30:53.763963+00:00",
+  "versionName": "0.28.1",
+  "versionCode": 46,
+  "sourceCommit": "ec60127c487d7e5b2c379a4824a9d91d4f2fad23",
+  "mainCommit": "e2b48858d1daa1ff7b2c4ad7d25eb752c928799a",
+  "downloadUrl": "https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.28.1.apk",
+  "githubRelease": "https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.28.1",
+  "sha256": "d0fc74621a318be2ebc9b0d5c3f62fcb2202cc593cb1d7511879dbe193419991",
+  "size": 9152648,
+  "certificateSha256": "0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3",
+  "debuggable": false,
+  "productionCI": "https://github.com/ccatomic81-droid/VEXO-Music/actions/runs/41167834017",
+  "checks": {
+    "regressionPassed": 260,
+    "regressionSkipped": 13,
+    "regressionFailed": 0,
+    "liveDiscoveryRadioPassed": 10,
+    "android15NormalAnd160PercentText": "passed; 2 tests per font size",
+    "serviceTestsPassed": 21,
+    "lintDebugRelease": "passed",
+    "originalCertificate": "verified",
+    "signedFeed": "verified",
+    "publicAndGithubApkHashes": "verified",
+    "headAndByteRange": "verified",
+    "previousReleaseAvailable": true,
+    "publicWritesDisabled": true
+  },
+  "notificationPolicy": "Default ON when preferences are absent; Android permission required; saved Off choices retained. FCM policy tests use a fake registration transport. No live broadcast was sent.",
+  "crossfadeDefaultSeconds": 4,
+  "releaseWorkflow": "https://github.com/ccatomic81-droid/VEXO-Music/actions/runs/41168600400"
+}

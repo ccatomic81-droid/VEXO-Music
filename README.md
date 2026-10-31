@@ -4,7 +4,7 @@ Developer: **Kavindu Kavishka**.
 
 Public version **0.28.1** defaults update alerts and release alerts to ON, connects release alerts automatically after Android notification permission is granted, and initializes crossfade at 4 seconds. Saved Off choices and custom durations are respected.
 
-[Download VEXO Music 0.28.1](https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.28.1.apk), use Settings → Check for updates, or open the [GitHub release](https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.28.1). Install over the existing app without uninstalling. Version code 46 uses the original signing identity. See [release notes](release/notes-0.28.1.md) and [update behavior](UPDATES.md).
+[Download VEXO Music 0.28.1](https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.28.1.apk), use Settings → Check for updates, or open the [GitHub release](https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.28.1). Install over the existing app without uninstalling. Version code 46 uses the original signing identity. See [release notes](release/notes-0.28.1.md), [verification](release/verification-0.28.1.json) and [update behavior](UPDATES.md).
 
 The 0.28.0 Home, Settings, Library and queue improvements remain, along with synced lyrics, artist circles, personalized mixes, radio, MindRadio, PureSong, Smart, offline music, crossfade and playlists. Connecting a YouTube account is optional.
 
