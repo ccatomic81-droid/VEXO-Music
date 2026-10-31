@@ -19,6 +19,10 @@ public class MusicDiscoveryLiveTest {
       SearchArtists.Artist artist = results.stream().filter(a -> a.name.equalsIgnoreCase(name))
           .findFirst().orElseThrow();
       ArtistSongs.Page page = ArtistSongs.load(artist, RegionPolicy.GLOBAL, null);
+      System.out.println("Artist diagnostic: " + name + " selected=" + artist.id + " matched=" + page.songs.size());
+      MusicSearch.Result diagnostic = MusicSearch.load(name, RegionPolicy.GLOBAL);
+      for (Track t : diagnostic.tracks.subList(0, Math.min(6, diagnostic.tracks.size())))
+        System.out.println("Artist diagnostic song: " + t.title + " credits=" + ArtistCredit.json(t.artists));
       assertTrue("Expected credited songs for " + name, page.songs.size() >= 2);
       assertTrue(page.songs.stream().allMatch(t -> ArtistSongs.credited(artist, t)));
       if (page.more()) {
