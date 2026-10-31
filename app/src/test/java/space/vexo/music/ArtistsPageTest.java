@@ -96,10 +96,11 @@ public class ArtistsPageTest {
               public void more() { actions.add("more"); }
               public void retry() {}
             });
+        capture.capture(profile, width, 1100, "artist-profile-" + light + "-" + width);
         assertNotNull(helper.text(profile, a.name));
         assertTrue(helper.find(profile, "Play " + duet.title + " by " + duet.artist).performClick());
         assertTrue(helper.text(profile, "Load more songs").performClick());
-        capture.capture(profile, width, 800, "artist-profile-" + light + "-" + width);
+
         android.widget.ImageView photo = capture.findType(profile, android.widget.ImageView.class);
         android.graphics.Bitmap bitmap = android.graphics.Bitmap.createBitmap(photo.getWidth(),
             photo.getHeight(), android.graphics.Bitmap.Config.ARGB_8888);
@@ -138,6 +139,7 @@ public class ArtistsPageTest {
       View root = a.findViewById(android.R.id.content);
       assertTrue(helper.find(root, "Find songs by " + wanted.name).performClick());
       assertTrue(entered.await(2, TimeUnit.SECONDS));
+      new ArtistAppearanceTest().capture(root, 360, 800, "artist-loading-before-back");
       assertNotNull(helper.find(root, "Back from artist"));
       assertNull(new ArtistAppearanceTest().findType(root, ArtistsPanel.class));
       a.getOnBackPressedDispatcher().onBackPressed();
@@ -152,4 +154,70 @@ public class ArtistsPageTest {
       assertNotNull(helper.find(root, "Open artist " + wanted.name));
     } finally { release.countDown(); }
   }
+  @Test public void loadingFollowingAndBackgroundRefreshKeepPageArtworkAndScroll() throws Exception {
+    DiscoveryUiTest helper = new DiscoveryUiTest(); helper.seed();
+    Context c = RuntimeEnvironment.getApplication();
+    SearchArtists.Artist wanted = artist(first, "Kevin Smokio");
+    new SavedArtists(c).follow(wanted);
+    SearchSuggestionsTest.Work work = new SearchSuggestionsTest.Work();
+    List<Track> initial = new ArrayList<>(), extra = new ArrayList<>();
+    for (int i = 0; i < 70; i++) {
+      Track t = song(String.format(Locale.ROOT, "%011d", i), "Catalogue song " + i,
+          new ArtistCredit(first, wanted.name));
+      (i < 40 ? initial : extra).add(t);
+    }
+    try (var activity = Robolectric.buildActivity(MainActivity.class).setup()) {
+      MainActivity a = activity.get();
+      Field io = MainActivity.class.getDeclaredField("artistIo"); io.setAccessible(true);
+      ((ExecutorService) io.get(a)).shutdownNow(); io.set(a, work);
+      Field source = MainActivity.class.getDeclaredField("artistSource"); source.setAccessible(true);
+      source.set(a, new MainActivity.ArtistSource() {
+        public List<SearchArtists.Artist> search(String q, String country) { return List.of(wanted); }
+        public ArtistSongs.Page songs(SearchArtists.Artist artist, String country, ArtistSongs.Page previous) {
+          return new ArtistSongs.Page(wanted, previous == null ? initial : extra,
+              previous == null ? new ArtistSongs.Cursor("VLOL_artists_fixture", "", country, "next") : null);
+        }
+      });
+      View root = a.findViewById(android.R.id.content);
+      helper.find(root, "Find songs by " + wanted.name).performClick();
+      ArtistAppearanceTest capture = new ArtistAppearanceTest();
+      ArtistPanel panel = capture.findType(root, ArtistPanel.class);
+      assertNotNull(panel);
+      capture.capture(root, 360, 800, "artist-stable-loading");
+      android.widget.ImageView photo = capture.findType(panel, android.widget.ImageView.class);
+      work.runNext(); Shadows.shadowOf(Looper.getMainLooper()).idle();
+      capture.capture(root, 360, 800, "artist-stable-loaded");
+      assertSame(panel, capture.findType(root, ArtistPanel.class));
+      assertSame(photo, capture.findType(panel, android.widget.ImageView.class));
+      helper.text(panel, "Following").performClick();
+      capture.capture(root, 360, 800, "artist-stable-follow");
+      assertSame(photo, capture.findType(panel, android.widget.ImageView.class));
+      Method render = MainActivity.class.getDeclaredMethod("render"); render.setAccessible(true);
+      render.invoke(a); render.invoke(a);
+      assertSame(panel, capture.findType(root, ArtistPanel.class));
+      androidx.recyclerview.widget.LinearLayoutManager layout =
+          (androidx.recyclerview.widget.LinearLayoutManager) panel.getLayoutManager();
+      layout.scrollToPositionWithOffset(20, 8);
+      capture.capture(root, 360, 800, "artist-stable-scrolled");
+      int before = layout.findFirstVisibleItemPosition();
+      View row = layout.findViewByPosition(before);
+      int top = row.getTop();
+      Method load = MainActivity.class.getDeclaredMethod("loadArtist", boolean.class); load.setAccessible(true);
+      load.invoke(a, true);
+      assertSame(panel, capture.findType(root, ArtistPanel.class));
+      work.runNext(); Shadows.shadowOf(Looper.getMainLooper()).idle();
+      capture.capture(root, 360, 800, "artist-stable-more");
+      assertEquals(72, panel.getAdapter().getItemCount());
+      assertEquals(before, layout.findFirstVisibleItemPosition());
+      assertEquals(top, layout.findViewByPosition(before).getTop());
+      assertNull(panel.getItemAnimator());
+      a.getOnBackPressedDispatcher().onBackPressed();
+      Method open = MainActivity.class.getDeclaredMethod("openArtist", SearchArtists.Artist.class); open.setAccessible(true);
+      open.invoke(a, wanted);
+      assertTrue("Reopening a recent catalogue uses its cache", work.tasks.isEmpty());
+      ArtistPanel reopened = capture.findType(root, ArtistPanel.class);
+      assertEquals(72, reopened.getAdapter().getItemCount());
+    }
+  }
+
 }

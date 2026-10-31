@@ -1,0 +1,14 @@
+{
+  "applicationId": "space.vexo.music.radio",
+  "versionCode": 48,
+  "versionName": "0.29.1",
+  "summary": "Artist pages now load the artist’s own song catalogue instead of a song search, with more songs loading as you scroll. Loading, following and background refreshes keep the page, artwork and scroll position stable. Recycled song rows improve long catalogues; recent catalogues reopen from a short-lived cache. Install as an update to keep your music and settings.",
+  "downloadUrl": "https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.29.1.apk",
+  "sourceUrl": "https://github.com/ccatomic81-droid/VEXO-Music/archive/ae4cb60ba237d9e2a142e181a6a4755650333996.zip",
+  "sourceCommit": "ae4cb60ba237d9e2a142e181a6a4755650333996",
+  "size": 9169032,
+  "sha256": "fed0a2435e7c28d0da1a4d2de68bd4f074bcb07b95ab54d40e837d17a2cd51c6",
+  "certificateSha256": "0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3",
+  "signedPayload": "eyJmb3JtYXQiOiJ2ZXhvLXJlbGVhc2UtdjEiLCJhcHBsaWNhdGlvbklkIjoic3BhY2UudmV4by5tdXNpYy5yYWRpbyIsInZlcnNpb25Db2RlIjo0OCwidmVyc2lvbk5hbWUiOiIwLjI5LjEiLCJzdW1tYXJ5IjoiQXJ0aXN0IHBhZ2VzIG5vdyBsb2FkIHRoZSBhcnRpc3TigJlzIG93biBzb25nIGNhdGFsb2d1ZSBpbnN0ZWFkIG9mIGEgc29uZyBzZWFyY2gsIHdpdGggbW9yZSBzb25ncyBsb2FkaW5nIGFzIHlvdSBzY3JvbGwuIExvYWRpbmcsIGZvbGxvd2luZyBhbmQgYmFja2dyb3VuZCByZWZyZXNoZXMga2VlcCB0aGUgcGFnZSwgYXJ0d29yayBhbmQgc2Nyb2xsIHBvc2l0aW9uIHN0YWJsZS4gUmVjeWNsZWQgc29uZyByb3dzIGltcHJvdmUgbG9uZyBjYXRhbG9ndWVzOyByZWNlbnQgY2F0YWxvZ3VlcyByZW9wZW4gZnJvbSBhIHNob3J0LWxpdmVkIGNhY2hlLiBJbnN0YWxsIGFzIGFuIHVwZGF0ZSB0byBrZWVwIHlvdXIgbXVzaWMgYW5kIHNldHRpbmdzLiIsImRvd25sb2FkVXJsIjoiaHR0cHM6Ly92ZXhvLW11c2ljLXVwZGF0ZXMua2F2aW5kdWthdmlzaGthNzg1LndvcmtlcnMuZGV2L3JlbGVhc2VzL1ZFWE8tTXVzaWMtMC4yOS4xLmFwayIsInNpemUiOjkxNjkwMzIsInNoYTI1NiI6ImZlZDBhMjQzNWU3YzI4ZDBkYTFhNGQyZGU2OGJkNGYwNzRiY2IwN2I5NWFiNTRkNDBlODM3ZDE3YTJjZDUxYzYiLCJjZXJ0aWZpY2F0ZVNoYTI1NiI6IjBiMzFjNTA5MDQ1NjczODliNzIzZTIzYWQ2MDQzYjJkMmZjNjYzNWMzMGRmZGIzZWQ1ZWYzZjliYTk3MjdlZjMiLCJzb3VyY2VDb21taXQiOiJhZTRjYjYwYmEyMzdkOWUyYTE0MmUxODFhNmE0NzU1NjUwMzMzOTk2In0=",
+  "releaseSignature": "Ez2kGRLBJXEtOgUSO+rCortDVs4aIUhkMKuVPjsSod+5z5eQMI4XoGh1/vJvNLuzyzqEDdxWo71mht0iUVFeQruztOhwFYUvAnZ0kUHw7XD9HUEhxzru23Pto8gVUIQE6kkH9qbmKiEeYIU+MH5Z0SsqTYrmnLBYEOTMGRDzMkFCc5zpPSCebtJa/xHgX6/UXN7DtvBJ7lp6jWaMuSjdsazRzKrLtLcP2nyXUIDCJXhyAXZCg81+HtYim2Fev8Xlxwzl/sAnA6DlJPPYcfXqi4BvkyGXxybNSCofVupHHbz8fE+QQO/3uw7ENxMv+glxkFWkrWOhzAewzTfHU3oixA=="
+}

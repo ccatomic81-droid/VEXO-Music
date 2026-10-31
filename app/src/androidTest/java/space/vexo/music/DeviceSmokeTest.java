@@ -98,6 +98,43 @@ public class DeviceSmokeTest {
     }
   }
 
+  @Test public void artistCatalogueUpdatesKeepTheNativePageStable() throws Exception {
+    SearchArtists.Artist artist = new SearchArtists.Artist("UCaaaaaaaaaaaaaaaaaaaaaa", "Device artist", "", Collections.emptyList(), 1, false);
+    List<Track> tracks = new ArrayList<>();
+    for (int i = 0; i < 60; i++) tracks.add(new Track("https://www.youtube.com/watch?v="
+        + String.format(Locale.ROOT, "%011d", i), "Artist catalogue song " + i,
+        artist.name, "", 210).withArtists(Arrays.asList(new ArtistCredit(artist.id, artist.name))));
+    try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+      scenario.onActivity(a -> {
+        try {
+          var source = MainActivity.class.getDeclaredField("artistSource"); source.setAccessible(true);
+          source.set(a, new MainActivity.ArtistSource() {
+            public List<SearchArtists.Artist> search(String q, String country) { return Arrays.asList(artist); }
+            public ArtistSongs.Page songs(SearchArtists.Artist selected, String country, ArtistSongs.Page previous) {
+              return new ArtistSongs.Page(artist, tracks, null);
+            }
+          });
+          var open = MainActivity.class.getDeclaredMethod("openArtist", SearchArtists.Artist.class); open.setAccessible(true); open.invoke(a, artist);
+        } catch (ReflectiveOperationException e) { throw new AssertionError(e); }
+      });
+      await(scenario, a -> ((List<?>)field(a, "artistSongs")).size() == 60, "Artist catalogue did not load all fixture songs");
+      scenario.onActivity(a -> {
+        ArtistPanel panel = (ArtistPanel) field(a, "artistPanel");
+        assertEquals(62, panel.getAdapter().getItemCount());
+        try {
+          var render = MainActivity.class.getDeclaredMethod("render"); render.setAccessible(true);
+          render.invoke(a); render.invoke(a);
+        } catch (ReflectiveOperationException e) { throw new AssertionError(e); }
+        assertSame(panel, field(a, "artistPanel"));
+        assertNull(panel.getItemAnimator());
+        panel.scrollToPosition(45);
+      });
+      shot("artist-catalogue-stable");
+      scenario.onActivity(a -> a.getOnBackPressedDispatcher().onBackPressed());
+      scenario.onActivity(a -> assertNull(findDescription(a.findViewById(android.R.id.content), "Back from artist")));
+    }
+  }
+
   private interface Check { boolean ready(MainActivity a); }
   private void await(ActivityScenario<MainActivity> scenario, Check check, String message) {
     long until = SystemClock.uptimeMillis() + 15000;

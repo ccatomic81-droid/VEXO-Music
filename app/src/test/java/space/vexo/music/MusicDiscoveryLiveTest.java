@@ -19,11 +19,12 @@ public class MusicDiscoveryLiveTest {
       SearchArtists.Artist artist = results.stream().filter(a -> a.name.equalsIgnoreCase(name))
           .findFirst().orElseThrow();
       ArtistSongs.Page page = ArtistSongs.load(artist, RegionPolicy.GLOBAL, null);
-      assertTrue("Expected credited songs for " + name, page.songs.size() >= 2);
+      assertTrue("Expected the artist catalogue beyond a 20-song search page for " + name, page.songs.size() >= 40);
       assertTrue(page.songs.stream().allMatch(t -> ArtistSongs.credited(artist, t)));
       if (page.more()) {
         ArtistSongs.Page next = ArtistSongs.load(artist, RegionPolicy.GLOBAL, page);
         assertTrue(next.songs.stream().allMatch(t -> ArtistSongs.credited(artist, t)));
+        assertFalse("Continuation must return additional catalogue songs", next.songs.isEmpty());
       }
       System.out.println("Verified artist songs: " + name + " " + artist.id + " count=" + page.songs.size());
     }
