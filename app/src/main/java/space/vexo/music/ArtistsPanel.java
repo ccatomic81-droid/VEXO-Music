@@ -18,11 +18,15 @@ final class ArtistsPanel extends MusicSurface {
   }
 
   final EditText search;
+  private final LinearLayout artistsBody;
+  private final Listener listener;
+  private String stateKey = "";
 
   ArtistsPanel(Context c, String query, List<SearchArtists.Artist> results,
       boolean searched, boolean loading, String error, Listener listener) {
     super(c);
     setBackgroundColor(BG);
+    this.listener = listener;
     body.addView(text("YOUR MUSIC", 11, LIME, true));
     gap(body, 8);
     body.addView(text("Artists", 32, TEXT, true));
@@ -65,34 +69,54 @@ final class ArtistsPanel extends MusicSurface {
     input.addView(go, new LinearLayout.LayoutParams(dp(48), dp(48)));
     body.addView(input);
     gap(body, 22);
-    if (loading) body.addView(text("Finding artists…", 14, MUTED, false));
+    artistsBody = column();
+    body.addView(artistsBody);
+    update(results, searched, loading, error);
+  }
+
+  void update(List<SearchArtists.Artist> results, boolean searched, boolean loading, String error) {
+    StringBuilder key = new StringBuilder().append(searched).append(loading).append(error);
+    List<SearchArtists.Artist> all = new ArrayList<>(results);
+    all.addAll(new SavedArtists(getContext()).entries());
+    all.addAll(new SearchArtists(getContext()).visible());
+    for (SearchArtists.Artist a : all) key.append(SavedArtists.encode(a));
+    if (stateKey.equals(key.toString())) return;
+    stateKey = key.toString();
+    artistsBody.removeAllViews();
+    Context c = getContext();
+    if (loading) artistsBody.addView(text("Finding artists…", 14, MUTED, false));
     if (!error.isEmpty()) {
-      body.addView(text(error, 14, MUTED, false));
-      gap(body, 12);
-      body.addView(action("Try again", false, () -> listener.search(query)));
+      artistsBody.addView(text(error, 14, MUTED, false));
+      gap(artistsBody, 12);
+      artistsBody.addView(action("Try again", false, () -> listener.search(search.getText().toString())));
     }
     if (searched) {
       if (!loading && error.isEmpty() && results.isEmpty())
-        body.addView(text("No artists found. Try another name.", 14, MUTED, false));
-      if (!results.isEmpty()) section("Artists found", null, () -> {});
+        artistsBody.addView(text("No artists found. Try another name.", 14, MUTED, false));
+      if (!results.isEmpty()) artistSection("Artists found");
       for (SearchArtists.Artist artist : results) artistRow(artist, listener);
-      gap(body, 16);
-      body.addView(action("Your artists", false, () -> listener.search("")));
+      gap(artistsBody, 16);
+      artistsBody.addView(action("Your artists", false, () -> listener.search("")));
     } else {
       SavedArtists saved = new SavedArtists(c);
       List<SearchArtists.Artist> followed = saved.entries();
-      section("Following", null, () -> {});
+      artistSection("Following");
       if (followed.isEmpty())
-        body.addView(text("Search for an artist, then tap Follow on their page.", 14, MUTED, false));
+        artistsBody.addView(text("Search for an artist, then tap Follow on their page.", 14, MUTED, false));
       for (SearchArtists.Artist artist : followed) artistRow(artist, listener);
       List<SearchArtists.Artist> recent = new SearchArtists(c).visible();
       recent.removeIf(saved::contains);
       if (!recent.isEmpty()) {
-        gap(body, 20);
-        section("Recently found", null, () -> {});
+        gap(artistsBody, 20);
+        artistSection("Recently found");
         for (SearchArtists.Artist artist : recent) artistRow(artist, listener);
       }
     }
+  }
+
+  private void artistSection(String title) {
+    TextView label = text(title, 22, TEXT, true);
+    artistsBody.addView(label); gap(artistsBody, 8);
   }
 
   private void artistRow(SearchArtists.Artist artist, Listener listener) {
@@ -116,7 +140,7 @@ final class ArtistsPanel extends MusicSurface {
     item.setContentDescription("Open artist " + artist.name);
     item.setFocusable(true);
     item.setOnClickListener(v -> listener.open(artist));
-    body.addView(item);
+    artistsBody.addView(item);
   }
 
   static ImageView portrait(Context c, SearchArtists.Artist artist) {

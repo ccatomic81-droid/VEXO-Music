@@ -7,11 +7,11 @@ import org.json.*;
 /** A release feed contains metadata only. Downloads always need a user tap. */
 final class AppRelease {
   static final String NOTES =
-      "• Find and follow artists in Library → Artists.\n"
-          + "• Tap an artist to see only their credited songs and collaborations.\n"
-          + "• Your followed artists stay saved when search history is cleared.\n"
-          + "• Home artist circles open artist pages directly.\n"
-          + "• Update alerts and your crossfade preferences are preserved.";
+      "• Artist pages load the artist’s song catalogue instead of search results.\n"
+          + "• More songs load as you scroll, with a manual Load more option.\n"
+          + "• Artist pages stay in place while loading or following.\n"
+          + "• Recycled song rows keep long catalogues smooth.\n"
+          + "• Recently opened artist catalogues reopen without a blank reload.";
   final int code;
   final String version, summary, url;
   String sha256 = "";

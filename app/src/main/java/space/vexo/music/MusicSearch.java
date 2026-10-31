@@ -53,17 +53,11 @@ final class MusicSearch {
     if (token.isEmpty()) body.put("query", query).put("params", filter);
     String url = "https://music.youtube.com/youtubei/v1/search?prettyPrint=false";
     if (!token.isEmpty()) url += "&continuation=" + java.net.URLEncoder.encode(token, "UTF-8");
-    // Mobile responses omit artist browse endpoints, even with platform=DESKTOP.
-    // Request the desktop metadata shape so artist identity survives search and pagination.
-    Map<String, List<String>> headers = new HashMap<>(YoutubeParsingHelper.getYoutubeMusicHeaders());
-    headers.put("User-Agent", Collections.singletonList(
-        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko)"
-            + " Chrome/131.0.0.0 Safari/537.36"));
     Response response =
         NewPipe.getDownloader()
             .postWithContentTypeJson(
                 url,
-                headers,
+                desktopHeaders(),
                 body.toString().getBytes(StandardCharsets.UTF_8));
     String text = response.responseBody();
     if (response.responseCode() != 200 || text == null || text.length() > 4 * 1024 * 1024)
@@ -73,6 +67,41 @@ final class MusicSearch {
         && !data.has("continuationContents")
         && !data.has("onResponseReceivedCommands"))
       throw new IOException("YouTube Music search returned an incomplete page");
+    return data;
+  }
+
+  static Map<String, List<String>> desktopHeaders() {
+    // Mobile responses omit artist endpoints even with platform=DESKTOP.
+    Map<String, List<String>> headers = new HashMap<>(YoutubeParsingHelper.getYoutubeMusicHeaders());
+    headers.put("User-Agent", Collections.singletonList(
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko)"
+            + " Chrome/131.0.0.0 Safari/537.36"));
+    return headers;
+  }
+
+  static JSONObject browse(String id, String params, String country, String continuation)
+      throws Exception {
+    if (Thread.currentThread().isInterrupted()) throw new InterruptedException();
+    if (!id.matches("(?:UC[A-Za-z0-9_-]{22}|VL[A-Za-z0-9_-]{10,150})")
+        || params.length() > 8192 || continuation.length() > 8192)
+      throw new IOException("Invalid artist catalogue address");
+    OnlineMusic.initialize();
+    JSONObject body = new JSONObject().put("context", new JSONObject().put("client",
+        client(country, YoutubeParsingHelper.getYoutubeMusicClientVersion())));
+    String url = "https://music.youtube.com/youtubei/v1/browse?prettyPrint=false";
+    if (continuation.isEmpty()) {
+      body.put("browseId", id);
+      if (!params.isEmpty()) body.put("params", params);
+    } else url += "&continuation=" + java.net.URLEncoder.encode(continuation, "UTF-8");
+    Response response = NewPipe.getDownloader().postWithContentTypeJson(url,
+        desktopHeaders(), body.toString().getBytes(StandardCharsets.UTF_8));
+    String text = response.responseBody();
+    if (response.responseCode() != 200 || text == null || text.length() > 8 * 1024 * 1024)
+      throw new IOException("Artist catalogue is temporarily unavailable");
+    JSONObject data = new JSONObject(text);
+    if (!data.has("contents") && !data.has("continuationContents")
+        && !data.has("onResponseReceivedActions") && !data.has("onResponseReceivedCommands"))
+      throw new IOException("Artist catalogue returned an incomplete page");
     return data;
   }
 
@@ -123,7 +152,7 @@ final class MusicSearch {
     }
   }
 
-  private static Track track(JSONObject row) {
+  static Track track(JSONObject row) {
     if (row.optString("musicItemRendererDisplayPolicy").contains("GREY_OUT")
         || row.optBoolean("isUnplayable")
         || podcast(row)) return null;

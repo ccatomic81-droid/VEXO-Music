@@ -130,7 +130,7 @@ public final class MainActivity extends ComponentActivity {
     public ArtistSongs.Page songs(SearchArtists.Artist artist, String country, ArtistSongs.Page previous)
         throws Exception { return ArtistSongs.load(artist, country, previous); }
   };
-  private final ExecutorService artistIo = Executors.newSingleThreadExecutor();
+  private ExecutorService artistIo = Executors.newSingleThreadExecutor();
   private Future<?> artistTask;
   private int artistGeneration;
   private SearchArtists.Artist activeArtist;
@@ -141,7 +141,16 @@ public final class MainActivity extends ComponentActivity {
   private boolean artistsSearched, artistsLoading;
   private ArtistsPanel artistsPanel;
   private ArtistPanel artistPanel;
-  private int artistScroll;
+  private Parcelable artistLayoutState;
+  private static final class ArtistListing {
+    final ArtistSongs.Page page;
+    final List<Track> songs;
+    final long at = System.currentTimeMillis();
+    ArtistListing(ArtistSongs.Page page, List<Track> songs) {
+      this.page = page; this.songs = new ArrayList<>(songs);
+    }
+  }
+  private final Map<String, ArtistListing> artistCatalogues = new LinkedHashMap<>();
   private SearchSuggestions suggestions;
   private MusicPreview musicPreview;
   private MixCatalogue mixCatalogue;
@@ -308,6 +317,7 @@ public final class MainActivity extends ComponentActivity {
       catch (org.json.JSONException ignored) {}
       artistsQuery = state.getString("artists_query", "");
       artistsSearched = state.getBoolean("artists_searched", false);
+      artistLayoutState = state.getParcelable("artist_layout");
       homeFilter = state.getString("home_filter", "All");
       addingToPlaylist = state.getString("adding_playlist", "");
       profileEditing = state.getBoolean("profile_editing", false);
@@ -511,6 +521,9 @@ public final class MainActivity extends ComponentActivity {
     if (artistsPanel != null) artistsQuery = artistsPanel.search.getText().toString();
     b.putString("artists_query", artistsQuery);
     b.putBoolean("artists_searched", artistsSearched);
+    if (artistPanel != null && activeArtist != null)
+      artistLayoutState = artistPanel.getLayoutManager().onSaveInstanceState();
+    b.putParcelable("artist_layout", artistLayoutState);
     b.putString("home_filter", homeFilter);
     b.putString("adding_playlist", addingToPlaylist);
     b.putBoolean("profile_editing", profileEditing);
@@ -877,6 +890,20 @@ public final class MainActivity extends ComponentActivity {
   private void render() {
     if (destroyed) return;
     if (notificationPrompt != null) notificationPrompt.schedule();
+    if (profile.complete() && !profileEditing && activeArtist != null
+        && artistPanel != null && artistPanel.getParent() == content) {
+      renderArtist();
+      updatePlayback();
+      updateDockSpace();
+      return;
+    }
+    if (profile.complete() && !profileEditing && activeArtist == null
+        && tab.equals("Library") && shelf.equals("Artists") && artistsPanel != null
+        && artistsPanel.getParent() == content) {
+      artistsPanel.update(artistResults, artistsSearched, artistsLoading, artistError);
+      updatePlayback(); updateDockSpace();
+      return;
+    }
     content.animate().cancel();
     content.setTranslationX(0);
     content.setAlpha(1);
@@ -893,7 +920,6 @@ public final class MainActivity extends ComponentActivity {
     searchLanguages = null;
     searchCategoryBack = null;
     homePanel = null;
-    if (activeArtist != null && artistPanel != null) artistScroll = artistPanel.getScrollY();
     artistPanel = null;
     artistsPanel = null;
     suggestionsVisible = false;
@@ -2219,6 +2245,8 @@ public final class MainActivity extends ComponentActivity {
   private void searchArtists(String term) {
     cancelArtistWork();
     artistsQuery = SearchHistory.clean(term);
+    if (artistsPanel != null && !artistsQuery.contentEquals(artistsPanel.search.getText()))
+      artistsPanel.search.setText(artistsQuery);
     artistsSearched = !artistsQuery.isEmpty();
     artistResults = new ArrayList<>();
     artistError = "";
@@ -2255,11 +2283,17 @@ public final class MainActivity extends ComponentActivity {
     activeMix = "";
     activeArtist = artist;
     artistPage = null;
-    artistScroll = 0;
+    artistLayoutState = null;
     artistSongs = new ArrayList<>();
     artistError = "";
     hideArtistKeyboard();
-    loadArtist(false);
+    ArtistListing cached = artistCatalogues.get(RegionPolicy.current(this) + ":" + artist.key());
+    if (cached != null && System.currentTimeMillis() - cached.at < 15 * 60 * 1000L) {
+      activeArtist = cached.page.artist;
+      artistPage = cached.page;
+      artistSongs = new ArrayList<>(cached.songs);
+      render();
+    } else loadArtist(false);
   }
 
   private void closeArtist() {
@@ -2292,6 +2326,10 @@ public final class MainActivity extends ComponentActivity {
           if (more) for (Track song : artistSongs) songs.put(song.url, song);
           for (Track song : page.songs) songs.putIfAbsent(song.url, song);
           artistSongs = new ArrayList<>(songs.values());
+          String cacheKey = country + ":" + page.artist.key();
+          if (artistCatalogues.size() >= 6 && !artistCatalogues.containsKey(cacheKey))
+            artistCatalogues.remove(artistCatalogues.keySet().iterator().next());
+          artistCatalogues.put(cacheKey, new ArtistListing(page, artistSongs));
           artistsLoading = false;
           render();
         });
@@ -2301,7 +2339,7 @@ public final class MainActivity extends ComponentActivity {
           artistsLoading = false;
           artistError = wanted.id.isEmpty()
               ? "Find this artist in Artists search to choose their official profile."
-              : "Couldn’t load artist songs. Check your connection and try again.";
+              : "Couldn’t load the artist catalogue. Check your connection and try again.";
           render();
         });
       }
@@ -2309,8 +2347,13 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private void renderArtist() {
-    List<Track> songs = new ArrayList<>(artistSongs);
-    ArtistPanel panel = new ArtistPanel(this, activeArtist, songs,
+    if (artistPanel != null && artistPanel.getParent() == content) {
+      artistPanel.update(activeArtist, new ArrayList<>(artistSongs),
+          new SavedArtists(this).contains(activeArtist), artistsLoading,
+          artistPage != null && artistPage.more(), artistError);
+      return;
+    }
+    ArtistPanel panel = new ArtistPanel(this, activeArtist, new ArrayList<>(artistSongs),
         new SavedArtists(this).contains(activeArtist), artistsLoading,
         artistPage != null && artistPage.more(), artistError, new ArtistPanel.Listener() {
           public void back() { closeArtist(); }
@@ -2324,10 +2367,10 @@ public final class MainActivity extends ComponentActivity {
           }
           public void play(int index) {
             if (controller != null) controller.setShuffleModeEnabled(false);
-            MainActivity.this.play(songs, index);
+            MainActivity.this.play(new ArrayList<>(artistSongs), index);
           }
           public void shuffle() {
-            List<Track> shuffled = new ArrayList<>(songs);
+            List<Track> shuffled = new ArrayList<>(artistSongs);
             Collections.shuffle(shuffled);
             if (controller != null) controller.setShuffleModeEnabled(false);
             MainActivity.this.play(shuffled, 0);
@@ -2338,8 +2381,7 @@ public final class MainActivity extends ComponentActivity {
         });
     artistPanel = panel;
     content.addView(panel, new LinearLayout.LayoutParams(-1, 0, 1));
-    int scroll = artistScroll;
-    panel.post(() -> panel.scrollTo(0, scroll));
+    if (artistLayoutState != null) panel.getLayoutManager().onRestoreInstanceState(artistLayoutState);
   }
 
   private void renderLibrary() {
@@ -3161,6 +3203,9 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private void refreshApp() {
+    cancelArtistWork();
+    activeArtist = null;
+    artistCatalogues.clear();
     invalidatePersonal();
     if (artistPortraits != null) artistPortraits.retry();
     if (destroyed) return;
