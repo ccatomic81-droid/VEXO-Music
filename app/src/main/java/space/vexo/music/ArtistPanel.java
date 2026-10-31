@@ -22,6 +22,7 @@ final class ArtistPanel extends MusicSurface {
   ArtistPanel(Context c, SearchArtists.Artist artist, List<Track> songs, boolean following,
       boolean loading, boolean more, String error, Listener listener) {
     super(c);
+    setBackgroundColor(BG);
     LinearLayout top = row();
     Icon back = new Icon(c, "back", TEXT);
     back.setContentDescription("Back from artist");

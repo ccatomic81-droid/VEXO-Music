@@ -100,6 +100,13 @@ public class ArtistsPageTest {
         assertTrue(helper.find(profile, "Play " + duet.title + " by " + duet.artist).performClick());
         assertTrue(helper.text(profile, "Load more songs").performClick());
         capture.capture(profile, width, 800, "artist-profile-" + light + "-" + width);
+        android.widget.ImageView photo = capture.findType(profile, android.widget.ImageView.class);
+        android.graphics.Bitmap bitmap = android.graphics.Bitmap.createBitmap(photo.getWidth(),
+            photo.getHeight(), android.graphics.Bitmap.Config.ARGB_8888);
+        photo.draw(new android.graphics.Canvas(bitmap));
+        assertEquals("Portrait background must also be circular", 0,
+            android.graphics.Color.alpha(bitmap.getPixel(0, 0)));
+        bitmap.recycle();
       }
     }
     assertTrue(actions.contains(first));

@@ -22,6 +22,7 @@ final class ArtistsPanel extends MusicSurface {
   ArtistsPanel(Context c, String query, List<SearchArtists.Artist> results,
       boolean searched, boolean loading, String error, Listener listener) {
     super(c);
+    setBackgroundColor(BG);
     body.addView(text("YOUR MUSIC", 11, LIME, true));
     gap(body, 8);
     body.addView(text("Artists", 32, TEXT, true));
@@ -120,6 +121,11 @@ final class ArtistsPanel extends MusicSurface {
 
   static ImageView portrait(Context c, SearchArtists.Artist artist) {
     ImageView photo = new ArtistStoriesPanel.CircleImage(c);
+    android.graphics.drawable.GradientDrawable circle = new android.graphics.drawable.GradientDrawable();
+    circle.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+    circle.setColor(PANEL);
+    photo.setBackground(circle);
+    photo.setClipToOutline(true);
     photo.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
     ArtworkLoader.load(photo, artist.artwork, new ArtistStoriesPanel.Initials(artist.name));
     return photo;
