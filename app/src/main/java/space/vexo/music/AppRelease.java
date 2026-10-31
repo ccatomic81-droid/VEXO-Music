@@ -7,11 +7,11 @@ import org.json.*;
 /** A release feed contains metadata only. Downloads always need a user tap. */
 final class AppRelease {
   static final String NOTES =
-      "• Artist pages load the artist’s song catalogue instead of search results.\n"
-          + "• More songs load as you scroll, with a manual Load more option.\n"
-          + "• Artist pages stay in place while loading or following.\n"
-          + "• Recycled song rows keep long catalogues smooth.\n"
-          + "• Recently opened artist catalogues reopen without a blank reload.";
+      "• Official lyric and music releases now appear in song search and artist pages.\n"
+          + "• Finds recordings such as JANANA’s Kolama that have no audio-only catalogue entry.\n"
+          + "• Official recordings play as audio in the existing player.\n"
+          + "• Unrelated videos and unverified uploads remain excluded.\n"
+          + "• Artist-page stability and your saved music are preserved.";
   final int code;
   final String version, summary, url;
   String sha256 = "";

@@ -12,6 +12,24 @@ import org.robolectric.annotation.Config;
 @Config(sdk = 35)
 public class MusicDiscoveryLiveTest {
   @Test
+  public void jananaKolamaAppearsInExplicitSearchAndArtistCatalogueAsOfficialMusic() throws Exception {
+    Assume.assumeTrue("1".equals(System.getenv("VEXO_MUSIC_LIVE_TEST")));
+    String id = "UCz2nbDqzWpCdA5JKuRh_hUw", video = "31HnVoGRXvw";
+    for (String country : Arrays.asList("LK", RegionPolicy.GLOBAL)) {
+      OnlineMusic.Results results = OnlineMusic.userSearch("Janana Kolama", country);
+      Track found = results.tracks.stream().filter(t -> t.url.endsWith(video)).findFirst().orElseThrow();
+      assertEquals("JANANA", found.artist.toUpperCase(Locale.ROOT));
+      assertEquals(257, found.duration);
+      assertTrue("Exact title/artist result should rank first", results.tracks.get(0).url.endsWith(video));
+      SearchArtists.Artist artist = new SearchArtists.Artist(id, "JANANA", "", Collections.emptyList(), 1, false);
+      ArtistSongs.Page page = ArtistSongs.load(artist, country, null);
+      assertTrue("Kolama must appear without another Load more tap", page.songs.stream().anyMatch(t -> t.url.endsWith(video)));
+      assertTrue(page.songs.stream().allMatch(t -> ArtistSongs.credited(artist, t)));
+      System.out.println("Verified JANANA Kolama in " + country + ": search first; catalogue=" + page.songs.size() + "; duration=" + found.duration);
+    }
+  }
+
+  @Test
   public void artistDirectoryLoadsOnlyTheSelectedArtistsCreditedSongs() throws Exception {
     Assume.assumeTrue("1".equals(System.getenv("VEXO_MUSIC_LIVE_TEST")));
     for (String name : Arrays.asList("Kevin Smokio", "Billie Eilish")) {
