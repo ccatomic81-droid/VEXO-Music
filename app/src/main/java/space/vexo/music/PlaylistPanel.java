@@ -41,7 +41,7 @@ final class PlaylistPanel extends MusicSurface {
       Listener listener) {
     super(c);
     LinearLayout top = row();
-    Icon back = new Icon(c, "previous", TEXT);
+    Icon back = new Icon(c, "back", TEXT);
     back.setContentDescription("Back from playlist");
     back.setOnClickListener(v -> listener.back());
     top.addView(back, new LinearLayout.LayoutParams(dp(48), dp(48)));
@@ -63,7 +63,7 @@ final class PlaylistPanel extends MusicSurface {
         text(
             songs.size()
                 + (songs.size() == 1 ? " song" : " songs")
-                + (mix ? " · Music from YouTube" : " · On this device"),
+                + (mix ? " · Music from YouTube" : " · Your collection"),
             12,
             MUTED,
             false));

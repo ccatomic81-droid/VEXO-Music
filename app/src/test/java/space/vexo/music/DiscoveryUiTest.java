@@ -136,7 +136,7 @@ public class DiscoveryUiTest {
       find(root, "Add Skyline after dark to Sinhala favourites").performClick();
       assertEquals(2, new LibraryStore(activity).tracks("playlist:Sinhala favourites").size());
       text(root, "Done · Sinhala favourites").performClick();
-      assertNotNull(text(root, "2 songs · On this device"));
+      assertNotNull(text(root, "2 songs · Your collection"));
       find(root, "Back from playlist").performClick();
       assertNotNull(text(root, "Your library"));
     }
@@ -210,7 +210,7 @@ public class DiscoveryUiTest {
         Robolectric.buildActivity(MainActivity.class).create(state).start().resume().visible()) {
       View root = b.get().findViewById(android.R.id.content);
       assertNotNull(text(root, "My evening"));
-      assertNotNull(text(root, "1 song · On this device"));
+      assertNotNull(text(root, "1 song · Your collection"));
       assertNotNull(find(root, "Play Sky lights"));
       assertEquals(1, new LibraryStore(b.get()).tracks("playlist:My evening").size());
     }

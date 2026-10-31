@@ -320,6 +320,12 @@ public final class Visuals {
           a.lineTo(16, 21);
           c.drawPath(a, p);
           break;
+        case "chevron":
+          a.moveTo(9, 6);
+          a.lineTo(15, 12);
+          a.lineTo(9, 18);
+          c.drawPath(a, p);
+          break;
         case "down":
           a.moveTo(4, 8);
           a.lineTo(12, 16);

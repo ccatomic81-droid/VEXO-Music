@@ -27,11 +27,23 @@ final class ArtistStoriesPanel extends LinearLayout {
       Context c, List<SearchArtists.Artist> artists, Consumer<String> open, Runnable search) {
     super(c);
     setOrientation(VERTICAL);
-    setPadding(0, dp(12), 0, dp(20));
+    setPadding(0, dp(artists.isEmpty() ? 4 : 12), 0, dp(artists.isEmpty() ? 12 : 20));
     TextView heading = text("Your artists", 20, TEXT);
     heading.setTypeface(null, Typeface.BOLD);
     androidx.core.view.ViewCompat.setAccessibilityHeading(heading, true);
-    addView(heading);
+    if (artists.isEmpty()) {
+      LinearLayout top = new LinearLayout(c);
+      top.setGravity(Gravity.CENTER_VERTICAL);
+      top.addView(heading, new LayoutParams(0, -2, 1));
+      TextView find = text("Find artists", 13, LIME);
+      find.setGravity(Gravity.CENTER);
+      find.setMinHeight(dp(48));
+      find.setPadding(dp(10), dp(10), 0, dp(10));
+      find.setOnClickListener(v -> search.run());
+      find.setContentDescription("Find artists by searching songs");
+      top.addView(find);
+      addView(top);
+    } else addView(heading);
     TextView detail =
         text(
             artists.isEmpty()
@@ -41,7 +53,7 @@ final class ArtistStoriesPanel extends LinearLayout {
                 : "From your song searches",
             12,
             MUTED);
-    detail.setPadding(0, dp(6), 0, dp(14));
+    detail.setPadding(0, dp(artists.isEmpty() ? 0 : 6), 0, dp(artists.isEmpty() ? 0 : 14));
     addView(detail);
     HorizontalScrollView scroll =
         new HorizontalScrollView(c) {
@@ -121,15 +133,6 @@ final class ArtistStoriesPanel extends LinearLayout {
       LayoutParams params = new LayoutParams(dp(96), -2);
       params.rightMargin = dp(4);
       row.addView(card, params);
-    }
-    if (artists.isEmpty()) {
-      TextView find = text("＋  Find artists", 14, LIME);
-      find.setGravity(Gravity.CENTER);
-      find.setMinHeight(dp(48));
-      find.setPadding(dp(18), dp(12), dp(18), dp(12));
-      find.setBackground(round(SELECTED, dp(24)));
-      find.setOnClickListener(v -> search.run());
-      row.addView(find);
     }
   }
 

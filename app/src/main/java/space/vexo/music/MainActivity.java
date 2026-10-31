@@ -543,8 +543,8 @@ public final class MainActivity extends ComponentActivity {
   private TextView button(String s, Runnable action) {
     TextView t = text(s, 14, BG, true);
     t.setGravity(Gravity.CENTER);
+    t.setBackground(round(LIME, dp(24)));
     t.setPadding(dp(16), dp(13), dp(16), dp(13));
-    t.setBackground(round(LIME, dp(18)));
     t.setMinHeight(dp(48));
     t.setOnClickListener(v -> action.run());
     return t;
@@ -596,7 +596,9 @@ public final class MainActivity extends ComponentActivity {
       if (last.getPaddingBottom() != bottom)
         last.setPadding(
             last.getPaddingLeft(), last.getPaddingTop(), last.getPaddingRight(), bottom);
-      ((ViewGroup) last).setClipToPadding(false);
+      // RecyclerView requests layout even when setClipToPadding receives its current value.
+      // This callback also runs after layout, so avoid scheduling another frame needlessly.
+      if (((ViewGroup) last).getClipToPadding()) ((ViewGroup) last).setClipToPadding(false);
     }
   }
 
@@ -2174,7 +2176,6 @@ public final class MainActivity extends ComponentActivity {
     h.addView(sc);
     gap(h, 12);
     if (shelf.equals("Playlists")) {
-      h.addView(button("+  Create playlist", () -> createPlaylist(null)));
       List<String> names = store.playlists();
       if (names.isEmpty()) {
         empty(
@@ -2184,6 +2185,7 @@ public final class MainActivity extends ComponentActivity {
             () -> createPlaylist(null));
         return;
       }
+      h.addView(button("+  Create playlist", () -> createPlaylist(null)));
       ScrollView playlistScroll = new ScrollView(this);
       LinearLayout playlistBody = column();
       playlistScroll.addView(playlistBody);
@@ -2234,7 +2236,7 @@ public final class MainActivity extends ComponentActivity {
       return;
     }
     List<Track> tracks;
-    if (shelf.equals("Phone")) {
+    if (shelf.equals("Phone") && !local.isEmpty()) {
       LinearLayout actions = row();
       actions.addView(
           button("Import device music", this::requestScan),
@@ -2249,6 +2251,8 @@ public final class MainActivity extends ComponentActivity {
       gap(h, 10);
       h.addView(text(local.size() + " audio files · stays on your device", 12, MUTED, false));
       tracks = local;
+    } else if (shelf.equals("Phone")) {
+      tracks = local;
     } else if (shelf.equals("Offline")) {
       tracks = OfflineLibrary.get(this).saved();
       offlineSummary = text(offlineDescription(), 12, MUTED, false);
@@ -2256,7 +2260,7 @@ public final class MainActivity extends ComponentActivity {
       h.addView(offlineSummary);
       gap(h, 10);
     } else tracks = store.tracks(shelf.equals("Favourites") ? "favourites" : "history");
-    if (tracks.isEmpty())
+    if (tracks.isEmpty()) {
       empty(
           shelf.equals("Phone")
               ? "Bring your music along"
@@ -2275,8 +2279,10 @@ public final class MainActivity extends ComponentActivity {
               tab = "Search";
               render();
             }
-          });
-    else addList(tracks, shelf.equals("Favourites") ? "favourites" : null);
+          },
+          shelf.equals("Phone") ? "Choose files" : null,
+          this::importAudio);
+    } else addList(tracks, shelf.equals("Favourites") ? "favourites" : null);
   }
 
   private void importAudio() {
@@ -2345,6 +2351,12 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private void empty(String title, String description, String action, Runnable click) {
+    empty(title, description, action, click, null, null);
+  }
+
+  private void empty(
+      String title, String description, String action, Runnable click,
+      String secondary, Runnable secondaryClick) {
     LinearLayout e = column();
     e.setGravity(Gravity.CENTER);
     e.setPadding(dp(30), dp(20), dp(30), dp(20));
@@ -2358,6 +2370,14 @@ public final class MainActivity extends ComponentActivity {
     e.addView(detail);
     gap(e, 22);
     e.addView(button(action, click));
+    if (secondary != null) {
+      gap(e, 10);
+      TextView other = button(secondary, secondaryClick);
+      other.setBackground(round(CONTROL, dp(24)));
+      other.setTextColor(TEXT);
+      other.setPadding(dp(16), dp(13), dp(16), dp(13));
+      e.addView(other);
+    }
     ScrollView emptyScroll = new ScrollView(this);
     emptyScroll.setFillViewport(true);
     emptyScroll.addView(e);
@@ -3616,6 +3636,7 @@ public final class MainActivity extends ComponentActivity {
     body.setPadding(dp(22), dp(8), dp(22), dp(24));
     scroll.addView(body);
     content.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
+    settingsGroup(body, "Your VEXO");
     setting(
         body,
         "Appearance",
@@ -3641,79 +3662,13 @@ public final class MainActivity extends ComponentActivity {
         "Optional · liked music and VEXO picks · manage connection",
         false,
         () -> youtube.show());
-    setting(
-        body,
-        "Refresh & repair",
-        "Reload music and temporary data · saved music stays",
-        false,
-        this::refreshApp);
-    setting(
-        body,
-        "Report a problem",
-        "Review device diagnostics and email " + AppDiagnostics.EMAIL,
-        false,
-        this::reportProblem);
-    setting(
-        body,
-        "Automatic recovery",
-        getSharedPreferences("settings", 0).getBoolean("auto_repair", true)
-            ? "On · refresh temporary data after an app crash"
-            : "Off · use Refresh & repair manually",
-        false,
-        () -> {
-          android.content.SharedPreferences prefs = getSharedPreferences("settings", 0);
-          prefs.edit().putBoolean("auto_repair", !prefs.getBoolean("auto_repair", true)).apply();
-          render();
-        });
+    settingsGroup(body, "Playback & discovery");
     setting(
         body,
         "Music region",
         RegionPolicy.name(RegionPolicy.current(this)) + " · tap to change",
         false,
         this::chooseRegion);
-    setting(
-        body,
-        "Auto-save offline music",
-        "Save songs while listening · up to 500 MB · uses internet data",
-        true,
-        OfflineLibrary.get(this).enabled(),
-        () -> {
-          boolean enabled = !OfflineLibrary.get(this).enabled();
-          getSharedPreferences("settings", 0).edit().putBoolean("auto_save", enabled).apply();
-          if (!enabled) OfflineLibrary.get(this).cancel();
-          if (controller != null)
-            controller.sendCustomCommand(
-                new SessionCommand(PlaybackService.OFFLINE_SETTINGS, Bundle.EMPTY), Bundle.EMPTY);
-          render();
-        });
-    offlineSummary = text(offlineDescription(), 12, MUTED, false);
-    offlineSummary.setPadding(dp(12), dp(4), dp(12), dp(16));
-    body.addView(offlineSummary);
-    setting(
-        body,
-        "Clear offline storage",
-        "Remove saved audio · favourites and playlists stay",
-        false,
-        () ->
-            new VexoDialogs.Builder(this)
-                .setTitle("Clear offline audio?")
-                .setMessage(
-                    "Saved songs will need internet again. Your phone’s original audio files will"
-                        + " stay.")
-                .setNegativeButton("Cancel", null)
-                .setPositiveButton("Clear", (d, w) -> OfflineLibrary.get(this).clear())
-                .show());
-    setting(
-        body,
-        "Data saver",
-        "Prefer a lower bitrate for new online streams",
-        true,
-        () -> {
-          boolean enabled = !getSharedPreferences("settings", 0).getBoolean("data_saver", false);
-          getSharedPreferences("settings", 0).edit().putBoolean("data_saver", enabled).apply();
-          OnlineMusic.clearCache();
-          render();
-        });
     setting(
         body,
         "Autoplay related songs",
@@ -3771,6 +3726,50 @@ public final class MainActivity extends ComponentActivity {
         () -> showPureSong(null));
     setting(body, "Playback speed", "Choose 0.75× to 2×", false, this::playbackSpeed);
     setting(body, "Sleep timer", "Pause playback after a time you choose", false, this::sleepTimer);
+    settingsGroup(body, "Library & data");
+    setting(
+        body,
+        "Auto-save offline music",
+        "Save songs while listening · up to 500 MB · uses internet data",
+        true,
+        OfflineLibrary.get(this).enabled(),
+        () -> {
+          boolean enabled = !OfflineLibrary.get(this).enabled();
+          getSharedPreferences("settings", 0).edit().putBoolean("auto_save", enabled).apply();
+          if (!enabled) OfflineLibrary.get(this).cancel();
+          if (controller != null)
+            controller.sendCustomCommand(
+                new SessionCommand(PlaybackService.OFFLINE_SETTINGS, Bundle.EMPTY), Bundle.EMPTY);
+          render();
+        });
+    offlineSummary = text(offlineDescription(), 12, MUTED, false);
+    offlineSummary.setPadding(dp(12), dp(4), dp(12), dp(16));
+    body.addView(offlineSummary);
+    setting(
+        body,
+        "Clear offline storage",
+        "Remove saved audio · favourites and playlists stay",
+        false,
+        () ->
+            new VexoDialogs.Builder(this)
+                .setTitle("Clear offline audio?")
+                .setMessage(
+                    "Saved songs will need internet again. Your phone’s original audio files will"
+                        + " stay.")
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Clear", (d, w) -> OfflineLibrary.get(this).clear())
+                .show());
+    setting(
+        body,
+        "Data saver",
+        "Prefer a lower bitrate for new online streams",
+        true,
+        () -> {
+          boolean enabled = !getSharedPreferences("settings", 0).getBoolean("data_saver", false);
+          getSharedPreferences("settings", 0).edit().putBoolean("data_saver", enabled).apply();
+          OnlineMusic.clearCache();
+          render();
+        });
     setting(
         body,
         "Refresh phone library",
@@ -3797,6 +3796,41 @@ public final class MainActivity extends ComponentActivity {
                 .show());
     setting(
         body,
+        "Clear recent searches",
+        "Remove search terms and artist shortcuts saved on this phone",
+        false,
+        () -> {
+          searchHistory.clear();
+          invalidateTab("Home");
+          message("Recent searches cleared");
+        });
+    settingsGroup(body, "App & support");
+    setting(
+        body,
+        "Refresh & repair",
+        "Reload music and temporary data · saved music stays",
+        false,
+        this::refreshApp);
+    setting(
+        body,
+        "Report a problem",
+        "Review device diagnostics and email " + AppDiagnostics.EMAIL,
+        false,
+        this::reportProblem);
+    setting(
+        body,
+        "Automatic recovery",
+        getSharedPreferences("settings", 0).getBoolean("auto_repair", true)
+            ? "On · refresh temporary data after an app crash"
+            : "Off · use Refresh & repair manually",
+        false,
+        () -> {
+          android.content.SharedPreferences prefs = getSharedPreferences("settings", 0);
+          prefs.edit().putBoolean("auto_repair", !prefs.getBoolean("auto_repair", true)).apply();
+          render();
+        });
+    setting(
+        body,
         "What’s new",
         "Version " + BuildConfig.VERSION_NAME + " · latest improvements",
         false,
@@ -3817,16 +3851,6 @@ public final class MainActivity extends ComponentActivity {
         () -> {
           updates.automatic(!updates.automatic());
           render();
-        });
-    setting(
-        body,
-        "Clear recent searches",
-        "Remove search terms and artist shortcuts saved on this phone",
-        false,
-        () -> {
-          searchHistory.clear();
-          invalidateTab("Home");
-          message("Recent searches cleared");
         });
     setting(
         body,
@@ -4115,8 +4139,9 @@ public final class MainActivity extends ComponentActivity {
       boolean on,
       Runnable action) {
     LinearLayout r = row();
-    r.setPadding(dp(16), dp(16), dp(8), dp(16));
-    r.setBackground(round(PANEL, dp(18)));
+    r.setBackground(round(PANEL, dp(12)));
+    r.setPadding(dp(16), dp(14), dp(8), dp(14));
+    r.setMinimumHeight(dp(72));
     LinearLayout labels = column();
     labels.addView(text(title, 15, TEXT, true));
     gap(labels, 5);
@@ -4128,10 +4153,22 @@ public final class MainActivity extends ComponentActivity {
       TextView value = text(on ? "ON" : "OFF", 12, on ? LIME : MUTED, true);
       value.setPadding(dp(12), 0, dp(8), 0);
       r.addView(value);
-    } else r.addView(icon("next", MUTED, action));
+    } else {
+      Icon forward = new Icon(this, "chevron", MUTED);
+      forward.setGlyphSize(20);
+      forward.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+      r.addView(forward, new LinearLayout.LayoutParams(dp(32), dp(40)));
+    }
     r.setOnClickListener(v -> action.run());
     parent.addView(r);
-    gap(parent, 10);
+    gap(parent, 6);
+  }
+
+  private void settingsGroup(LinearLayout parent, String title) {
+    if (parent.getChildCount() > 0) gap(parent, 18);
+    TextView label = text(title, 13, MUTED, true);
+    label.setPadding(dp(4), dp(8), dp(4), dp(12));
+    parent.addView(label);
   }
 
   private void openUrl(String url) {

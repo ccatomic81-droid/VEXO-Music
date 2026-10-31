@@ -9,6 +9,48 @@ on:
 permissions:
   contents: read
 jobs:
+  device-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: false
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Run real Android navigation and local playback checks
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-boot-timeout: 240
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot-save -memory 2048
+          script: bash tools/device-smoke.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: VEXO-Music-Android-Device-Checks
+          path: |
+            app/build/reports/androidTests/
+            app/build/outputs/androidTest-results/
+            device-smoke/
+          if-no-files-found: ignore
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -43,10 +85,10 @@ jobs:
       - name: Package APK
         run: |
           mkdir -p dist
-          cp app/build/outputs/apk/debug/app-debug.apk dist/VEXO-Music-0.27.0.apk
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose dist/VEXO-Music-0.27.0.apk
-          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging dist/VEXO-Music-0.27.0.apk | grep "versionCode='43' versionName='0.27.0'"
-          sha256sum dist/VEXO-Music-0.27.0.apk > dist/SHA256SUMS.txt
+          cp app/build/outputs/apk/debug/app-debug.apk dist/VEXO-Music-0.28.0.apk
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose dist/VEXO-Music-0.28.0.apk
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging dist/VEXO-Music-0.28.0.apk | grep "versionCode='45' versionName='0.28.0'"
+          sha256sum dist/VEXO-Music-0.28.0.apk > dist/SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
           name: VEXO-Music-CI-Test-APK
@@ -55,11 +97,11 @@ jobs:
       - name: Package unsigned production candidate
         run: |
           mkdir -p release-candidate
-          cp app/build/outputs/apk/release/app-release-unsigned.apk release-candidate/VEXO-Music-0.27.0-unsigned.apk
-          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging release-candidate/VEXO-Music-0.27.0-unsigned.apk > release-candidate/badging.txt
-          grep "versionCode='43' versionName='0.27.0'" release-candidate/badging.txt
+          cp app/build/outputs/apk/release/app-release-unsigned.apk release-candidate/VEXO-Music-0.28.0-unsigned.apk
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging release-candidate/VEXO-Music-0.28.0-unsigned.apk > release-candidate/badging.txt
+          grep "versionCode='45' versionName='0.28.0'" release-candidate/badging.txt
           if grep -q 'application-debuggable' release-candidate/badging.txt; then exit 1; fi
-          (cd release-candidate && sha256sum VEXO-Music-0.27.0-unsigned.apk > SHA256SUMS.txt)
+          (cd release-candidate && sha256sum VEXO-Music-0.28.0-unsigned.apk > SHA256SUMS.txt)
       - uses: actions/upload-artifact@v4
         with:
           name: VEXO-Music-Production-Candidate

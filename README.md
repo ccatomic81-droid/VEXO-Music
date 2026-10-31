@@ -1,12 +1,12 @@
-# VEXO Music 0.27.0
+# VEXO Music 0.28.0
 
 Developer: **Kavindu Kavishka**.
 
-Public version **0.27.0** adds a lyrics screen to Now Playing. When timed lyrics are available, the current line follows playback and tapping a line seeks to it. Untimed lyrics, instrumental tracks and missing matches have clear states. Song title, artist and duration are sent to LRCLIB when lyrics are opened; lyrics need an internet connection and availability varies.
+Public version **0.28.0** improves Home, Settings and Library, corrects queue counts and navigation icons, and fixes continuous Library layout requests after playback is cleared. Light/dark themes and large text are supported.
 
-Artist circles scroll more smoothly and retain their position while portraits refresh. Existing device music import, Light/Dark themes, Global discovery, branded popups, update downloads and offline saving remain.
+[Download VEXO Music 0.28.0](https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.28.0.apk), use Settings → Check for updates, or open the [GitHub release](https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.28.0). Install over the existing app without uninstalling. Version code 45 uses the original signing identity and updates the 0.28.0-dev tester too. See [release notes](release/notes-0.28.0.md) and [design audit](docs/design-audit-0.28.0-dev.md).
 
-[Download VEXO Music 0.27.0](https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.27.0.apk), use Settings → Check for updates, or open the [GitHub release](https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.27.0). Install over the existing app without uninstalling. Version code 43 uses the original signing identity. See [release notes](release/notes-0.27.0.md) and [verification](release/verification-0.27.0.json).
+Synced lyrics, artist circles, personalized mixes, radio, MindRadio, PureSong, Smart, offline music, crossfade and playlists remain available. Connecting a YouTube account is optional.
 
 Search now shows real song names, artwork and artists while typing, with direct play controls. Home has quick collection tiles, horizontally scrolling music cards, regional picks and VEXO mood mixes. Full playlist pages support Play all, a one-shot shuffled queue, adding songs, renaming and deleting a playlist, and removing individual tracks.
 
