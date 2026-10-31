@@ -4,7 +4,7 @@ Developer: **Kavindu Kavishka**.
 
 Public version **0.28.0** improves Home, Settings and Library, corrects queue counts and navigation icons, and fixes continuous Library layout requests after playback is cleared. Light/dark themes and large text are supported.
 
-[Download VEXO Music 0.28.0](https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.28.0.apk), use Settings → Check for updates, or open the [GitHub release](https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.28.0). Install over the existing app without uninstalling. Version code 45 uses the original signing identity and updates the 0.28.0-dev tester too. See [release notes](release/notes-0.28.0.md) and [design audit](docs/design-audit-0.28.0-dev.md).
+[Download VEXO Music 0.28.0](https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.28.0.apk), use Settings → Check for updates, or open the [GitHub release](https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.28.0). Install over the existing app without uninstalling. Version code 45 uses the original signing identity and updates the 0.28.0-dev tester too. See [release notes](release/notes-0.28.0.md) [verification](release/verification-0.28.0.json) and [design audit](docs/design-audit-0.28.0-dev.md).
 
 Synced lyrics, artist circles, personalized mixes, radio, MindRadio, PureSong, Smart, offline music, crossfade and playlists remain available. Connecting a YouTube account is optional.
 

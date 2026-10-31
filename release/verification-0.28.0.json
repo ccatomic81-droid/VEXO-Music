@@ -1,0 +1,31 @@
+{
+  "verifiedAt": "2026-10-31T03:45:59.614232+00:00",
+  "versionName": "0.28.0",
+  "versionCode": 45,
+  "sourceCommit": "ea03efc4fc18fac08971de01c44851d8da1f3d51",
+  "mainCommit": "666d4df0b5ca09b49928e4371e2b92e08a735531",
+  "downloadUrl": "https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.28.0.apk",
+  "githubRelease": "https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.28.0",
+  "sha256": "0f00a9c5877f83ee10c38289563567888a6dd8f7071620e78cf86db08409c51f",
+  "size": 9152648,
+  "certificateSha256": "0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3",
+  "debuggable": false,
+  "productionCI": "https://github.com/ccatomic81-droid/VEXO-Music/actions/runs/41165006392",
+  "releaseWorkflow": "https://github.com/ccatomic81-droid/VEXO-Music/actions/runs/41165512888",
+  "checks": {
+    "regressionPassed": 255,
+    "regressionSkipped": 13,
+    "regressionFailed": 0,
+    "liveDiscoveryRadioPassed": 10,
+    "android15NormalAnd160PercentText": "passed",
+    "serviceTestsPassed": 21,
+    "lintDebugRelease": "passed",
+    "originalSigningCertificate": "verified",
+    "releaseMetadataSignature": "verified",
+    "publicApkHash": "verified",
+    "githubApkHash": "verified",
+    "headAndByteRange": "verified",
+    "previousReleaseAvailable": true,
+    "publicWriteRoutesDisabled": true
+  }
+}
