@@ -1,0 +1,36 @@
+{
+  "verifiedAt": "2026-10-31T13:09:48.841599+00:00",
+  "versionName": "0.29.0",
+  "versionCode": 47,
+  "sourceCommit": "788beb626e195a42f712b5d8f5c6f58926e55ff1",
+  "mainCommit": "717ebd6ca2efde2ef3c6235b83180db64432ea60",
+  "downloadUrl": "https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.29.0.apk",
+  "githubRelease": "https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.29.0",
+  "sha256": "714402c850c4af0496b796eee0fe137586fff4404b5dcc09051c974fb119dd84",
+  "size": 9169032,
+  "certificateSha256": "0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3",
+  "debuggable": false,
+  "productionCI": "https://github.com/ccatomic81-droid/VEXO-Music/actions/runs/41203666034",
+  "checks": {
+    "regressionPassed": 265,
+    "regressionSkipped": 14,
+    "regressionFailed": 0,
+    "liveDiscoveryRadioPassed": 11,
+    "android15NormalAnd160PercentText": "passed; 2 tests per font size",
+    "serviceTestsPassed": 21,
+    "lintDebugRelease": "passed",
+    "originalCertificate": "verified",
+    "signedFeed": "verified",
+    "publicAndGithubApkHashes": "verified",
+    "headAndByteRange": "verified",
+    "previousReleaseAvailable": true,
+    "publicWritesDisabled": true
+  },
+  "artistMatching": "Exact provider artist IDs; credited collaborations included. Mobile metadata omits artist endpoints, so song search explicitly requests desktop metadata. Artist pages show available matches, not an exhaustive discography.",
+  "liveArtistFirstPageCounts": {
+    "Kevin Smokio": 19,
+    "Billie Eilish": 18
+  },
+  "releaseWorkflow": "https://github.com/ccatomic81-droid/VEXO-Music/actions/runs/41204150433",
+  "broadcastSent": false
+}
