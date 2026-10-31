@@ -17,6 +17,9 @@ final class AppNotifications {
   AppNotifications() {}
 
   static boolean enabled(Context context) {
+    if (android.os.Build.VERSION.SDK_INT >= 33
+        && context.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
+            != android.content.pm.PackageManager.PERMISSION_GRANTED) return false;
     return NotificationManagerCompat.from(context).areNotificationsEnabled();
   }
 
@@ -87,7 +90,7 @@ final class AppNotifications {
   static void update(Context context, AppRelease appRelease) {
     SharedPreferences sharedPreferences = context.getSharedPreferences("settings", 0);
     if (appRelease.authenticated
-        && sharedPreferences.getBoolean("update_alerts", false)
+        && AppDefaults.updateAlerts(context)
         && sharedPreferences.getInt("notified_update", 0) < appRelease.code) {
       if (post(
           context,

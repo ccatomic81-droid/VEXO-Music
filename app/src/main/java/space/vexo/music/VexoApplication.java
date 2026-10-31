@@ -7,6 +7,7 @@ public class VexoApplication extends Application {
   public void onCreate() {
     super.onCreate();
     AppRecovery.recoverIfNeeded(this);
+    AppDefaults.initialize(this);
     PushNotifications.restore(this);
     Thread.UncaughtExceptionHandler previous = Thread.getDefaultUncaughtExceptionHandler();
     Thread.setDefaultUncaughtExceptionHandler(

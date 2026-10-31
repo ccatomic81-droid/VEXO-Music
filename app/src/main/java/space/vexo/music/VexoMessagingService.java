@@ -3,7 +3,7 @@ package space.vexo.music;
 import com.google.firebase.messaging.*;
 import java.util.Map;
 
-/** Opt-in release messages never install or start playback. */
+/** Release messages respect notification settings and never install or start playback. */
 public final class VexoMessagingService extends FirebaseMessagingService {
   @Override
   public void onNewToken(String ignored) {

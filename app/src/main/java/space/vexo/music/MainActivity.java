@@ -164,6 +164,7 @@ public final class MainActivity extends ComponentActivity {
       registerForActivityResult(
           new ActivityResultContracts.RequestPermission(),
           granted -> {
+            PushNotifications.permissionsChanged(this);
             if (granted) message("Notifications enabled");
           });
   private QueuePanel queuePanel;
@@ -416,6 +417,7 @@ public final class MainActivity extends ComponentActivity {
       scanPhone();
     }
     if (notificationPrompt != null) notificationPrompt.resume();
+    PushNotifications.permissionsChanged(this);
     main.removeCallbacks(tick);
     main.post(tick);
     if (homePanel != null) {
@@ -3553,7 +3555,7 @@ public final class MainActivity extends ComponentActivity {
                 }
               }
             }));
-    boolean alerts = getSharedPreferences("settings", 0).getBoolean("update_alerts", false);
+    boolean alerts = AppDefaults.updateAlerts(this);
     panel.gap(panel.body, 10);
     panel.body.addView(
         panel.action(
@@ -3574,10 +3576,6 @@ public final class MainActivity extends ComponentActivity {
             push ? "Push release alerts: ON" : "Push release alerts: OFF",
             false,
             () -> {
-              if (!push && !AppNotifications.enabled(this)) {
-                message("Enable notifications in Android first, then turn on push alerts.");
-                return;
-              }
               PushNotifications.enabled(this, !push);
               dialog.dismiss();
               showNotifications();
@@ -3707,7 +3705,7 @@ public final class MainActivity extends ComponentActivity {
                     })
                 .show());
     int crossfade =
-        CrossfadeEngine.clampSeconds(getSharedPreferences("settings", 0).getInt("crossfade", 4));
+        AppDefaults.crossfadeSeconds(this);
     setting(
         body,
         "Crossfade",
@@ -4576,7 +4574,7 @@ public final class MainActivity extends ComponentActivity {
   private void crossfadeSettings() {
     CrossfadeSettingsPanel panel =
         new CrossfadeSettingsPanel(
-            this, getSharedPreferences("settings", 0).getInt("crossfade", 4));
+            this, AppDefaults.crossfadeSeconds(this));
     new VexoDialogs.Builder(this)
         .setTitle("Crossfade")
         .setView(panel)

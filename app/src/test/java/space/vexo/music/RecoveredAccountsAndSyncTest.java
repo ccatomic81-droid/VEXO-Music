@@ -147,6 +147,10 @@ public class RecoveredAccountsAndSyncTest {
     String otherChannel = channel.equals("testing") ? "stable" : "testing";
     Context c = RuntimeEnvironment.getApplication();
     NotificationManager manager = c.getSystemService(NotificationManager.class);
+    Shadows.shadowOf(RuntimeEnvironment.getApplication())
+        .grantPermissions(android.Manifest.permission.POST_NOTIFICATIONS);
+    c.getSharedPreferences("settings", 0).edit()
+        .putBoolean("push_release_alerts", false).commit();
     var controller = Robolectric.buildService(VexoMessagingService.class).create();
     try {
       VexoMessagingService service = controller.get();

@@ -67,7 +67,7 @@ public final class CrossfadePlayer extends ForwardingSimpleBasePlayer {
                 setPlayer(active.player);
               }
             },
-            () -> context.getSharedPreferences("settings", 0).getInt("crossfade", 4));
+            () -> AppDefaults.crossfadeSeconds(context));
     focus =
         PlaybackFocus.android(
             context,
