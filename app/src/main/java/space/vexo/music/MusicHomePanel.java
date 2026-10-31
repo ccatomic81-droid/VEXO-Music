@@ -62,7 +62,9 @@ final class MusicHomePanel extends MusicSurface {
 
     default void smart() {}
 
-    default void artist(String name) {}
+    default void artist(SearchArtists.Artist artist) {}
+
+    default void artistsPage() { library("Artists"); }
   }
 
   void artists() {
@@ -75,9 +77,9 @@ final class MusicHomePanel extends MusicSurface {
     ArtistStoriesPanel panel =
         new ArtistStoriesPanel(
             getContext(),
-            new SearchArtists(getContext()).visible(),
+            new SavedArtists(getContext()).home(getContext()),
             listener::artist,
-            listener::search);
+            listener::artistsPage);
     artistSlot.addView(panel);
     panel.restoreScroll(offset);
   }

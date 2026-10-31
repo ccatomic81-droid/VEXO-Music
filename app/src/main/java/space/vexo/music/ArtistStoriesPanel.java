@@ -24,33 +24,31 @@ final class ArtistStoriesPanel extends LinearLayout {
   }
 
   ArtistStoriesPanel(
-      Context c, List<SearchArtists.Artist> artists, Consumer<String> open, Runnable search) {
+      Context c, List<SearchArtists.Artist> artists, Consumer<SearchArtists.Artist> open, Runnable search) {
     super(c);
     setOrientation(VERTICAL);
     setPadding(0, dp(artists.isEmpty() ? 4 : 12), 0, dp(artists.isEmpty() ? 12 : 20));
     TextView heading = text("Your artists", 20, TEXT);
     heading.setTypeface(null, Typeface.BOLD);
     androidx.core.view.ViewCompat.setAccessibilityHeading(heading, true);
-    if (artists.isEmpty()) {
+    {
       LinearLayout top = new LinearLayout(c);
       top.setGravity(Gravity.CENTER_VERTICAL);
       top.addView(heading, new LayoutParams(0, -2, 1));
-      TextView find = text("Find artists", 13, LIME);
+      TextView find = text(artists.isEmpty() ? "Find artists" : "View all", 13, LIME);
       find.setGravity(Gravity.CENTER);
       find.setMinHeight(dp(48));
       find.setPadding(dp(10), dp(10), 0, dp(10));
       find.setOnClickListener(v -> search.run());
-      find.setContentDescription("Find artists by searching songs");
+      find.setContentDescription("Open Artists page");
       top.addView(find);
       addView(top);
-    } else addView(heading);
+    }
     TextView detail =
         text(
             artists.isEmpty()
-                ? (new SearchArtists(c).entries().isEmpty()
-                    ? "Search a song to start your artist circle."
-                    : "Finding your artists…")
-                : "From your song searches",
+                ? "Find and follow the artists you love."
+                : "Following and recently found",
             12,
             MUTED);
     detail.setPadding(0, dp(artists.isEmpty() ? 0 : 6), 0, dp(artists.isEmpty() ? 0 : 14));
@@ -129,7 +127,7 @@ final class ArtistStoriesPanel extends LinearLayout {
               v.animate().scaleX(1f).scaleY(1f).setDuration(180).start();
             return false;
           });
-      card.setOnClickListener(v -> open.accept(artist.name));
+      card.setOnClickListener(v -> open.accept(artist));
       LayoutParams params = new LayoutParams(dp(96), -2);
       params.rightMargin = dp(4);
       row.addView(card, params);
@@ -148,7 +146,7 @@ final class ArtistStoriesPanel extends LinearLayout {
     return Math.round(value * getResources().getDisplayMetrics().density);
   }
 
-  private static final class Initials extends android.graphics.drawable.Drawable {
+  static final class Initials extends android.graphics.drawable.Drawable {
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final String letters;
 
@@ -199,7 +197,7 @@ final class ArtistStoriesPanel extends LinearLayout {
   }
 
   /** Explicit clipping also works for software drawing and placeholder/error artwork. */
-  private static final class CircleImage extends ImageView {
+  static final class CircleImage extends ImageView {
     private final Path circle = new Path();
 
     CircleImage(Context c) {

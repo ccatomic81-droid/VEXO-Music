@@ -6,6 +6,19 @@ import org.schabi.newpipe.extractor.channel.ChannelInfoItem;
 
 /** Public YouTube Music artist results, never a song-cover or approximate-name match. */
 final class ArtistCatalogue {
+  static List<SearchArtists.Artist> artists(List<? extends InfoItem> results) {
+    LinkedHashMap<String, SearchArtists.Artist> out = new LinkedHashMap<>();
+    for (InfoItem item : results.subList(0, Math.min(40, results.size()))) {
+      if (!(item instanceof ChannelInfoItem)) continue;
+      String id = channelId(item.getUrl()), name = SearchArtists.name(item.getName());
+      if (!id.isEmpty() && !name.isEmpty())
+        out.putIfAbsent(id, new SearchArtists.Artist(id, name,
+            ArtworkQuality.best(item.getThumbnails()), Collections.emptyList(),
+            System.currentTimeMillis(), false));
+    }
+    return new ArrayList<>(out.values());
+  }
+
   static List<SearchArtists.Artist> resolve(SearchArtists.Artist artist, String country)
       throws Exception {
     List<SearchArtists.Artist> exact = search(artist, country);

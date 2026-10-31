@@ -12,6 +12,24 @@ import org.robolectric.annotation.Config;
 @Config(sdk = 35)
 public class MusicDiscoveryLiveTest {
   @Test
+  public void artistDirectoryLoadsOnlyTheSelectedArtistsCreditedSongs() throws Exception {
+    Assume.assumeTrue("1".equals(System.getenv("VEXO_MUSIC_LIVE_TEST")));
+    for (String name : Arrays.asList("Kevin Smokio", "Billie Eilish")) {
+      List<SearchArtists.Artist> results = OnlineMusic.searchArtists(name, RegionPolicy.GLOBAL);
+      SearchArtists.Artist artist = results.stream().filter(a -> a.name.equalsIgnoreCase(name))
+          .findFirst().orElseThrow();
+      ArtistSongs.Page page = ArtistSongs.load(artist, RegionPolicy.GLOBAL, null);
+      assertTrue("Expected credited songs for " + name, page.songs.size() >= 2);
+      assertTrue(page.songs.stream().allMatch(t -> ArtistSongs.credited(artist, t)));
+      if (page.more()) {
+        ArtistSongs.Page next = ArtistSongs.load(artist, RegionPolicy.GLOBAL, page);
+        assertTrue(next.songs.stream().allMatch(t -> ArtistSongs.credited(artist, t)));
+      }
+      System.out.println("Verified artist songs: " + name + " " + artist.id + " count=" + page.songs.size());
+    }
+  }
+
+  @Test
   @org.robolectric.annotation.GraphicsMode(org.robolectric.annotation.GraphicsMode.Mode.NATIVE)
   public void artistPortraitsMatchKevinSmokioAndBillieEilishAndDecodeRealPhotos() throws Exception {
     Assume.assumeTrue("1".equals(System.getenv("VEXO_MUSIC_LIVE_TEST")));

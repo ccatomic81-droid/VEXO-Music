@@ -98,7 +98,7 @@ public class ArtistAppearanceTest {
     List<String> selected = new ArrayList<>();
     ArtistStoriesPanel panel =
         new ArtistStoriesPanel(
-            c, new SearchArtists(c).entries(), selected::add, () -> selected.add("search"));
+            c, new SearchArtists(c).entries(), a -> selected.add(a.name), () -> selected.add("search"));
     View card = helper.find(panel, "Find songs by Billie Eilish");
     assertTrue(card.performClick());
     assertEquals(Arrays.asList("Billie Eilish"), selected);

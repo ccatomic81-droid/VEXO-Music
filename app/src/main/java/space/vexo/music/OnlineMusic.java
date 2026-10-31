@@ -243,12 +243,20 @@ public final class OnlineMusic {
 
   static List<SearchArtists.Artist> artistPortraits(SearchArtists.Artist artist, String country)
       throws Exception {
+    return ArtistCatalogue.matches(artist, artistItems(artist.name, country));
+  }
+
+  static List<SearchArtists.Artist> searchArtists(String text, String country) throws Exception {
+    return ArtistCatalogue.artists(artistItems(SearchHistory.clean(text), country));
+  }
+
+  private static List<InfoItem> artistItems(String text, String country) throws Exception {
     initialize();
     PREVIEW.set(true);
     try {
       SearchQueryHandler query =
           ServiceList.YouTube.getSearchQHFactory()
-              .fromQuery(artist.name, Collections.singletonList("music_artists"), "");
+              .fromQuery(text, Collections.singletonList("music_artists"), "");
       org.schabi.newpipe.extractor.search.SearchExtractor extractor =
           ServiceList.YouTube.getSearchExtractor(query);
       if (!RegionPolicy.global(country))
@@ -256,7 +264,7 @@ public final class OnlineMusic {
             new org.schabi.newpipe.extractor.localization.ContentCountry(
                 RegionPolicy.providerCountry(country)));
       extractor.fetchPage();
-      return ArtistCatalogue.matches(artist, extractor.getInitialPage().getItems());
+      return extractor.getInitialPage().getItems();
     } finally {
       PREVIEW.remove();
     }
