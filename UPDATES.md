@@ -1,6 +1,6 @@
 # App updates and releases
 
-Current public release: **0.29.1 / code 48**. It updates public 0.29.0 in place with the original signing identity. Artist pages load the artist’s song catalogue and keep the same recycled list during loading, following and background refreshes. The manifest is signed. Use Settings → Check for updates; Android still requires approval to install. See `release/public-0.29.1.json` and `release/verification-0.29.1.json`.
+Current public release: **0.29.2 / code 49**. It updates public 0.29.1 in place with the original signing identity. Official music and lyric recordings such as JANANA’s Kolama appear in explicit song search and artist pages. Playback continues through the audio player. The manifest is signed. Use Settings → Check for updates; Android still requires approval to install. See `release/public-0.29.2.json` and `release/verification-0.29.2.json`.
 
 In 0.25.1, Get update opens an animated foreground download panel showing real percentage and MB transferred. Verification is a separate phase. Cancel stops the HTTP transfer and removes its partial file; Retry starts a new attempt after a connection or verification failure. A cached, already verified APK can be reused. Cancel remains visible while large-text content scrolls. Destroying the activity cancels its transfer. Older installed apps retain their existing update UI until this version is installed.
 
