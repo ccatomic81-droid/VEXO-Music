@@ -1,0 +1,14 @@
+{
+  "applicationId": "space.vexo.music.radio",
+  "versionCode": 46,
+  "versionName": "0.28.1",
+  "summary": "Update alerts and push release alerts default to ON. Grant Android notification permission to connect release alerts automatically. Crossfade starts at 4 seconds. Saved Off choices and custom durations are respected. Install as an update to keep your music and settings.",
+  "downloadUrl": "https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.28.1.apk",
+  "sourceUrl": "https://github.com/ccatomic81-droid/VEXO-Music/archive/ec60127c487d7e5b2c379a4824a9d91d4f2fad23.zip",
+  "sourceCommit": "ec60127c487d7e5b2c379a4824a9d91d4f2fad23",
+  "size": 9152648,
+  "sha256": "d0fc74621a318be2ebc9b0d5c3f62fcb2202cc593cb1d7511879dbe193419991",
+  "certificateSha256": "0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3",
+  "signedPayload": "eyJmb3JtYXQiOiJ2ZXhvLXJlbGVhc2UtdjEiLCJhcHBsaWNhdGlvbklkIjoic3BhY2UudmV4by5tdXNpYy5yYWRpbyIsInZlcnNpb25Db2RlIjo0NiwidmVyc2lvbk5hbWUiOiIwLjI4LjEiLCJzdW1tYXJ5IjoiVXBkYXRlIGFsZXJ0cyBhbmQgcHVzaCByZWxlYXNlIGFsZXJ0cyBkZWZhdWx0IHRvIE9OLiBHcmFudCBBbmRyb2lkIG5vdGlmaWNhdGlvbiBwZXJtaXNzaW9uIHRvIGNvbm5lY3QgcmVsZWFzZSBhbGVydHMgYXV0b21hdGljYWxseS4gQ3Jvc3NmYWRlIHN0YXJ0cyBhdCA0IHNlY29uZHMuIFNhdmVkIE9mZiBjaG9pY2VzIGFuZCBjdXN0b20gZHVyYXRpb25zIGFyZSByZXNwZWN0ZWQuIEluc3RhbGwgYXMgYW4gdXBkYXRlIHRvIGtlZXAgeW91ciBtdXNpYyBhbmQgc2V0dGluZ3MuIiwiZG93bmxvYWRVcmwiOiJodHRwczovL3ZleG8tbXVzaWMtdXBkYXRlcy5rYXZpbmR1a2F2aXNoa2E3ODUud29ya2Vycy5kZXYvcmVsZWFzZXMvVkVYTy1NdXNpYy0wLjI4LjEuYXBrIiwic2l6ZSI6OTE1MjY0OCwic2hhMjU2IjoiZDBmYzc0NjIxYTMxOGJlMmViYzliMGQ1YzNmNjJmY2IyMjAyY2M1OTNjYjFkNzUxMTg3OWRiZTE5MzQxOTk5MSIsImNlcnRpZmljYXRlU2hhMjU2IjoiMGIzMWM1MDkwNDU2NzM4OWI3MjNlMjNhZDYwNDNiMmQyZmM2NjM1YzMwZGZkYjNlZDVlZjNmOWJhOTcyN2VmMyIsInNvdXJjZUNvbW1pdCI6ImVjNjAxMjdjNDg3ZDdlNWIyYzM3OWE0ODI0YTlkOTFkNGYyZmFkMjMifQ==",
+  "releaseSignature": "hmyCbKhe3RG5HlMeqq5CPuZIIeuSoQLX/s6IZBSiU99FsSw3cMqc6ysOK5oAuAyuSTe1yxSXi+MHPvejswDTt7N7MZWv3utEsmtN6DNUW9rkNBLGjianJI0rH0IJYCuEuXZQGf+xEZwqwFDi4r23YV7awiMbc4ruhm02I7kLxIV4Gh8elXhwPcOZI1waNmahHOmYw+rQDAGzQcoLURiKNVH+cYq0Dno8tUaKekzG3y5exnGGjvsyn4q3EsLNK/Be+6ldhJnAd+IshIphziOosb93yT+dYie7TTTvuKDIEUwOpom+9Z3n4SdKvPHLq8b7bWxYnpwiqZE5zWdDjcypEQ=="
+}
