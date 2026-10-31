@@ -1,0 +1,48 @@
+{
+  "verifiedAt": "2026-10-31T14:05:26.416131+00:00",
+  "versionName": "0.29.2",
+  "versionCode": 49,
+  "sourceCommit": "270511426586299174a3a60c5d764308e5b05f56",
+  "mainCommit": "059d43f8e29ce0e0df1f68118371b78ee30d8a6b",
+  "downloadUrl": "https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.29.2.apk",
+  "githubRelease": "https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.29.2",
+  "sha256": "7a864a749dc37bb67fd85891ef45afb22dc153669052d3836989b2ad9160c1e9",
+  "size": 9185416,
+  "certificateSha256": "0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3",
+  "debuggable": false,
+  "productionCI": "https://github.com/ccatomic81-droid/VEXO-Music/actions/runs/41207749373",
+  "checks": {
+    "regressionPassed": 273,
+    "regressionSkipped": 15,
+    "regressionFailed": 0,
+    "liveDiscoveryRadioPassed": 12,
+    "android15NormalAnd160PercentText": "passed; 3 tests per font size",
+    "serviceTestsPassed": 21,
+    "lintDebugRelease": "passed",
+    "originalCertificate": "verified",
+    "signedFeed": "verified",
+    "publicAndGithubApkHashes": "verified",
+    "headAndByteRange": "verified",
+    "previousReleaseAvailable": true,
+    "publicWritesDisabled": true
+  },
+  "missingRecording": {
+    "artist": "JANANA",
+    "artistId": "UCz2nbDqzWpCdA5JKuRh_hUw",
+    "title": "Kolama",
+    "videoId": "31HnVoGRXvw",
+    "durationSeconds": 257,
+    "classification": "MUSIC_VIDEO_TYPE_OMV",
+    "regionsVerified": [
+      "LK",
+      "GLOBAL"
+    ],
+    "searchRank": 1,
+    "presentOnFirstArtistPage": true,
+    "artistCatalogueCount": 46
+  },
+  "policy": "Explicit song search and artist-owned official music catalogues accept provider-classified OMV entries with artist-page credits and music-content validation. UGC, unverified channel uploads and podcasts remain excluded. Discovery/category paths retain their audio catalogue. Both source cursors and retries are preserved.",
+  "playback": "Existing audio resolver/player; no video UI. Live checks verify discovery metadata; native playback smoke test uses local WAV.",
+  "releaseWorkflow": "https://github.com/ccatomic81-droid/VEXO-Music/actions/runs/41208318073",
+  "broadcastSent": false
+}
