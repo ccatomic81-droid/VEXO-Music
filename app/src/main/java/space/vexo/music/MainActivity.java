@@ -288,7 +288,9 @@ public final class MainActivity extends ComponentActivity {
         new MusicPreview(
             main,
             Executors.newFixedThreadPool(2),
-            (term, country) -> OnlineMusic.preview(categoryQuery(term), country));
+            (term, country) -> searchCategory == null
+                ? OnlineMusic.userPreview(term, country)
+                : OnlineMusic.preview(categoryQuery(term), country));
     mixCatalogue = new MixCatalogue(this);
     updates = new UpdateChecker(this);
     notificationPrompt =
@@ -2094,6 +2096,7 @@ public final class MainActivity extends ComponentActivity {
     int generation = ++searchGeneration;
     String searchedTerm = query;
     String request = categoryQuery(query);
+    boolean userSearch = searchCategory == null;
     String country = RegionPolicy.current(this);
     searching = true;
     results = new ArrayList<>();
@@ -2127,11 +2130,11 @@ public final class MainActivity extends ComponentActivity {
                         else invalidateTab("Search");
                       });
                 } else {
-                  OnlineMusic.Results found = OnlineMusic.search(request, country);
+                  OnlineMusic.Results found = userSearch ? OnlineMusic.userSearch(request, country) : OnlineMusic.search(request, country);
                   if (found.tracks.isEmpty()) {
                     for (String variant : SmartPolicy.variants(request)) {
                       if (variant.equals(request)) continue;
-                      OnlineMusic.Results alternative = OnlineMusic.search(variant, country);
+                      OnlineMusic.Results alternative = userSearch ? OnlineMusic.userSearch(variant, country) : OnlineMusic.search(variant, country);
                       if (!alternative.tracks.isEmpty()) {
                         found = alternative;
                         break;

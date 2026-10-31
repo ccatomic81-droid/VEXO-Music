@@ -16,14 +16,21 @@ final class MusicSearch {
 
   static final class Result {
     final List<Track> tracks;
-    final String query, country, continuation;
+    final String query, country, continuation, officialContinuation;
 
     Result(List<Track> tracks, String query, String country, String continuation) {
+      this(tracks, query, country, continuation, null);
+    }
+
+    Result(List<Track> tracks, String query, String country, String continuation, String officialContinuation) {
       this.tracks = tracks;
       this.query = query;
       this.country = country;
       this.continuation = continuation;
+      this.officialContinuation = officialContinuation;
     }
+
+    boolean more() { return !continuation.isEmpty() || officialContinuation != null && !officialContinuation.isEmpty(); }
   }
 
   static Result load(String query, String country) throws Exception {
@@ -31,7 +38,53 @@ final class MusicSearch {
     return parse(fetch(query, country, SONGS, ""), query, country);
   }
 
+  /** Explicit song searches also find official recordings without a separately distributed audio release. */
+  static Result userLoad(String query, String country) throws Exception {
+    Result audio = null, official = null;
+    Exception failure = null;
+    try { audio = load(query, country); }
+    catch (Exception e) { if (Thread.currentThread().isInterrupted()) throw e; failure = e; }
+    try { official = parse(fetch(query, country, VIDEOS, ""), query, country, true); }
+    catch (Exception e) { if (Thread.currentThread().isInterrupted()) throw e; if (failure == null) failure = e; }
+    if (audio == null && official == null) throw failure;
+    return combine(audio, official, query, country);
+  }
+
+  static Result combine(Result audio, Result official, String query, String country) {
+    LinkedHashMap<String, Track> out = new LinkedHashMap<>();
+    if (audio != null) for (Track t : audio.tracks) out.putIfAbsent(recordingKey(t), t);
+    if (official != null) for (Track t : official.tracks) out.putIfAbsent(recordingKey(t), t);
+    List<Track> songs = new ArrayList<>(out.values());
+    String[] words = RadioPolicy.normalize(query).split(" ");
+    songs.sort(Comparator.comparingInt((Track t) -> relevance(t, words)).reversed());
+    return new Result(songs, query, country, audio == null ? "" : audio.continuation,
+        official == null ? "" : official.continuation);
+  }
+
+  static String recordingKey(Track t) {
+    String key = RadioPolicy.songKey(t), artist = RadioPolicy.artist(t);
+    return !artist.isEmpty() && key.endsWith(" " + artist)
+        ? key.substring(0, key.length() - artist.length()).trim() : key;
+  }
+
+  private static int relevance(Track t, String[] words) {
+    String label = " " + RadioPolicy.normalize(t.title + " " + t.artist) + " ";
+    int score = 0;
+    for (String word : words) if (!word.isEmpty() && label.contains(" " + word + " ")) score++;
+    return score;
+  }
+
   static Result more(Result previous) throws Exception {
+    if (previous.officialContinuation != null) {
+      Result audio = previous.continuation.isEmpty() ? null : parse(
+          fetch("", previous.country, "", previous.continuation), previous.query, previous.country);
+      Result official = previous.officialContinuation.isEmpty() ? null : parse(
+          fetch("", previous.country, "", previous.officialContinuation), previous.query, previous.country, true);
+      Result combined = combine(audio, official, previous.query, previous.country);
+      return new Result(combined.tracks, previous.query, previous.country,
+          combined.continuation.equals(previous.continuation) ? "" : combined.continuation,
+          combined.officialContinuation.equals(previous.officialContinuation) ? "" : combined.officialContinuation);
+    }
     if (previous.continuation.isEmpty())
       return new Result(Collections.emptyList(), previous.query, previous.country, "");
     Result page =
@@ -119,25 +172,29 @@ final class MusicSearch {
   }
 
   static Result parse(JSONObject data, String query, String country) {
+    return parse(data, query, country, false);
+  }
+
+  static Result parse(JSONObject data, String query, String country, boolean official) {
     LinkedHashMap<String, Track> songs = new LinkedHashMap<>();
     String[] next = {""};
-    walk(data, songs, next, 0, new int[] {0});
+    walk(data, songs, next, 0, new int[] {0}, official);
     return new Result(
-        new ArrayList<>(songs.values()), query, country, songs.isEmpty() ? "" : next[0]);
+        new ArrayList<>(songs.values()), query, country, songs.isEmpty() && !official ? "" : next[0]);
   }
 
   private static void walk(
-      Object value, Map<String, Track> out, String[] next, int depth, int[] visited) {
+      Object value, Map<String, Track> out, String[] next, int depth, int[] visited, boolean official) {
     if (depth > 40 || visited[0]++ > 20000 || out.size() >= 100) return;
     if (value instanceof JSONArray) {
       JSONArray array = (JSONArray) value;
       for (int i = 0; i < Math.min(500, array.length()); i++)
-        walk(array.opt(i), out, next, depth + 1, visited);
+        walk(array.opt(i), out, next, depth + 1, visited, official);
     } else if (value instanceof JSONObject) {
       JSONObject object = (JSONObject) value;
       JSONObject row = object.optJSONObject("musicResponsiveListItemRenderer");
       if (row != null) {
-        Track song = track(row);
+        Track song = track(row, official);
         if (song != null) out.putIfAbsent(song.url, song);
         return;
       }
@@ -148,16 +205,20 @@ final class MusicSearch {
           next[0] = cursor.optString("continuation");
       }
       Iterator<String> keys = object.keys();
-      while (keys.hasNext()) walk(object.opt(keys.next()), out, next, depth + 1, visited);
+      while (keys.hasNext()) walk(object.opt(keys.next()), out, next, depth + 1, visited, official);
     }
   }
 
-  static Track track(JSONObject row) {
+  static Track track(JSONObject row) { return track(row, false); }
+
+  static Track track(JSONObject row, boolean official) {
     if (row.optString("musicItemRendererDisplayPolicy").contains("GREY_OUT")
         || row.optBoolean("isUnplayable")
         || podcast(row)) return null;
     String type = find(row, "musicVideoType", 0);
-    if (!type.isEmpty() && !type.equals("MUSIC_VIDEO_TYPE_ATV")) return null;
+    boolean officialRecording = official && type.equals("MUSIC_VIDEO_TYPE_OMV");
+    if (!type.isEmpty() && !type.equals("MUSIC_VIDEO_TYPE_ATV") && !officialRecording) return null;
+    if (official && !type.equals("MUSIC_VIDEO_TYPE_ATV") && !officialRecording) return null;
     JSONArray columns = row.optJSONArray("flexColumns");
     if (columns == null || columns.length() == 0) return null;
     JSONObject titleText = column(columns.optJSONObject(0));
@@ -182,7 +243,8 @@ final class MusicSearch {
         JSONObject run = runs.optJSONObject(j);
         JSONObject endpoint = run == null ? null : run.optJSONObject("navigationEndpoint");
         JSONObject browse = endpoint == null ? null : endpoint.optJSONObject("browseEndpoint");
-        if (browse != null && browse.optString("browseId").startsWith("UC")) {
+        if (browse != null && browse.optString("browseId").startsWith("UC")
+            && (!officialRecording || find(browse, "pageType", 0).equals("MUSIC_PAGE_TYPE_ARTIST"))) {
           String artistName = run.optString("text").trim();
           if (artists.add(artistName))
             credits.add(new ArtistCredit(browse.optString("browseId"), artistName));
@@ -200,13 +262,15 @@ final class MusicSearch {
       }
     String artist = artists.isEmpty() ? fallback : String.join(", ", artists);
     if (artist.isEmpty() || artist.length() > 500 || duration < 1 || duration > 21600) return null;
-    return new Track(
+    if (officialRecording && credits.isEmpty()) return null;
+    Track track = new Track(
             "https://www.youtube.com/watch?v=" + id,
             title,
             artist,
             thumbnail(row.optJSONObject("thumbnail"), 0),
             duration)
         .withArtists(credits);
+    return officialRecording && !RadioPolicy.music(track) ? null : track;
   }
 
   private static JSONObject column(JSONObject col) {

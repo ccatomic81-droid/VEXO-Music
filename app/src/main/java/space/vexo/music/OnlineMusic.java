@@ -188,7 +188,7 @@ public final class OnlineMusic {
     Results(MusicSearch.Result page) {
       tracks = page.tracks;
       next =
-          page.continuation.isEmpty()
+          !page.more()
               ? null
               : new Page("https://music.youtube.com/youtubei/v1/search");
       query = null;
@@ -224,6 +224,17 @@ public final class OnlineMusic {
     } finally {
       PREVIEW.remove();
     }
+  }
+
+  static Results userSearch(String text, String country) throws Exception {
+    initialize();
+    PREVIEW.set(true);
+    try { return new Results(MusicSearch.userLoad(text, country)); }
+    finally { PREVIEW.remove(); }
+  }
+
+  static List<Track> userPreview(String text, String country) throws Exception {
+    return userSearch(text, country).tracks;
   }
 
   private static Results legacySearch(String text, String country) throws Exception {

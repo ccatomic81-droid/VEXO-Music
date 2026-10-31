@@ -1,14 +1,14 @@
-# VEXO Music 0.29.1
+# VEXO Music 0.29.2
 
 Developer: **Kavindu Kavishka**.
 
-Public version **0.29.1** fixes missing artist songs and artist-page flicker. **Library → Artists** now follows the artist’s own Songs catalogue instead of filtering a name search. More catalogue pages load as you scroll; Load more remains available. Exact artist credits keep unrelated songs out. Availability depends on the music provider and region.
+Public version **0.29.2** fixes missing official music recordings such as **JANANA’s Kolama**. Explicit song search now combines audio releases with provider-classified official music and lyric recordings, ranks matching song/artist terms first, and prefers audio for equivalent duplicate search results. Artist pages read both artist-owned music catalogues with pagination. Artist identity credits remain required; unrelated videos and unverified uploads are excluded.
 
-Artist pages keep one recycled song list during loading, following and background refreshes, preserving visible artwork and scroll position. Recently opened catalogues are kept briefly in memory to avoid a blank reload when reopening them.
+Every recording uses the existing audio player. Artist-page stability, cached reopening, followed artists, saved music and settings are preserved.
 
-[Download VEXO Music 0.29.1](https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.29.1.apk), use Settings → Check for updates, or open the [GitHub release](https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.29.1). Install over the existing app without uninstalling. Version code 48 uses the original signing identity. See [release notes](release/notes-0.29.1.md), [verification](release/verification-0.29.1.json) and [update behavior](UPDATES.md).
+[Download VEXO Music 0.29.2](https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.29.2.apk), use Settings → Check for updates, or open the [GitHub release](https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.29.2). Install over the existing app without uninstalling. Version code 49 uses the original signing identity. See [release notes](release/notes-0.29.2.md), [verification](release/verification-0.29.2.json) and [update behavior](UPDATES.md).
 
-Followed artists stay saved when song-search history is cleared. Notification and crossfade preferences are preserved.
+Catalogue availability depends on the music provider and region. Discovery/category feeds retain their existing audio catalogue path.
 
 The 0.28.0 Home, Settings, Library and queue improvements remain, along with synced lyrics, artist circles, personalized mixes, radio, MindRadio, PureSong, Smart, offline music, crossfade and playlists. Connecting a YouTube account is optional.
 

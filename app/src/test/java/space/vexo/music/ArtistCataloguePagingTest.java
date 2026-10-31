@@ -40,7 +40,7 @@ public class ArtistCataloguePagingTest {
   @Test public void followsArtistSongsPointerAndKeepsCursorBeyondOneHundredSongs() throws Exception {
     List<String> requests = new ArrayList<>();
     JSONObject profile = new JSONObject().put("contents", new JSONArray()
-        .put(shelf("Videos", "VLPL_unrelated_video_list"))
+        .put(shelf("Related artists", "VLPL_unrelated_video_list"))
         .put(shelf("Top songs", playlist)));
     ArtistSongs.Source source = (browseId, params, country, continuation) -> {
       requests.add(browseId + ":" + continuation);
