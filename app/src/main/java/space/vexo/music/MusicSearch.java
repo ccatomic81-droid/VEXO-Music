@@ -53,11 +53,17 @@ final class MusicSearch {
     if (token.isEmpty()) body.put("query", query).put("params", filter);
     String url = "https://music.youtube.com/youtubei/v1/search?prettyPrint=false";
     if (!token.isEmpty()) url += "&continuation=" + java.net.URLEncoder.encode(token, "UTF-8");
+    // Mobile responses omit artist browse endpoints, even with platform=DESKTOP.
+    // Request the desktop metadata shape so artist identity survives search and pagination.
+    Map<String, List<String>> headers = new HashMap<>(YoutubeParsingHelper.getYoutubeMusicHeaders());
+    headers.put("User-Agent", Collections.singletonList(
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko)"
+            + " Chrome/131.0.0.0 Safari/537.36"));
     Response response =
         NewPipe.getDownloader()
             .postWithContentTypeJson(
                 url,
-                YoutubeParsingHelper.getYoutubeMusicHeaders(),
+                headers,
                 body.toString().getBytes(StandardCharsets.UTF_8));
     String text = response.responseBody();
     if (response.responseCode() != 200 || text == null || text.length() > 4 * 1024 * 1024)
