@@ -68,7 +68,7 @@ final class NotificationPermissionPrompt {
         || (dialog != null && dialog.isShowing())) return;
     AlertDialog candidate = new VexoDialogs.Builder(activity)
         .setTitle("Enable notifications?")
-        .setMessage("Allow VEXO Music notifications. You can change this anytime in Settings.")
+        .setMessage("Update alerts are on by default. Allow Android notifications to receive them. You can change this anytime in Settings.")
         .setPositiveButton("Enable", (unused, which) -> enable())
         .setNegativeButton("Not now", null)
         .create();

@@ -7,12 +7,11 @@ import org.json.*;
 /** A release feed contains metadata only. Downloads always need a user tap. */
 final class AppRelease {
   static final String NOTES =
-      "• Settings are grouped into profile, playback, library and support.\n"
-          + "• Clearer navigation icons and a simpler empty library.\n"
-          + "• Up next counts only the songs after your current track.\n"
-          + "• Small-screen and large-text layout improvements.\n"
-          + "• Fixed repeated Library layout work after the player closes.\n"
-          + "• Install over your existing app to keep your music and settings.";
+      "• Update and release alerts default to on.\n"
+          + "• Grant Android notification permission to connect release alerts automatically.\n"
+          + "• Crossfade starts at 4 seconds, with controls in Settings.\n"
+          + "• Saved notification and crossfade choices are respected.\n"
+          + "• Install as an update to keep your music and settings.";
   final int code;
   final String version, summary, url;
   String sha256 = "";

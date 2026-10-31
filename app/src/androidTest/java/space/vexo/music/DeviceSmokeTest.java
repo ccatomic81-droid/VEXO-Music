@@ -33,6 +33,21 @@ public class DeviceSmokeTest {
         .putBoolean(NotificationPermissionPrompt.SEEN, true).commit();
   }
 
+  @Test public void defaultsAreOnWhileAndroidPermissionStillControlsDelivery() {
+    context.getSharedPreferences("settings", 0).edit()
+        .remove("update_alerts").remove("push_release_alerts").remove("crossfade").commit();
+    AppDefaults.initialize(context);
+    assertTrue(AppDefaults.updateAlerts(context));
+    assertTrue(PushNotifications.optedIn(context));
+    assertEquals(4, AppDefaults.crossfadeSeconds(context));
+    if (android.os.Build.VERSION.SDK_INT >= 33
+        && context.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
+            != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+      assertFalse(AppNotifications.enabled(context));
+      assertFalse(AppNotifications.post(context, 90, "Test update", "Permission gate"));
+    }
+  }
+
   @Test public void navigateInBothThemesAndPlayLocalAudio() throws Exception {
     for (int theme : new int[] {1, 2}) {
       new LibraryStore(context).save("imports", Collections.emptyList());
