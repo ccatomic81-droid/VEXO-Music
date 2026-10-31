@@ -45,9 +45,9 @@ public class DesignAuditTest {
 
   @Test public void emptyArtistPromptLeavesRoomForRecommendations() throws Exception {
     List<String> actions = new ArrayList<>();
-    ArtistStoriesPanel panel = new ArtistStoriesPanel(RuntimeEnvironment.getApplication(), Collections.emptyList(), actions::add, () -> actions.add("search"));
+    ArtistStoriesPanel panel = new ArtistStoriesPanel(RuntimeEnvironment.getApplication(), Collections.emptyList(), a -> actions.add(a.name), () -> actions.add("search"));
     new ArtistAppearanceTest().capture(panel, 288, 120, "audit-empty-artists");
-    View find = new SearchUiTest().description(panel, "Find artists by searching songs");
+    View find = new SearchUiTest().description(panel, "Open Artists page");
     assertTrue(find.getHeight() >= 48);
     assertTrue(find.performClick());
     assertEquals(Arrays.asList("search"), actions);

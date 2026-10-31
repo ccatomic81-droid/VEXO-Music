@@ -7,11 +7,11 @@ import org.json.*;
 /** A release feed contains metadata only. Downloads always need a user tap. */
 final class AppRelease {
   static final String NOTES =
-      "• Update and release alerts default to on.\n"
-          + "• Grant Android notification permission to connect release alerts automatically.\n"
-          + "• Crossfade starts at 4 seconds, with controls in Settings.\n"
-          + "• Saved notification and crossfade choices are respected.\n"
-          + "• Install as an update to keep your music and settings.";
+      "• Find and follow artists in Library → Artists.\n"
+          + "• Tap an artist to see only their credited songs and collaborations.\n"
+          + "• Your followed artists stay saved when search history is cleared.\n"
+          + "• Home artist circles open artist pages directly.\n"
+          + "• Update alerts and your crossfade preferences are preserved.";
   final int code;
   final String version, summary, url;
   String sha256 = "";

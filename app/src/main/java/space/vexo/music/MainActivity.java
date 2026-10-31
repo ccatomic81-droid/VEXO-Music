@@ -118,6 +118,30 @@ public final class MainActivity extends ComponentActivity {
   private EditText searchField;
   private SearchHistory searchHistory;
   private ArtistPortraits artistPortraits;
+  interface ArtistSource {
+    List<SearchArtists.Artist> search(String query, String country) throws Exception;
+    ArtistSongs.Page songs(SearchArtists.Artist artist, String country, ArtistSongs.Page previous)
+        throws Exception;
+  }
+  private ArtistSource artistSource = new ArtistSource() {
+    public List<SearchArtists.Artist> search(String query, String country) throws Exception {
+      return OnlineMusic.searchArtists(query, country);
+    }
+    public ArtistSongs.Page songs(SearchArtists.Artist artist, String country, ArtistSongs.Page previous)
+        throws Exception { return ArtistSongs.load(artist, country, previous); }
+  };
+  private final ExecutorService artistIo = Executors.newSingleThreadExecutor();
+  private Future<?> artistTask;
+  private int artistGeneration;
+  private SearchArtists.Artist activeArtist;
+  private ArtistSongs.Page artistPage;
+  private List<Track> artistSongs = new ArrayList<>();
+  private List<SearchArtists.Artist> artistResults = new ArrayList<>();
+  private String artistsQuery = "", artistError = "";
+  private boolean artistsSearched, artistsLoading;
+  private ArtistsPanel artistsPanel;
+  private ArtistPanel artistPanel;
+  private int artistScroll;
   private SearchSuggestions suggestions;
   private MusicPreview musicPreview;
   private MixCatalogue mixCatalogue;
@@ -280,6 +304,10 @@ public final class MainActivity extends ComponentActivity {
       activeCollection = state.getString("collection", "");
       collectionTitle = state.getString("collection_title", "");
       activeMix = state.getString("mix", "");
+      try { activeArtist = SavedArtists.decode(new org.json.JSONObject(state.getString("artist", "{}"))); }
+      catch (org.json.JSONException ignored) {}
+      artistsQuery = state.getString("artists_query", "");
+      artistsSearched = state.getBoolean("artists_searched", false);
       homeFilter = state.getString("home_filter", "All");
       addingToPlaylist = state.getString("adding_playlist", "");
       profileEditing = state.getBoolean("profile_editing", false);
@@ -371,6 +399,10 @@ public final class MainActivity extends ComponentActivity {
                   render();
                   return;
                 }
+                if (activeArtist != null) {
+                  closeArtist();
+                  return;
+                }
                 if (!activeCollection.isEmpty() || !activeMix.isEmpty()) {
                   closeCollection();
                   return;
@@ -392,6 +424,9 @@ public final class MainActivity extends ComponentActivity {
     scanPhone();
     loadHome(false);
     if (!activeMix.isEmpty()) loadMix(false);
+    if (activeArtist != null) loadArtist(false);
+    else if (tab.equals("Library") && shelf.equals("Artists") && artistsSearched)
+      searchArtists(artistsQuery);
     main.postDelayed(this::announceOrCheckUpdates, 700);
   }
 
@@ -472,6 +507,10 @@ public final class MainActivity extends ComponentActivity {
     b.putString("collection", activeCollection);
     b.putString("collection_title", collectionTitle);
     b.putString("mix", activeMix);
+    b.putString("artist", activeArtist == null ? "{}" : SavedArtists.encode(activeArtist).toString());
+    if (artistsPanel != null) artistsQuery = artistsPanel.search.getText().toString();
+    b.putString("artists_query", artistsQuery);
+    b.putBoolean("artists_searched", artistsSearched);
     b.putString("home_filter", homeFilter);
     b.putString("adding_playlist", addingToPlaylist);
     b.putBoolean("profile_editing", profileEditing);
@@ -484,6 +523,8 @@ public final class MainActivity extends ComponentActivity {
     invalidatePersonal();
     if (youtube != null) youtube.close();
     if (artistPortraits != null) artistPortraits.close();
+    cancelArtistWork();
+    artistIo.shutdownNow();
     if (googleCancellation != null) googleCancellation.cancel();
     if (notificationPrompt != null) notificationPrompt.close();
     destroyed = true;
@@ -737,7 +778,10 @@ public final class MainActivity extends ComponentActivity {
     if (tab.equals("Search")) {
       if (searchField != null) searchField.clearFocus();
     }
-    boolean keep = !renderedTab.isEmpty();
+    if (artistsPanel != null) artistsQuery = artistsPanel.search.getText().toString();
+    cancelArtistWork();
+    activeArtist = null;
+    boolean keep = !renderedTab.isEmpty() && !(tab.equals("Library") && shelf.equals("Artists"));
     if (keep) tabPages.put(renderedTab, new TabPage());
     content.animate().cancel();
     content.setTranslationX(0);
@@ -849,6 +893,9 @@ public final class MainActivity extends ComponentActivity {
     searchLanguages = null;
     searchCategoryBack = null;
     homePanel = null;
+    if (activeArtist != null && artistPanel != null) artistScroll = artistPanel.getScrollY();
+    artistPanel = null;
+    artistsPanel = null;
     suggestionsVisible = false;
     suggestionScroll = null;
     suggestionBody = null;
@@ -868,6 +915,11 @@ public final class MainActivity extends ComponentActivity {
     }
     nav.setVisibility(View.VISIBLE);
     updatePlayback();
+    if (activeArtist != null) {
+      renderArtist();
+      updateDockSpace();
+      return;
+    }
     if (!activeCollection.isEmpty() || !activeMix.isEmpty()) {
       renderCollection();
       return;
@@ -1040,15 +1092,8 @@ public final class MainActivity extends ComponentActivity {
                 navigate("Search");
               }
 
-              public void artist(String name) {
-                navigate("Search");
-                online = true;
-                searchCategory = null;
-                searchLanguage = "Any";
-                query = name;
-                render();
-                if (searchField != null) searchField.setText(name);
-                search();
+              public void artist(SearchArtists.Artist artist) {
+                openArtist(artist);
               }
 
               public void library(String section) {
@@ -1242,7 +1287,7 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private void prefetchHomeMixes() {
-    if (destroyed || !tab.equals("Home") || !activeMix.isEmpty() || !activeCollection.isEmpty())
+    if (destroyed || activeArtist != null || !tab.equals("Home") || !activeMix.isEmpty() || !activeCollection.isEmpty())
       return;
     try {
       if (new SmartStore(this).preferences().optBoolean("focus")) return;
@@ -2160,23 +2205,176 @@ public final class MainActivity extends ComponentActivity {
             });
   }
 
+  private void cancelArtistWork() {
+    artistGeneration++;
+    if (artistTask != null) artistTask.cancel(true);
+    artistsLoading = false;
+  }
+
+  private void hideArtistKeyboard() {
+    ((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE))
+        .hideSoftInputFromWindow(root.getWindowToken(), 0);
+  }
+
+  private void searchArtists(String term) {
+    cancelArtistWork();
+    artistsQuery = SearchHistory.clean(term);
+    artistsSearched = !artistsQuery.isEmpty();
+    artistResults = new ArrayList<>();
+    artistError = "";
+    hideArtistKeyboard();
+    if (!artistsSearched) { render(); return; }
+    artistsLoading = true;
+    int request = artistGeneration;
+    String text = artistsQuery, country = RegionPolicy.current(this);
+    render();
+    artistTask = artistIo.submit(() -> {
+      try {
+        List<SearchArtists.Artist> found = artistSource.search(text, country);
+        main.post(() -> {
+          if (destroyed || request != artistGeneration) return;
+          artistResults = found;
+          artistsLoading = false;
+          if (tab.equals("Library") && shelf.equals("Artists") && activeArtist == null) render();
+        });
+      } catch (Exception error) {
+        main.post(() -> {
+          if (destroyed || request != artistGeneration) return;
+          artistsLoading = false;
+          artistError = "Couldn’t load artists. Check your connection and try again.";
+          if (tab.equals("Library") && shelf.equals("Artists") && activeArtist == null) render();
+        });
+      }
+    });
+  }
+
+  private void openArtist(SearchArtists.Artist artist) {
+    if (artistsPanel != null) artistsQuery = artistsPanel.search.getText().toString();
+    cancelArtistWork();
+    activeCollection = "";
+    activeMix = "";
+    activeArtist = artist;
+    artistPage = null;
+    artistScroll = 0;
+    artistSongs = new ArrayList<>();
+    artistError = "";
+    hideArtistKeyboard();
+    loadArtist(false);
+  }
+
+  private void closeArtist() {
+    cancelArtistWork();
+    activeArtist = null;
+    artistPage = null;
+    artistSongs = new ArrayList<>();
+    artistError = "";
+    render();
+  }
+
+  private void loadArtist(boolean more) {
+    if (activeArtist == null || artistsLoading || more && (artistPage == null || !artistPage.more())) return;
+    cancelArtistWork();
+    artistsLoading = true;
+    artistError = "";
+    int request = artistGeneration;
+    SearchArtists.Artist wanted = activeArtist;
+    ArtistSongs.Page previous = more ? artistPage : null;
+    String country = RegionPolicy.current(this);
+    render();
+    artistTask = artistIo.submit(() -> {
+      try {
+        ArtistSongs.Page page = artistSource.songs(wanted, country, previous);
+        main.post(() -> {
+          if (destroyed || request != artistGeneration || activeArtist == null) return;
+          activeArtist = page.artist;
+          artistPage = page;
+          LinkedHashMap<String, Track> songs = new LinkedHashMap<>();
+          if (more) for (Track song : artistSongs) songs.put(song.url, song);
+          for (Track song : page.songs) songs.putIfAbsent(song.url, song);
+          artistSongs = new ArrayList<>(songs.values());
+          artistsLoading = false;
+          render();
+        });
+      } catch (Exception error) {
+        main.post(() -> {
+          if (destroyed || request != artistGeneration || activeArtist == null) return;
+          artistsLoading = false;
+          artistError = wanted.id.isEmpty()
+              ? "Find this artist in Artists search to choose their official profile."
+              : "Couldn’t load artist songs. Check your connection and try again.";
+          render();
+        });
+      }
+    });
+  }
+
+  private void renderArtist() {
+    List<Track> songs = new ArrayList<>(artistSongs);
+    ArtistPanel panel = new ArtistPanel(this, activeArtist, songs,
+        new SavedArtists(this).contains(activeArtist), artistsLoading,
+        artistPage != null && artistPage.more(), artistError, new ArtistPanel.Listener() {
+          public void back() { closeArtist(); }
+          public void follow() {
+            SavedArtists saved = new SavedArtists(MainActivity.this);
+            if (saved.contains(activeArtist)) saved.unfollow(activeArtist);
+            else if (!saved.follow(activeArtist)) { message("You can follow up to 100 artists."); return; }
+            invalidateTab("Home");
+            invalidateTab("Library");
+            render();
+          }
+          public void play(int index) {
+            if (controller != null) controller.setShuffleModeEnabled(false);
+            MainActivity.this.play(songs, index);
+          }
+          public void shuffle() {
+            List<Track> shuffled = new ArrayList<>(songs);
+            Collections.shuffle(shuffled);
+            if (controller != null) controller.setShuffleModeEnabled(false);
+            MainActivity.this.play(shuffled, 0);
+          }
+          public void options(Track song) { songMenu(song, null); }
+          public void more() { loadArtist(true); }
+          public void retry() { loadArtist(artistPage != null && artistPage.more()); }
+        });
+    artistPanel = panel;
+    content.addView(panel, new LinearLayout.LayoutParams(-1, 0, 1));
+    int scroll = artistScroll;
+    panel.post(() -> panel.scrollTo(0, scroll));
+  }
+
   private void renderLibrary() {
-    LinearLayout h = header("YOUR COLLECTION", "Your library");
+    LinearLayout h;
+    if (shelf.equals("Artists")) {
+      h = column();
+      h.setPadding(dp(16), dp(8), dp(16), 0);
+      content.addView(h);
+    } else h = header("YOUR COLLECTION", "Your library");
     HorizontalScrollView sc = new HorizontalScrollView(this);
     sc.setHorizontalScrollBarEnabled(false);
     LinearLayout chips = row();
-    for (String s : new String[] {"Phone", "Offline", "Favourites", "Playlists", "History"})
+    for (String s : new String[] {"Phone", "Offline", "Favourites", "Artists", "Playlists", "History"})
       chips.addView(
           chip(
               s,
               s.equals(shelf),
               () -> {
+                cancelArtistWork();
                 shelf = s;
                 render();
               }));
     sc.addView(chips);
     h.addView(sc);
     gap(h, 12);
+    if (shelf.equals("Artists")) {
+      artistsPanel = new ArtistsPanel(this, artistsQuery, artistResults, artistsSearched,
+          artistsLoading, artistError, new ArtistsPanel.Listener() {
+            public void search(String term) { searchArtists(term); }
+            public void open(SearchArtists.Artist artist) { openArtist(artist); }
+            public void edit(String term) { artistsQuery = term; }
+          });
+      content.addView(artistsPanel, new LinearLayout.LayoutParams(-1, 0, 1));
+      return;
+    }
     if (shelf.equals("Playlists")) {
       List<String> names = store.playlists();
       if (names.isEmpty()) {
@@ -2717,6 +2915,8 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private void showCollection(String title, String key) {
+    cancelArtistWork();
+    activeArtist = null;
     activeCollection = key;
     collectionTitle = title;
     activeMix = "";
@@ -2739,6 +2939,8 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private void openMix(MixCatalogue.Mix mix) {
+    cancelArtistWork();
+    activeArtist = null;
     activeCollection = "";
     activeMix = mix.id;
     collectionTitle = mix.name;

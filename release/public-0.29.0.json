@@ -1,0 +1,14 @@
+{
+  "applicationId": "space.vexo.music.radio",
+  "versionCode": 47,
+  "versionName": "0.29.0",
+  "summary": "Find and follow artists in Library → Artists. Search artists separately from songs. Tap any artist to open only their credited songs and collaborations, with Play all, Shuffle and more results. Home artist circles open artist pages directly. Followed artists stay saved when search history is cleared. Notification and crossfade preferences are preserved. Install as an update to keep your music and settings.",
+  "downloadUrl": "https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.29.0.apk",
+  "sourceUrl": "https://github.com/ccatomic81-droid/VEXO-Music/archive/788beb626e195a42f712b5d8f5c6f58926e55ff1.zip",
+  "sourceCommit": "788beb626e195a42f712b5d8f5c6f58926e55ff1",
+  "size": 9169032,
+  "sha256": "714402c850c4af0496b796eee0fe137586fff4404b5dcc09051c974fb119dd84",
+  "certificateSha256": "0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3",
+  "signedPayload": "eyJmb3JtYXQiOiJ2ZXhvLXJlbGVhc2UtdjEiLCJhcHBsaWNhdGlvbklkIjoic3BhY2UudmV4by5tdXNpYy5yYWRpbyIsInZlcnNpb25Db2RlIjo0NywidmVyc2lvbk5hbWUiOiIwLjI5LjAiLCJzdW1tYXJ5IjoiRmluZCBhbmQgZm9sbG93IGFydGlzdHMgaW4gTGlicmFyeSDihpIgQXJ0aXN0cy4gU2VhcmNoIGFydGlzdHMgc2VwYXJhdGVseSBmcm9tIHNvbmdzLiBUYXAgYW55IGFydGlzdCB0byBvcGVuIG9ubHkgdGhlaXIgY3JlZGl0ZWQgc29uZ3MgYW5kIGNvbGxhYm9yYXRpb25zLCB3aXRoIFBsYXkgYWxsLCBTaHVmZmxlIGFuZCBtb3JlIHJlc3VsdHMuIEhvbWUgYXJ0aXN0IGNpcmNsZXMgb3BlbiBhcnRpc3QgcGFnZXMgZGlyZWN0bHkuIEZvbGxvd2VkIGFydGlzdHMgc3RheSBzYXZlZCB3aGVuIHNlYXJjaCBoaXN0b3J5IGlzIGNsZWFyZWQuIE5vdGlmaWNhdGlvbiBhbmQgY3Jvc3NmYWRlIHByZWZlcmVuY2VzIGFyZSBwcmVzZXJ2ZWQuIEluc3RhbGwgYXMgYW4gdXBkYXRlIHRvIGtlZXAgeW91ciBtdXNpYyBhbmQgc2V0dGluZ3MuIiwiZG93bmxvYWRVcmwiOiJodHRwczovL3ZleG8tbXVzaWMtdXBkYXRlcy5rYXZpbmR1a2F2aXNoa2E3ODUud29ya2Vycy5kZXYvcmVsZWFzZXMvVkVYTy1NdXNpYy0wLjI5LjAuYXBrIiwic2l6ZSI6OTE2OTAzMiwic2hhMjU2IjoiNzE0NDAyYzg1MGM0YWYwNDk2Yjc5NmVlZTBmZTEzNzU4NmZmZjQ0MDRiNWRjYzA5MDUxYzk3NGZiMTE5ZGQ4NCIsImNlcnRpZmljYXRlU2hhMjU2IjoiMGIzMWM1MDkwNDU2NzM4OWI3MjNlMjNhZDYwNDNiMmQyZmM2NjM1YzMwZGZkYjNlZDVlZjNmOWJhOTcyN2VmMyIsInNvdXJjZUNvbW1pdCI6Ijc4OGJlYjYyNmUxOTVhNDJmNzEyYjVkOGY1YzZmNTg5MjZlNTVmZjEifQ==",
+  "releaseSignature": "GKjpMaJtO10OxedlP4dBG9+QkmlfH6unFGDzsDGvIp3qAaktvaYEZO7fEuZvyuDW4T7mI4D3wzlAieRXrjpynBbl8QUb4UFyWVUXWkslkDH9/1G//x2jTi+uGMawxRyL7Ws3u3CMn4uGB88w5B/CGdzT4Fq/Z5VOp9Am6cEs/PHAA+K3/lczRhBsJg1YAxRn1F8ZXA0IKW/Nu8fU7DHW5xha3lgkdW5Sqkeydxz9u85HxMCXbAQQSizkxm7+jAjZT3BZ5fvPWGEtll6ujRFqBTLGnnd6UgpK9VNKDw11wbTVndGqmpDviXBbRCCEjWs2fI5CxCCenLqQk3NIITTcsw=="
+}

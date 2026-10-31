@@ -59,6 +59,9 @@ public class DeviceSmokeTest {
         await(scenario, a -> findText(a.findViewById(android.R.id.content), "Choose files") != null, "Library did not load");
         scenario.onActivity(a -> assertEquals(1, countText(a.findViewById(android.R.id.content), "Import device music")));
         shot("library-" + theme);
+        scenario.onActivity(a -> findText(a.findViewById(android.R.id.content), "Artists").performClick());
+        await(scenario, a -> findDescription(a.findViewById(android.R.id.content), "Search artists") != null, "Artists page missing");
+        shot("artists-" + theme);
         scenario.onActivity(a -> clickDescription(a.findViewById(android.R.id.content), "Search tab"));
         shot("search-" + theme);
         scenario.onActivity(a -> clickDescription(a.findViewById(android.R.id.content), "Settings tab"));

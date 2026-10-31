@@ -1,10 +1,12 @@
-# VEXO Music 0.28.1
+# VEXO Music 0.29.0
 
 Developer: **Kavindu Kavishka**.
 
-Public version **0.28.1** defaults update alerts and release alerts to ON, connects release alerts automatically after Android notification permission is granted, and initializes crossfade at 4 seconds. Saved Off choices and custom durations are respected.
+Public version **0.29.0** adds **Library → Artists** with independent artist search, following, and dedicated artist pages. Home artist circles open the artist directly. Each page shows only songs with matching provider artist credits, including collaborations, with Play all, Shuffle and more results when available. Followed artists stay saved when song-search history is cleared. The public catalog is not an exhaustive discography; availability depends on the music provider.
 
-[Download VEXO Music 0.28.1](https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.28.1.apk), use Settings → Check for updates, or open the [GitHub release](https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.28.1). Install over the existing app without uninstalling. Version code 46 uses the original signing identity. See [release notes](release/notes-0.28.1.md), [verification](release/verification-0.28.1.json) and [update behavior](UPDATES.md).
+[Download VEXO Music 0.29.0](https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.29.0.apk), use Settings → Check for updates, or open the [GitHub release](https://github.com/ccatomic81-droid/VEXO-Music/releases/tag/vexo-v0.29.0). Install over the existing app without uninstalling. Version code 47 uses the original signing identity. See [release notes](release/notes-0.29.0.md) and [update behavior](UPDATES.md).
+
+Update alerts and release alerts default to ON; Android notification permission is required. Crossfade defaults to 4 seconds. Saved Off choices and custom durations are respected.
 
 The 0.28.0 Home, Settings, Library and queue improvements remain, along with synced lyrics, artist circles, personalized mixes, radio, MindRadio, PureSong, Smart, offline music, crossfade and playlists. Connecting a YouTube account is optional.
 
