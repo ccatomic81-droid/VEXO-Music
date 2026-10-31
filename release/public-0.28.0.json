@@ -1,0 +1,14 @@
+{
+  "applicationId": "space.vexo.music.radio",
+  "versionCode": 45,
+  "versionName": "0.28.0",
+  "summary": "Cleaner Home, grouped Settings and simpler Library screens. Correct navigation arrows and Up next counts. Fixed continuous Library layout work after playback is cleared. Existing lyrics, artists, mixes, radio, crossfade and offline music remain available. Install as an update over your current app or tester to keep your music and settings.",
+  "downloadUrl": "https://vexo-music-updates.kavindukavishka785.workers.dev/releases/VEXO-Music-0.28.0.apk",
+  "sourceUrl": "https://github.com/ccatomic81-droid/VEXO-Music/archive/ea03efc4fc18fac08971de01c44851d8da1f3d51.zip",
+  "sourceCommit": "ea03efc4fc18fac08971de01c44851d8da1f3d51",
+  "size": 9152648,
+  "sha256": "0f00a9c5877f83ee10c38289563567888a6dd8f7071620e78cf86db08409c51f",
+  "certificateSha256": "0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3",
+  "signedPayload": "eyJmb3JtYXQiOiJ2ZXhvLXJlbGVhc2UtdjEiLCJhcHBsaWNhdGlvbklkIjoic3BhY2UudmV4by5tdXNpYy5yYWRpbyIsInZlcnNpb25Db2RlIjo0NSwidmVyc2lvbk5hbWUiOiIwLjI4LjAiLCJzdW1tYXJ5IjoiQ2xlYW5lciBIb21lLCBncm91cGVkIFNldHRpbmdzIGFuZCBzaW1wbGVyIExpYnJhcnkgc2NyZWVucy4gQ29ycmVjdCBuYXZpZ2F0aW9uIGFycm93cyBhbmQgVXAgbmV4dCBjb3VudHMuIEZpeGVkIGNvbnRpbnVvdXMgTGlicmFyeSBsYXlvdXQgd29yayBhZnRlciBwbGF5YmFjayBpcyBjbGVhcmVkLiBFeGlzdGluZyBseXJpY3MsIGFydGlzdHMsIG1peGVzLCByYWRpbywgY3Jvc3NmYWRlIGFuZCBvZmZsaW5lIG11c2ljIHJlbWFpbiBhdmFpbGFibGUuIEluc3RhbGwgYXMgYW4gdXBkYXRlIG92ZXIgeW91ciBjdXJyZW50IGFwcCBvciB0ZXN0ZXIgdG8ga2VlcCB5b3VyIG11c2ljIGFuZCBzZXR0aW5ncy4iLCJkb3dubG9hZFVybCI6Imh0dHBzOi8vdmV4by1tdXNpYy11cGRhdGVzLmthdmluZHVrYXZpc2hrYTc4NS53b3JrZXJzLmRldi9yZWxlYXNlcy9WRVhPLU11c2ljLTAuMjguMC5hcGsiLCJzaXplIjo5MTUyNjQ4LCJzaGEyNTYiOiIwZjAwYTljNTg3N2Y4M2VlMTBjMzgyODk1NjM1Njc4ODhhNmRkOGY3MDcxNjIwZTc4Y2Y4NmRiMDg0MDljNTFmIiwiY2VydGlmaWNhdGVTaGEyNTYiOiIwYjMxYzUwOTA0NTY3Mzg5YjcyM2UyM2FkNjA0M2IyZDJmYzY2MzVjMzBkZmRiM2VkNWVmM2Y5YmE5NzI3ZWYzIiwic291cmNlQ29tbWl0IjoiZWEwM2VmYzRmYzE4ZmFjMDg5NzFkZTAxYzQ0ODUxZDhkYTFmM2Q1MSJ9",
+  "releaseSignature": "Fgu6g53jgWsNRbPnlzYyrPSirYPuM7o72UEa/o1dFdsEm8LmSySdA+J/ecry+x8KeAhxn0e/WqZleYLf88AfNZ0v7fq17uSGeigcxplFFudoejROs0ONOJeNQfbz3G5k8T9t07CTIM95KC0e+3lYYBBdAX4ljV01//Vh3ILNHdh9K93lcFv46+H+RveKDUxfaqpJ0U5qPayhcPqk0uaos1xqS3v+IloyRzZqhE5wVKh6VkVJkE4QIvICbgak7I8FiQ4F3NQDYe0m3rGqzF37d+I16nBYG6B+x3SUpDuSZp0iiiAuGr5mmiHFdC7LfKvxr6l3ms7L8+yu7fBh2tkiEw=="
+}
