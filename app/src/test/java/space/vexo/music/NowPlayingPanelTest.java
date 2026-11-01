@@ -123,6 +123,16 @@ public class NowPlayingPanelTest {
   }
 
   @Test
+  public void transportControlsRemainVisibleWithLargeTextOnShortPortraitScreens() throws Exception {
+    NowPlayingPanel p = panel(320, 640, 1.6f, new ArrayList<>());
+    Rect play = new Rect(0, 0, p.play.getWidth(), p.play.getHeight());
+    p.scroll.offsetDescendantRectToMyCoords(p.play, play);
+    assertTrue("Play button should be fully visible without scrolling", play.bottom <= p.scroll.getHeight());
+    assertTrue("Artwork should still be large enough to see", p.cover.getWidth() >= 144);
+    render(p, 320, 640, "now-playing-refined-large-320");
+  }
+
+  @Test
   public void largeTextAndLandscapeRemainScrollableWithoutHorizontalClipping() throws Exception {
     for (int[] size : new int[][] {{320, 640}, {640, 360}}) {
       NowPlayingPanel p = panel(size[0], size[1], 1.6f, new ArrayList<>());

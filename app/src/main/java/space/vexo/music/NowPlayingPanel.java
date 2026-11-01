@@ -24,6 +24,13 @@ public final class NowPlayingPanel extends LinearLayout {
   public final View cover;
   public final ScrollView scroll;
   private android.graphics.Bitmap tintedArtwork;
+  private int availableHeight;
+
+  @Override
+  protected void onMeasure(int width, int height) {
+    availableHeight = Math.max(0, MeasureSpec.getSize(height) - getPaddingTop() - getPaddingBottom());
+    super.onMeasure(width, height);
+  }
 
   private void tint(int color) {
     setBackground(
@@ -139,6 +146,12 @@ public final class NowPlayingPanel extends LinearLayout {
                         == android.content.res.Configuration.ORIENTATION_LANDSCAPE
                     ? dp(192)
                     : dp(320);
+            // Keep transport controls on screen when the user chooses larger text or a short display.
+            if (availableHeight > 0) {
+              float scale = Math.max(1f, getResources().getConfiguration().fontScale);
+              int spaceForArt = availableHeight - dp(Math.round(300 + 110 * scale));
+              max = Math.min(max, Math.max(dp(144), spaceForArt));
+            }
             int side = Math.min(MeasureSpec.getSize(w), max);
             super.onMeasure(
                 MeasureSpec.makeMeasureSpec(side, MeasureSpec.EXACTLY),

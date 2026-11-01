@@ -7,11 +7,11 @@ import org.json.*;
 /** A release feed contains metadata only. Downloads always need a user tap. */
 final class AppRelease {
   static final String NOTES =
-      "• Home blends rose, blue and teal into a soft background gradient.\n"
-          + "• Quick picks and mood shortcuts make it easier to choose what plays next.\n"
-          + "• Swipe up for your queue, drag to reorder, swipe to remove, or save the mix.\n"
-          + "• All, Familiar, Popular, Discover and Deep cuts shape upcoming recommendations.\n"
-          + "• Current-song markers and an artwork-tinted mini-player connect your listening screens.";
+      "• Playback controls fit better on smaller screens and with larger text.\n"
+          + "• Quick Picks shows more of long song titles and updates more smoothly.\n"
+          + "• Queue songs have more room for artist names and a simpler reorder handle.\n"
+          + "• Queue options stay accessible, with a clearer empty-queue message.\n"
+          + "• The blended Home gradient, mood shortcuts and smart queue remain available.";
   final int code;
   final String version, summary, url;
   String sha256 = "";

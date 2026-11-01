@@ -757,8 +757,14 @@ final class MusicHomePanel extends MusicSurface {
   }
 
   void playback(String id, boolean playing) {
-    playingId = id == null ? "" : id;
+    String next = id == null ? "" : id;
+    if (playingId.equals(next) && isPlaying == playing) return;
+    playingId = next;
     isPlaying = playing;
+    updateQuickPlaying();
+  }
+
+  private void updateQuickPlaying() {
     for (Map.Entry<View, Track> entry : quickRows.entrySet()) {
       boolean current = playingId.equals(entry.getValue().url);
       entry.getKey().setBackground(current ? Visuals.round(Visuals.SELECTED, dp(12)) : null);
@@ -790,7 +796,7 @@ final class MusicHomePanel extends MusicSurface {
     gap(quickPicksSlot, 8);
     HorizontalScrollView pages = new HorizontalScrollView(getContext()) {
       @Override protected void onMeasure(int width, int height) {
-        int available = Math.max(dp(220), MeasureSpec.getSize(width) - dp(24));
+        int available = Math.max(dp(220), MeasureSpec.getSize(width) - dp(8));
         if (getChildCount() > 0 && getChildAt(0) instanceof LinearLayout) {
           LinearLayout columns = (LinearLayout) getChildAt(0);
           for (int i = 0; i < columns.getChildCount(); i++)
@@ -808,7 +814,7 @@ final class MusicHomePanel extends MusicSurface {
         final int index = at;
         Track track = picks.get(at);
         LinearLayout song = row();
-        song.setPadding(dp(8), dp(8), dp(4), dp(8));
+        song.setPadding(dp(4), dp(8), dp(4), dp(8));
         FrameLayout art = new FrameLayout(getContext());
         ImageView image = new RoundedArtwork(getContext());
         art.addView(image, new FrameLayout.LayoutParams(-1, -1));
@@ -819,9 +825,9 @@ final class MusicHomePanel extends MusicSurface {
         art.addView(indicator, marker);
         song.addView(art, new LinearLayout.LayoutParams(dp(52), dp(52)));
         LinearLayout copy = column();
-        copy.setPadding(dp(12), 0, dp(4), 0);
+        copy.setPadding(dp(10), 0, dp(4), 0);
         TextView title = text(track.title, 15, Visuals.TEXT, true);
-        title.setSingleLine(); title.setEllipsize(TextUtils.TruncateAt.END);
+        title.setMaxLines(2); title.setEllipsize(TextUtils.TruncateAt.END);
         TextView artist = text(track.artist, 12, Visuals.MUTED, false);
         artist.setSingleLine(); artist.setEllipsize(TextUtils.TruncateAt.END);
         copy.addView(title); gap(copy, 5); copy.addView(artist);
@@ -842,7 +848,7 @@ final class MusicHomePanel extends MusicSurface {
     pages.addView(columns);
     quickPicksSlot.addView(pages, new LinearLayout.LayoutParams(-1, -2));
     gap(quickPicksSlot, 24);
-    playback(playingId, isPlaying);
+    updateQuickPlaying();
   }
 
   private void feature(

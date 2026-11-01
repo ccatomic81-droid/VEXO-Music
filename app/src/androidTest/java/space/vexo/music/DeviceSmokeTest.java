@@ -113,7 +113,7 @@ public class DeviceSmokeTest {
         assertFalse(controller(a).isPlaying());
         assertEquals("Device playback check", String.valueOf(controller(a).getCurrentMediaItem().mediaMetadata.title));
         assertTrue(findDescription(queue, "Queue options").isShown());
-        findText(queue, "Save mix").performClick();
+        findText(queue, "Save").performClick();
       });
       await(scenario, a -> new LibraryStore(context).playlists().contains("Device playback check Mix"), "Queue mix was not saved");
       shot("smart-queue-full");

@@ -121,7 +121,7 @@ public class PlayerUpgradeTest {
     panel.handle.performClick();
     capture(sheet, 320, 720, "smart-queue-full-320");
     assertEquals(720, panel.getHeight());
-    helper.text(panel, "Discover").performClick(); helper.text(panel, "Save mix").performClick();
+    helper.text(panel, "Discover").performClick(); helper.text(panel, "Save").performClick();
     assertEquals(Arrays.asList("Discover", "save"), actions);
     capture(sheet, 640, 360, "smart-queue-landscape");
     assertTrue(panel.getHeight() <= 360);
