@@ -30,6 +30,7 @@ public final class QueuePanel extends LinearLayout {
     default void filter(String value) {}
     default void move(int from, int to, String expected, String target) {}
     default void remove(int index, String expected) {}
+    default void changed() {}
   }
 
   private final TextView summary, status, retry, clearUpcoming, clearQueue;
@@ -41,7 +42,8 @@ public final class QueuePanel extends LinearLayout {
   private boolean playing;
   private boolean updatingToggle;
   final View handle;
-  private final LinearLayout buttons, automatic;
+  private final LinearLayout buttons, automatic, currentRow;
+  private boolean expanded = true;
   private final ImageView currentArt;
   private final TextView currentTitle, currentArtist;
   private final Visuals.Icon currentPlay;
@@ -109,7 +111,7 @@ public final class QueuePanel extends LinearLayout {
     top.addView(action("Save mix", actions::save));
     top.addView(icon("close", actions::close));
     addView(top);
-    LinearLayout currentRow = row();
+    currentRow = row();
     currentRow.setPadding(0, dp(10), 0, dp(6));
     currentArt = new RoundedArtwork(c);
     currentRow.addView(currentArt, new LayoutParams(dp(44), dp(44)));
@@ -211,6 +213,7 @@ public final class QueuePanel extends LinearLayout {
         editing = false;
         if (dragFrom >= 0 && dragTo >= 0 && dragFrom != dragTo)
           actions.move(dragFrom, dragTo, dragId, dragTarget);
+        else actions.changed();
         dragFrom = dragTo = -1;
       }
       @Override public void onSwiped(RecyclerView.ViewHolder holder, int direction) {
@@ -224,8 +227,18 @@ public final class QueuePanel extends LinearLayout {
   }
 
   void expanded(boolean value) {
-    buttons.setVisibility(value ? VISIBLE : GONE);
-    automatic.setVisibility(value ? VISIBLE : GONE);
+    expanded = value;
+    requestLayout();
+  }
+
+  @Override protected void onMeasure(int width, int height) {
+    int available = MeasureSpec.getMode(height) == MeasureSpec.UNSPECIFIED ? Integer.MAX_VALUE : MeasureSpec.getSize(height);
+    boolean showOptions = expanded && available >= dp(580);
+    buttons.setVisibility(showOptions ? VISIBLE : GONE);
+    automatic.setVisibility(showOptions ? VISIBLE : GONE);
+    currentRow.setVisibility(available >= dp(420) ? VISIBLE : GONE);
+    summary.setVisibility(available >= dp(400) ? VISIBLE : GONE);
+    super.onMeasure(width, height);
   }
 
   boolean editing() { return editing; }

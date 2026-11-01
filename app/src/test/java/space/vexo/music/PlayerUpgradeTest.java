@@ -20,6 +20,18 @@ import org.robolectric.annotation.*;
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @androidx.annotation.OptIn(markerClass = androidx.media3.common.util.UnstableApi.class)
 public class PlayerUpgradeTest {
+  private void capture(View view, int width, int height, String name) throws Exception {
+    view.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+        View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY));
+    view.layout(0, 0, width, height);
+    Bitmap image = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+    view.draw(new Canvas(image));
+    java.io.File dir = new java.io.File("build/ui-checks"); dir.mkdirs();
+    try (java.io.FileOutputStream out = new java.io.FileOutputStream(new java.io.File(dir, name + ".png"))) {
+      image.compress(Bitmap.CompressFormat.PNG, 100, out);
+    }
+    image.recycle();
+  }
   private Track song(String id, String artist) {
     return new Track("https://www.youtube.com/watch?v=" + id, id, artist, "", 180);
   }
@@ -102,14 +114,15 @@ public class PlayerUpgradeTest {
     sheet.measure(View.MeasureSpec.makeMeasureSpec(320, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(720, View.MeasureSpec.EXACTLY));
     sheet.layout(0, 0, 320, 720);
     Shadows.shadowOf(Looper.getMainLooper()).idle();
-    helper.capture(sheet, 320, 720, "smart-queue-half-320");
+    capture(sheet, 320, 720, "smart-queue-half-320");
     assertTrue(panel.getHeight() < 720); assertTrue(panel.getHeight() >= 340);
-    assertEquals(View.GONE, helper.text(panel, "Clear upcoming").getParent().getParent() instanceof LinearLayout
-        ? ((View) helper.text(panel, "Clear upcoming").getParent()).getVisibility() : View.VISIBLE);
+    assertEquals(View.GONE, ((View) helper.text(panel, "Clear upcoming").getParent()).getVisibility());
     panel.handle.performClick();
-    helper.capture(sheet, 320, 720, "smart-queue-full-320");
+    capture(sheet, 320, 720, "smart-queue-full-320");
     assertEquals(720, panel.getHeight());
     helper.text(panel, "Discover").performClick(); helper.text(panel, "Save mix").performClick();
     assertEquals(Arrays.asList("Discover", "save"), actions);
+    capture(sheet, 640, 360, "smart-queue-landscape");
+    assertTrue(panel.getHeight() <= 360);
   }
 }

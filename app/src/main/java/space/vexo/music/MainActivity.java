@@ -5015,6 +5015,7 @@ public final class MainActivity extends ComponentActivity {
               }
 
               public void save() { saveQueueMix(); }
+              public void changed() { refreshQueue(); }
 
               public void filter(String value) {
                 Bundle args = new Bundle(); args.putString("filter", value);

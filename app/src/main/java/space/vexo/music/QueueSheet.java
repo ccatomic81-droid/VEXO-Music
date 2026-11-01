@@ -11,6 +11,7 @@ final class QueueSheet extends FrameLayout {
   private boolean full, moving;
   private float down;
   private int initial;
+  private int lastViewport;
   QueueSheet(Context context, QueuePanel panel, Runnable close) {
     super(context);
     this.panel = panel;
@@ -46,7 +47,7 @@ final class QueueSheet extends FrameLayout {
       androidx.core.graphics.Insets bars = insets.getInsets(
           androidx.core.view.WindowInsetsCompat.Type.systemBars() | androidx.core.view.WindowInsetsCompat.Type.displayCutout());
       setPadding(bars.left, bars.top, bars.right, bars.bottom);
-      post(() -> snap(full));
+      requestLayout();
       return insets;
     });
     panel.expanded(false);
@@ -62,8 +63,13 @@ final class QueueSheet extends FrameLayout {
     panel.expanded(full);
     resize(full ? available() : Math.min(available(), Math.max(dp(340), Math.round(available() * .68f))));
   }
-  @Override protected void onSizeChanged(int w, int h, int oldW, int oldH) {
-    super.onSizeChanged(w, h, oldW, oldH);
-    post(() -> snap(full));
+  @Override protected void onMeasure(int width, int height) {
+    int viewport = Math.max(1, MeasureSpec.getSize(height) - getPaddingTop() - getPaddingBottom());
+    if (viewport != lastViewport) {
+      lastViewport = viewport;
+      panel.getLayoutParams().height = full ? viewport
+          : Math.min(viewport, Math.max(dp(340), Math.round(viewport * .68f)));
+    }
+    super.onMeasure(width, height);
   }
 }

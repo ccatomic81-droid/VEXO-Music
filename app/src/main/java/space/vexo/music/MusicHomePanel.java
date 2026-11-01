@@ -29,6 +29,7 @@ final class MusicHomePanel extends MusicSurface {
   private final Map<View, PlayingIndicator> quickIndicators = new HashMap<>();
   private String playingId = "";
   private boolean isPlaying;
+  private String quickKey = "";
   private TextView greeting;
   private final Map<String, LinearLayout> mixCards;
   private FrameLayout profileAvatar;
@@ -635,6 +636,8 @@ final class MusicHomePanel extends MusicSurface {
       jSONObject = new JSONObject();
     }
     JSONObject jSONObject2 = jSONObject;
+    if (jSONObject2.optBoolean("focus") && quickPicksSlot != null)
+      quickPicksSlot.setVisibility(View.GONE);
     Iterator<List<View>> it = linkedHashMap.values().iterator();
     while (it.hasNext()) {
       Iterator<View> it2 = it.next().iterator();
@@ -770,6 +773,10 @@ final class MusicHomePanel extends MusicSurface {
     LinkedHashMap<String, Track> unique = new LinkedHashMap<>();
     for (Track track : input) unique.putIfAbsent(RadioPolicy.songKey(track), track);
     final List<Track> picks = new ArrayList<>(unique.values());
+    StringBuilder signature = new StringBuilder();
+    for (Track track : picks) signature.append(track.url).append('|').append(track.title).append('|').append(track.artwork).append('\n');
+    if (quickKey.equals(signature.toString())) return;
+    quickKey = signature.toString();
     quickPicksSlot.removeAllViews();
     quickRows.clear();
     quickIndicators.clear();
