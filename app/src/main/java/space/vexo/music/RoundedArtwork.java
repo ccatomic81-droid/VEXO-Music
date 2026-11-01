@@ -9,6 +9,18 @@ import android.view.ViewOutlineProvider;
 import android.widget.ImageView;
 
 final class RoundedArtwork extends ImageView {
+  private java.util.function.IntConsumer palette;
+  private android.graphics.Bitmap tinted;
+
+  void palette(java.util.function.IntConsumer callback) { palette = callback; }
+
+  @Override public void setImageDrawable(android.graphics.drawable.Drawable drawable) {
+    super.setImageDrawable(drawable);
+    if (palette != null && drawable instanceof android.graphics.drawable.BitmapDrawable) {
+      android.graphics.Bitmap bitmap = ((android.graphics.drawable.BitmapDrawable) drawable).getBitmap();
+      if (bitmap != tinted) { tinted = bitmap; palette.accept(ArtworkPalette.shade(bitmap)); }
+    }
+  }
   private final Path clip;
   private final float radius;
 

@@ -859,6 +859,13 @@ public final class MainActivity extends ComponentActivity {
     LinearLayout line = row();
     mini.addView(line, new LinearLayout.LayoutParams(-1, -2));
     miniArt = new RoundedArtwork(this);
+    ((RoundedArtwork) miniArt).palette(color -> {
+      android.graphics.drawable.GradientDrawable tint = new android.graphics.drawable.GradientDrawable(
+          android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT,
+          new int[] {light ? ArtworkPalette.lightShade(color) : color, MINI});
+      tint.setCornerRadius(dp(8));
+      mini.setBackground(tint);
+    });
     miniArt.setBackground(round(PANEL, dp(5)));
     miniArt.setClipToOutline(true);
     line.addView(miniArt, new LinearLayout.LayoutParams(dp(40), dp(40)));
@@ -887,6 +894,7 @@ public final class MainActivity extends ComponentActivity {
     mini.addView(miniProgress, progress);
     mini.setContentDescription("Open now playing");
     mini.setOnClickListener(v -> showPlayer());
+    PlayerGestures.expand(mini, this::showPlayer);
   }
 
   private void render() {
@@ -1150,6 +1158,8 @@ public final class MainActivity extends ComponentActivity {
                 MainActivity.this.play(songs, index, false, mix.id);
               }
 
+              public void options(Track track) { songMenu(track, null); }
+
               public void filter(String value) {
                 homeFilter = value;
                 render();
@@ -1169,6 +1179,9 @@ public final class MainActivity extends ComponentActivity {
       // A disconnected or unavailable optional source must never block Home.
     }
     content.addView(panel, new LinearLayout.LayoutParams(-1, 0, 1));
+    if (controller != null)
+      panel.playback(controller.getCurrentMediaItem() == null ? "" : controller.getCurrentMediaItem().mediaId,
+          controller.isPlaying());
     artistPortraits.refresh(
         RegionPolicy.current(this),
         () -> {
@@ -4451,6 +4464,7 @@ public final class MainActivity extends ComponentActivity {
     if (controller == null || destroyed) return;
     refreshQueue();
     MediaItem item = controller.getCurrentMediaItem();
+    if (homePanel != null) homePanel.playback(item == null ? "" : item.mediaId, controller.isPlaying());
     mini.setVisibility(
         showMini(item, controller.getPlaybackState()) && profile.complete() && !profileEditing
             ? View.VISIBLE
@@ -4873,6 +4887,7 @@ public final class MainActivity extends ComponentActivity {
   }
 
   private void refreshQueue() {
+    if (queuePanel != null && queuePanel.editing()) return;
     if (controller != null
         && queuePanel != null
         && queueDialog != null
@@ -4968,19 +4983,12 @@ public final class MainActivity extends ComponentActivity {
                   return;
                 }
                 if (index == controller.getCurrentMediaItemIndex()) {
-                  boolean wasPlaying = controller.isPlaying();
                   togglePlay();
-                  if (!wasPlaying) {
-                    queueDialog.dismiss();
-                    showPlayer();
-                  }
                   return;
                 }
                 controller.seekTo(index, 0);
                 controller.prepare();
                 controller.play();
-                queueDialog.dismiss();
-                showPlayer();
               }
 
               public void options(int index, Track track) {
@@ -5005,29 +5013,79 @@ public final class MainActivity extends ComponentActivity {
               public void autoplay(boolean enabled) {
                 setAutoplay(enabled);
               }
+
+              public void save() { saveQueueMix(); }
+
+              public void filter(String value) {
+                Bundle args = new Bundle(); args.putString("filter", value);
+                queueCommand(PlaybackService.QUEUE_FILTER, args);
+              }
+
+              public void move(int from, int to, String expected, String target) {
+                if (from < 0 || to < 0 || from >= queueViewIndices.size() || to >= queueViewIndices.size()) { refreshQueue(); return; }
+                Bundle args = new Bundle();
+                args.putInt("from", queueViewIndices.get(from)); args.putInt("to", queueViewIndices.get(to));
+                args.putString("expected", expected); args.putString("target", target);
+                queueCommand(PlaybackService.QUEUE_EDIT, args);
+              }
+
+              public void remove(int index, String expected) {
+                if (index < 0 || index >= queueViewIndices.size()) { refreshQueue(); return; }
+                Bundle args = new Bundle(); args.putBoolean("remove", true);
+                args.putInt("from", queueViewIndices.get(index)); args.putString("expected", expected);
+                queueCommand(PlaybackService.QUEUE_EDIT, args);
+              }
             });
-    androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(
-        queuePanel,
-        (v, in) -> {
-          androidx.core.graphics.Insets bars =
-              in.getInsets(
-                  androidx.core.view.WindowInsetsCompat.Type.systemBars()
-                      | androidx.core.view.WindowInsetsCompat.Type.displayCutout());
-          v.setPadding(
-              dp(18) + bars.left, dp(6) + bars.top, dp(18) + bars.right, dp(12) + bars.bottom);
-          return in;
-        });
-    queueDialog.setContentView(queuePanel);
+    QueueSheet sheet = new QueueSheet(this, queuePanel, () -> queueDialog.dismiss());
+    queueDialog.setContentView(sheet);
     queueDialog.show();
     Window w = queueDialog.getWindow();
     if (w != null) {
       w.setLayout(-1, -1);
+      androidx.core.view.WindowCompat.setDecorFitsSystemWindows(w, false);
+      w.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
+      w.getDecorView().setPadding(0, 0, 0, 0);
+      w.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
       AppAppearance.bars(w);
       w.setStatusBarColor(BG);
       w.setNavigationBarColor(BG);
     }
-    queuePanel.requestApplyInsets();
+    sheet.requestApplyInsets();
     refreshQueue();
+  }
+
+  private void queueCommand(String action, Bundle args) {
+    if (controller == null) return;
+    ListenableFuture<SessionResult> result = controller.sendCustomCommand(new SessionCommand(action, Bundle.EMPTY), args);
+    result.addListener(() -> {
+      if (destroyed) return;
+      try {
+        if (result.get().resultCode != SessionResult.RESULT_SUCCESS)
+          message(action.equals(PlaybackService.QUEUE_FILTER)
+              ? "Queue filters are available during personal playback. Leave the shared session first."
+              : "The queue changed. Try moving or removing the song again.");
+      } catch (Exception unavailable) { message("Player is reconnecting. Try again."); }
+      refreshQueue();
+    }, main::post);
+  }
+
+  private void saveQueueMix() {
+    if (controller == null || controller.getCurrentMediaItem() == null) return;
+    Timeline timeline = controller.getCurrentTimeline();
+    List<Track> songs = new ArrayList<>();
+    for (int index : QueuePolicy.order(controller.getMediaItemCount(), controller.getCurrentMediaItemIndex(),
+        at -> timeline.getNextWindowIndex(at, Player.REPEAT_MODE_OFF, controller.getShuffleModeEnabled())))
+      songs.add(Track.from(controller.getMediaItemAt(index)));
+    MixCatalogue.Mix active = MixSession.active(this);
+    String title = active == null ? Track.from(controller.getCurrentMediaItem()).title + " Mix" : active.name;
+    io.execute(() -> {
+      try {
+        String name = store.savePlaylistCopy(title, songs);
+        main.post(() -> { if (!destroyed) { discardInactivePages(); message("Saved to " + name); } });
+      } catch (IllegalStateException unavailable) {
+        main.post(() -> { if (!destroyed) message("Couldn’t save this mix. Try again."); });
+      }
+    });
   }
 
   private void sleepTimer() {

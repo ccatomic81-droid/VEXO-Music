@@ -105,6 +105,14 @@ public final class NowPlayingPanel extends LinearLayout {
     body.setPadding(dp(24), dp(16), dp(24), dp(20));
     scroll.addView(body, new FrameLayout.LayoutParams(-1, -2, Gravity.CENTER_HORIZONTAL));
     addView(scroll, new LayoutParams(-1, 0, 1));
+    TextView queueGrip = text("Up next  ↑", 13, TEXT, true);
+    queueGrip.setGravity(Gravity.CENTER);
+    queueGrip.setMinHeight(dp(48));
+    queueGrip.setFocusable(true);
+    queueGrip.setContentDescription("Open queue. Swipe up or tap");
+    queueGrip.setOnClickListener(v -> actions.action("queue"));
+    PlayerGestures.expand(queueGrip, () -> actions.action("queue"));
+    addView(queueGrip, new LayoutParams(-1, dp(48)));
     FrameLayout artwork =
         new FrameLayout(c) {
           private final android.graphics.Path clip = new android.graphics.Path();

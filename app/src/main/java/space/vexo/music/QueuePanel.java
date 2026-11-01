@@ -26,6 +26,10 @@ public final class QueuePanel extends LinearLayout {
     void autoplay(boolean enabled);
 
     default void retry() {}
+    default void save() {}
+    default void filter(String value) {}
+    default void move(int from, int to, String expected, String target) {}
+    default void remove(int index, String expected) {}
   }
 
   private final TextView summary, status, retry, clearUpcoming, clearQueue;
@@ -36,6 +40,17 @@ public final class QueuePanel extends LinearLayout {
   private int current = -1;
   private boolean playing;
   private boolean updatingToggle;
+  final View handle;
+  private final LinearLayout buttons, automatic;
+  private final ImageView currentArt;
+  private final TextView currentTitle, currentArtist;
+  private final Visuals.Icon currentPlay;
+  private final Map<String, TextView> filters = new LinkedHashMap<>();
+  private boolean editing;
+  private int dragFrom = -1, dragTo = -1;
+  private String dragId = "", dragTarget = "";
+  private List<Track> dragSnapshot;
+  private final RecyclerView list;
 
   private int dp(int n) {
     return Math.round(n * getResources().getDisplayMetrics().density);
@@ -79,16 +94,57 @@ public final class QueuePanel extends LinearLayout {
     setOrientation(VERTICAL);
     setBackgroundColor(BG);
     setPadding(dp(18), dp(6), dp(18), dp(12));
+    FrameLayout grip = new FrameLayout(c);
+    View bar = new View(c);
+    bar.setBackground(round(MUTED, dp(3)));
+    grip.addView(bar, new FrameLayout.LayoutParams(dp(36), dp(4), Gravity.CENTER));
+    grip.setContentDescription("Expand or collapse queue. Swipe up for full queue, down to return to player");
+    grip.setFocusable(true);
+    addView(grip, new LayoutParams(-1, dp(32)));
+    handle = grip;
     LinearLayout top = row();
-    TextView title = text("Up next", 27, TEXT);
+    TextView title = text("Up next", 22, TEXT);
     title.setTypeface(null, Typeface.BOLD);
     top.addView(title, new LayoutParams(0, -2, 1));
+    top.addView(action("Save mix", actions::save));
     top.addView(icon("close", actions::close));
     addView(top);
+    LinearLayout currentRow = row();
+    currentRow.setPadding(0, dp(10), 0, dp(6));
+    currentArt = new RoundedArtwork(c);
+    currentRow.addView(currentArt, new LayoutParams(dp(44), dp(44)));
+    LinearLayout currentCopy = new LinearLayout(c);
+    currentCopy.setOrientation(VERTICAL);
+    currentCopy.setPadding(dp(12), 0, dp(8), 0);
+    currentTitle = text("", 14, TEXT);
+    currentTitle.setSingleLine(); currentTitle.setEllipsize(TextUtils.TruncateAt.END);
+    currentArtist = text("", 12, MUTED);
+    currentArtist.setSingleLine(); currentArtist.setEllipsize(TextUtils.TruncateAt.END);
+    currentCopy.addView(currentTitle); currentCopy.addView(currentArtist);
+    currentRow.addView(currentCopy, new LayoutParams(0, -2, 1));
+    currentPlay = icon("play", () -> {
+      if (current >= 0 && current < songs.size()) actions.play(current, songs.get(current).url);
+    });
+    currentRow.addView(currentPlay);
+    addView(currentRow);
     summary = text("", 13, MUTED);
     summary.setPadding(0, dp(6), 0, dp(16));
     addView(summary);
-    LinearLayout buttons = row();
+    HorizontalScrollView chips = new HorizontalScrollView(c);
+    chips.setHorizontalScrollBarEnabled(false);
+    LinearLayout chipRow = row();
+    for (String label : QueueMixFilter.LABELS) {
+      TextView chip = action(label, () -> actions.filter(label));
+      chip.setContentDescription(label.equals("Deep cuts")
+          ? "Deep cuts: search for album tracks and B-sides" : label + " upcoming recommendations");
+      LayoutParams cp = new LayoutParams(-2, dp(48));
+      cp.rightMargin = dp(8);
+      chipRow.addView(chip, cp); filters.put(label, chip);
+    }
+    chips.addView(chipRow);
+    addView(chips, new LayoutParams(-1, -2));
+    filterState(QueueMixFilter.read(c));
+    buttons = row();
     clearUpcoming = action("Clear upcoming", actions::clearUpcoming);
     clearQueue = action("Clear queue", actions::clearAll);
     LayoutParams left = new LayoutParams(0, -1, 1);
@@ -96,7 +152,7 @@ public final class QueuePanel extends LinearLayout {
     buttons.addView(clearUpcoming, left);
     buttons.addView(clearQueue, new LayoutParams(0, -1, 1));
     addView(buttons);
-    LinearLayout automatic = row();
+    automatic = row();
     automatic.setPadding(dp(2), dp(12), 0, dp(4));
     LinearLayout labels = new LinearLayout(c);
     labels.setOrientation(VERTICAL);
@@ -125,17 +181,76 @@ public final class QueuePanel extends LinearLayout {
     status = text("", 12, MUTED);
     status.setPadding(0, dp(4), 0, dp(12));
     addView(status);
-    RecyclerView list = new RecyclerView(c);
+    list = new RecyclerView(c);
     list.setLayoutManager(new LinearLayoutManager(c));
     list.setAdapter(adapter);
     list.setClipToPadding(false);
     addView(list, new LayoutParams(-1, 0, 1));
+    ItemTouchHelper touch = new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(
+        ItemTouchHelper.UP | ItemTouchHelper.DOWN, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
+      @Override public boolean isLongPressDragEnabled() { return true; }
+      @Override public int getMovementFlags(RecyclerView view, RecyclerView.ViewHolder holder) {
+        int at = holder.getBindingAdapterPosition();
+        return at <= current ? 0 : super.getMovementFlags(view, holder);
+      }
+      @Override public boolean onMove(RecyclerView view, RecyclerView.ViewHolder source, RecyclerView.ViewHolder target) {
+        int from = source.getBindingAdapterPosition(), to = target.getBindingAdapterPosition();
+        if (from <= current || to <= current || from >= songs.size() || to >= songs.size()) return false;
+        if (dragFrom < 0) { dragFrom = from; dragId = songs.get(from).url; dragSnapshot = new ArrayList<>(songs); }
+        dragTo = to; dragTarget = dragSnapshot.get(to).url;
+        Track moved = songs.remove(from); songs.add(to, moved);
+        adapter.notifyItemMoved(from, to);
+        return true;
+      }
+      @Override public void onSelectedChanged(RecyclerView.ViewHolder holder, int state) {
+        if (state != ItemTouchHelper.ACTION_STATE_IDLE) editing = true;
+        super.onSelectedChanged(holder, state);
+      }
+      @Override public void clearView(RecyclerView view, RecyclerView.ViewHolder holder) {
+        super.clearView(view, holder);
+        editing = false;
+        if (dragFrom >= 0 && dragTo >= 0 && dragFrom != dragTo)
+          actions.move(dragFrom, dragTo, dragId, dragTarget);
+        dragFrom = dragTo = -1;
+      }
+      @Override public void onSwiped(RecyclerView.ViewHolder holder, int direction) {
+        int index = holder.getBindingAdapterPosition();
+        editing = false;
+        if (index > current && index < songs.size()) actions.remove(index, songs.get(index).url);
+        adapter.notifyDataSetChanged();
+      }
+    });
+    touch.attachToRecyclerView(list);
+  }
+
+  void expanded(boolean value) {
+    buttons.setVisibility(value ? VISIBLE : GONE);
+    automatic.setVisibility(value ? VISIBLE : GONE);
+  }
+
+  boolean editing() { return editing; }
+
+  void filterState(String selected) {
+    for (Map.Entry<String, TextView> entry : filters.entrySet()) {
+      boolean active = entry.getKey().equals(selected);
+      entry.getValue().setSelected(active);
+      entry.getValue().setTextColor(active ? BG : TEXT);
+      entry.getValue().setBackground(round(active ? TEXT : CONTROL, dp(16)));
+    }
   }
 
   public void refresh(List<Track> tracks, int index, boolean playing, String message) {
+    if (editing) return;
     songs = new ArrayList<>(tracks);
     current = index;
     this.playing = playing;
+    filterState(QueueMixFilter.read(getContext()));
+    if (index >= 0 && index < songs.size()) {
+      Track currentSong = songs.get(index);
+      currentTitle.setText(currentSong.title); currentArtist.setText(currentSong.artist);
+      artwork(currentArt, currentSong);
+      currentPlay.set(playing ? "pause" : "play", TEXT);
+    } else { currentTitle.setText("Choose a song to begin"); currentArtist.setText(""); }
     int upcoming = Math.max(0, songs.size() - Math.max(0, index + 1));
     summary.setText(
         songs.isEmpty()
@@ -171,8 +286,14 @@ public final class QueuePanel extends LinearLayout {
       r.setPadding(dp(8), dp(10), 0, dp(10));
       r.setMinimumHeight(dp(76));
       r.setLayoutParams(new RecyclerView.LayoutParams(-1, -2));
-      ImageView image = new ImageView(getContext());
-      r.addView(image, new LayoutParams(dp(44), dp(44)));
+      FrameLayout cover = new FrameLayout(getContext());
+      ImageView image = new RoundedArtwork(getContext());
+      cover.addView(image, new FrameLayout.LayoutParams(-1, -1));
+      PlayingIndicator indicator = new PlayingIndicator(getContext());
+      FrameLayout.LayoutParams marker = new FrameLayout.LayoutParams(dp(18), dp(18), Gravity.BOTTOM | Gravity.END);
+      marker.setMargins(0, 0, dp(3), dp(3));
+      cover.addView(indicator, marker);
+      r.addView(cover, new LayoutParams(dp(44), dp(44)));
       LinearLayout copy = new LinearLayout(getContext());
       copy.setOrientation(VERTICAL);
       copy.setPadding(dp(10), 0, dp(4), 0);
@@ -185,10 +306,10 @@ public final class QueuePanel extends LinearLayout {
       copy.addView(title);
       copy.addView(artist);
       r.addView(copy, new LayoutParams(0, -2, 1));
-      Visuals.Icon play = icon("play", () -> {}), more = icon("more", () -> {});
+      Visuals.Icon play = icon("drag", () -> {}), more = icon("more", () -> {});
       r.addView(play);
       r.addView(more);
-      return new Holder(r, image, title, artist, play, more);
+      return new Holder(r, image, title, artist, play, more, indicator);
     }
 
     @Override
@@ -200,14 +321,16 @@ public final class QueuePanel extends LinearLayout {
               : t.recommended ? "Recommended · " : "In your queue · ") + t.artist);
       artwork(h.image, t);
       h.itemView.setBackground(position == current ? round(PANEL, dp(14)) : null);
-      h.play.set(position == current && playing ? "pause" : "play", LIME);
+      h.indicator.setVisibility(position == current ? VISIBLE : GONE);
+      h.indicator.playing(playing);
+      h.play.set(position == current ? (playing ? "pause" : "play") : "drag", position == current ? LIME : MUTED);
       Runnable start =
           () -> {
             int index = h.getBindingAdapterPosition();
             if (index >= 0 && index < songs.size()) actions.play(index, songs.get(index).url);
           };
-      h.play.setOnClickListener(v -> start.run());
-      h.play.setContentDescription((position == current && playing ? "Pause " : "Play ") + t.title);
+      h.play.setOnClickListener(v -> { if (h.getBindingAdapterPosition() == current) start.run(); });
+      h.play.setContentDescription(position == current ? (playing ? "Pause " : "Play ") + t.title : "Hold and drag to reorder " + t.title + ". More options also includes Move up and Move down");
       h.itemView.setOnClickListener(v -> start.run());
       h.more.setContentDescription("Queue options for " + t.title);
       h.more.setOnClickListener(
@@ -227,6 +350,7 @@ public final class QueuePanel extends LinearLayout {
     final ImageView image;
     final TextView title, artist;
     final Visuals.Icon play, more;
+    final PlayingIndicator indicator;
 
     Holder(
         View r,
@@ -234,13 +358,14 @@ public final class QueuePanel extends LinearLayout {
         TextView title,
         TextView artist,
         Visuals.Icon play,
-        Visuals.Icon more) {
+        Visuals.Icon more, PlayingIndicator indicator) {
       super(r);
       this.image = image;
       this.title = title;
       this.artist = artist;
       this.play = play;
       this.more = more;
+      this.indicator = indicator;
     }
   }
 }

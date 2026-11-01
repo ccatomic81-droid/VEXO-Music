@@ -24,6 +24,11 @@ import org.json.JSONObject;
 final class MusicHomePanel extends MusicSurface {
   private long avatarVersion;
   private LinearLayout personalSlot, trendingShelf, artistSlot;
+  private LinearLayout quickPicksSlot;
+  private final Map<View, Track> quickRows = new LinkedHashMap<>();
+  private final Map<View, PlayingIndicator> quickIndicators = new HashMap<>();
+  private String playingId = "";
+  private boolean isPlaying;
   private TextView greeting;
   private final Map<String, LinearLayout> mixCards;
   private FrameLayout profileAvatar;
@@ -65,6 +70,8 @@ final class MusicHomePanel extends MusicSurface {
     default void artist(SearchArtists.Artist artist) {}
 
     default void artistsPage() { library("Artists"); }
+
+    default void options(Track track) {}
   }
 
   void artists() {
@@ -149,6 +156,7 @@ final class MusicHomePanel extends MusicSurface {
       String str3,
       final Listener listener) {
     super(context);
+    setBackground(new HomeGradient(Visuals.light, getResources().getDisplayMetrics().density));
     this.catalogue = mixCatalogue;
     this.country = str;
     this.listener = listener;
@@ -308,9 +316,36 @@ final class MusicHomePanel extends MusicSurface {
     this.body.addView(linearLayoutRow2);
     gap(this.body, 8);
     if (!str3.equals("Playlists")) {
+      HorizontalScrollView moods = new HorizontalScrollView(context);
+      moods.setHorizontalScrollBarEnabled(false);
+      LinearLayout moodRow = row();
+      String[] labels = {"Energize", "Relax", "Feel good", "Party", "Focus"};
+      String[] ids = {"energy", "calm", "feelgood", "party", "focus"};
+      for (int mood = 0; mood < labels.length; mood++) {
+        final MixCatalogue.Mix target = MixCatalogue.find(ids[mood], str);
+        TextView chip = action(labels[mood], false, () -> listener.mix(target));
+        chip.setTextSize(13);
+        LinearLayout.LayoutParams chipParams = new LinearLayout.LayoutParams(-2, dp(48));
+        chipParams.rightMargin = dp(8);
+        moodRow.addView(chip, chipParams);
+      }
+      moods.addView(moodRow);
+      body.addView(moods);
+      gap(body, 16);
+    }
+    if (!str3.equals("Playlists")) {
       artistSlot = column();
       body.addView(artistSlot);
       artists();
+    }
+    quickPicksSlot = column();
+    if (!str3.equals("Playlists")) {
+      body.addView(quickPicksSlot);
+      List<Track> picks = new ArrayList<>(libraryStore.tracks("history"));
+      picks.addAll(libraryStore.tracks("favourites"));
+      if (picks.isEmpty()) picks.addAll(mixCatalogue.cached(MixCatalogue.find("daily", str), str));
+      if (picks.isEmpty() && regionalFeed != null) picks.addAll(regionalFeed.tracks);
+      quickPicks(picks);
     }
     personalSlot = column();
     if (!str3.equals("Playlists")) body.addView(personalSlot);
@@ -656,6 +691,7 @@ final class MusicHomePanel extends MusicSurface {
       YouTubeConnection.Player play,
       Runnable radio) {
     if (personalSlot == null) return;
+    if (!songs.isEmpty()) quickPicks(songs);
     personalSlot.removeAllViews();
     personalSlot.setVisibility(View.VISIBLE);
     MusicSurface part = new MusicSurface(getContext());
@@ -715,6 +751,91 @@ final class MusicHomePanel extends MusicSurface {
     gap(body, 12);
     body.addView(action("Manage connected music & refresh", false, manage));
     gap(body, 24);
+  }
+
+  void playback(String id, boolean playing) {
+    playingId = id == null ? "" : id;
+    isPlaying = playing;
+    for (Map.Entry<View, Track> entry : quickRows.entrySet()) {
+      boolean current = playingId.equals(entry.getValue().url);
+      entry.getKey().setBackground(current ? Visuals.round(Visuals.SELECTED, dp(12)) : null);
+      PlayingIndicator indicator = quickIndicators.get(entry.getKey());
+      indicator.setVisibility(current ? View.VISIBLE : View.GONE);
+      indicator.playing(playing);
+    }
+  }
+
+  private void quickPicks(List<Track> input) {
+    if (quickPicksSlot == null) return;
+    LinkedHashMap<String, Track> unique = new LinkedHashMap<>();
+    for (Track track : input) unique.putIfAbsent(RadioPolicy.songKey(track), track);
+    final List<Track> picks = new ArrayList<>(unique.values());
+    quickPicksSlot.removeAllViews();
+    quickRows.clear();
+    quickIndicators.clear();
+    if (picks.isEmpty()) return;
+    LinearLayout heading = row();
+    heading.addView(text("Quick picks", 22, Visuals.TEXT, true), new LinearLayout.LayoutParams(0, -2, 1));
+    TextView all = action("Play all", false, () -> listener.play(picks, 0));
+    all.setTextSize(12);
+    heading.addView(all);
+    quickPicksSlot.addView(heading);
+    gap(quickPicksSlot, 8);
+    HorizontalScrollView pages = new HorizontalScrollView(getContext()) {
+      @Override protected void onMeasure(int width, int height) {
+        int available = Math.max(dp(220), MeasureSpec.getSize(width) - dp(24));
+        if (getChildCount() > 0 && getChildAt(0) instanceof LinearLayout) {
+          LinearLayout columns = (LinearLayout) getChildAt(0);
+          for (int i = 0; i < columns.getChildCount(); i++)
+            columns.getChildAt(i).getLayoutParams().width = Math.min(dp(380), available);
+        }
+        super.onMeasure(width, height);
+      }
+    };
+    pages.setHorizontalScrollBarEnabled(false);
+    LinearLayout columns = row();
+    columns.setGravity(android.view.Gravity.TOP);
+    for (int start = 0; start < Math.min(12, picks.size()); start += 4) {
+      LinearLayout page = column();
+      for (int at = start; at < Math.min(start + 4, picks.size()); at++) {
+        final int index = at;
+        Track track = picks.get(at);
+        LinearLayout song = row();
+        song.setPadding(dp(8), dp(8), dp(4), dp(8));
+        FrameLayout art = new FrameLayout(getContext());
+        ImageView image = new RoundedArtwork(getContext());
+        art.addView(image, new FrameLayout.LayoutParams(-1, -1));
+        Visuals.artwork(image, track);
+        PlayingIndicator indicator = new PlayingIndicator(getContext());
+        FrameLayout.LayoutParams marker = new FrameLayout.LayoutParams(dp(18), dp(18), android.view.Gravity.BOTTOM | android.view.Gravity.END);
+        marker.setMargins(0, 0, dp(3), dp(3));
+        art.addView(indicator, marker);
+        song.addView(art, new LinearLayout.LayoutParams(dp(52), dp(52)));
+        LinearLayout copy = column();
+        copy.setPadding(dp(12), 0, dp(4), 0);
+        TextView title = text(track.title, 15, Visuals.TEXT, true);
+        title.setSingleLine(); title.setEllipsize(TextUtils.TruncateAt.END);
+        TextView artist = text(track.artist, 12, Visuals.MUTED, false);
+        artist.setSingleLine(); artist.setEllipsize(TextUtils.TruncateAt.END);
+        copy.addView(title); gap(copy, 5); copy.addView(artist);
+        song.addView(copy, new LinearLayout.LayoutParams(0, -2, 1));
+        Visuals.Icon more = new Visuals.Icon(getContext(), "more", Visuals.TEXT);
+        more.setContentDescription("Song options for " + track.title);
+        more.setOnClickListener(v -> listener.options(track));
+        song.addView(more, new LinearLayout.LayoutParams(dp(48), dp(48)));
+        song.setContentDescription("Play " + track.title + " by " + track.artist);
+        song.setOnClickListener(v -> listener.play(picks, index));
+        quickRows.put(song, track); quickIndicators.put(song, indicator);
+        page.addView(song, new LinearLayout.LayoutParams(-1, -2));
+      }
+      LinearLayout.LayoutParams size = new LinearLayout.LayoutParams(dp(280), -2);
+      size.rightMargin = dp(12);
+      columns.addView(page, size);
+    }
+    pages.addView(columns);
+    quickPicksSlot.addView(pages, new LinearLayout.LayoutParams(-1, -2));
+    gap(quickPicksSlot, 24);
+    playback(playingId, isPlaying);
   }
 
   private void feature(

@@ -129,6 +129,8 @@ public final class Visuals {
 
     private static String description(String name) {
       switch (name) {
+        case "drag":
+          return "Reorder song";
         case "smart":
           return "Smart Experience";
         case "play":
@@ -178,6 +180,12 @@ public final class Visuals {
       p.setStrokeWidth(1.9f);
       p.setStrokeCap(Paint.Cap.ROUND);
       p.setStrokeJoin(Paint.Join.ROUND);
+      if (name.equals("drag")) {
+        c.drawLine(5, 9, 19, 9, p);
+        c.drawLine(5, 15, 19, 15, p);
+        c.restore();
+        return;
+      }
       Path a = new Path();
       switch (name) {
         case "intro":
