@@ -101,6 +101,12 @@ public class PlayerUpgradeTest {
         assertNotNull(helper.text(home, label));
       home.playback(helper.remote.url, true);
       helper.capture(owner.findViewById(android.R.id.content), 360, 800, "mixed-gradient-home-360");
+      Track longTitle = new Track("https://www.youtube.com/watch?v=longtitle99", "A very long song title that needs two lines to read", "A long artist name", "", 180);
+      home.personal(MusicInterests.read(context), Arrays.asList(longTitle, helper.remote), false, false,
+          () -> {}, () -> {}, (songs, at) -> {}, () -> {});
+      TextView title = helper.text(home, longTitle.title);
+      assertNotNull(title); assertEquals(2, title.getMaxLines());
+      helper.capture(owner.findViewById(android.R.id.content), 320, 800, "home-refined-long-title-320");
       helper.text(home, "Relax").performClick();
       assertEquals("calm", HomePolishTest.field(owner, "activeMix"));
     }

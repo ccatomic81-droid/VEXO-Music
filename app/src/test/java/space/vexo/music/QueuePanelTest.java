@@ -67,6 +67,8 @@ public class QueuePanelTest {
       screenshot.compress(Bitmap.CompressFormat.PNG, 100, f);
     }
     screenshot.recycle();
+    assertTrue("The reorder handle accepts a long press", handle.performLongClick());
+    assertTrue("The queue enters drag mode", panel.editing());
   }
 
   @Test

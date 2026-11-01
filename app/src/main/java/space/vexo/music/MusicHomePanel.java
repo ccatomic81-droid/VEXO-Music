@@ -770,7 +770,7 @@ final class MusicHomePanel extends MusicSurface {
       entry.getKey().setBackground(current ? Visuals.round(Visuals.SELECTED, dp(12)) : null);
       PlayingIndicator indicator = quickIndicators.get(entry.getKey());
       indicator.setVisibility(current ? View.VISIBLE : View.GONE);
-      indicator.playing(playing);
+      indicator.playing(isPlaying);
     }
   }
 
@@ -780,7 +780,7 @@ final class MusicHomePanel extends MusicSurface {
     for (Track track : input) unique.putIfAbsent(RadioPolicy.songKey(track), track);
     final List<Track> picks = new ArrayList<>(unique.values());
     StringBuilder signature = new StringBuilder();
-    for (Track track : picks) signature.append(track.url).append('|').append(track.title).append('|').append(track.artwork).append('\n');
+    for (Track track : picks) signature.append(track.url).append('|').append(track.title).append('|').append(track.artist).append('|').append(track.artwork).append('\n');
     if (quickKey.equals(signature.toString())) return;
     quickKey = signature.toString();
     quickPicksSlot.removeAllViews();
