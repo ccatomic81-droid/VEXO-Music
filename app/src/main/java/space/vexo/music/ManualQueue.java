@@ -60,10 +60,10 @@ final class ManualQueue {
     if (upcoming.indexOf(from) <= 0 || upcoming.indexOf(to) <= 0 || from == to
         || !player.getMediaItemAt(from).mediaId.equals(expected)
         || !player.getMediaItemAt(to).mediaId.equals(target)) return false;
+    List<Integer> all = order(player);
     // A deliberately moved recommendation becomes a manual choice, protected from retuning.
     player.replaceMediaItem(from, Track.from(player.getMediaItemAt(from)).mediaItem());
     if (player.getShuffleModeEnabled()) {
-      List<Integer> all = order(player);
       int destination = all.indexOf(to);
       all.remove(Integer.valueOf(from));
       all.add(destination, from);

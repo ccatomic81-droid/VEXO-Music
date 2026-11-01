@@ -64,7 +64,8 @@ public class PlayerUpgradeTest {
         assertEquals(42000, player.getCurrentPosition());
         assertFalse(player.getPlayWhenReady()); assertEquals(shuffled, player.getShuffleModeEnabled());
         List<String> upcoming = new SessionQueueTest().upcoming(player);
-        assertTrue(upcoming.indexOf(b.url) < upcoming.indexOf(a.url));
+        assertEquals(shuffled ? Arrays.asList(current.url, d.url, b.url, a.url)
+            : Arrays.asList(current.url, b.url, a.url, d.url), upcoming);
         for (int i = 0; i < player.getMediaItemCount(); i++)
           if (player.getMediaItemAt(i).mediaId.equals(b.url)) assertFalse(Track.from(player.getMediaItemAt(i)).recommended);
         SongRadio.pruneRecommendations(player);
