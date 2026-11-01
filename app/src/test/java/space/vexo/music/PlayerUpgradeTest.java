@@ -97,6 +97,9 @@ public class PlayerUpgradeTest {
       home.personal(MusicInterests.read(context), Arrays.asList(helper.saved, helper.remote), false, false,
           () -> {}, () -> {}, (songs, at) -> {}, () -> {});
       assertNotNull(helper.text(home, "Quick picks")); assertNotNull(helper.text(home, "Play all"));
+      assertNotNull(helper.text(home, "VEXO Music"));
+      assertTrue(home.body.indexOfChild((View) HomePolishTest.field(home, "quickPicksSlot"))
+          < home.body.indexOfChild((View) HomePolishTest.field(home, "artistSlot")));
       for (String label : new String[] {"Energize", "Relax", "Feel good", "Party", "Focus"})
         assertNotNull(helper.text(home, label));
       home.playback(helper.remote.url, true);

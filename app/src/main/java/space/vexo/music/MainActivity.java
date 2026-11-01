@@ -849,7 +849,7 @@ public final class MainActivity extends ComponentActivity {
 
   private void buildMini() {
     mini = column();
-    mini.setBackground(round(MINI, dp(8)));
+    mini.setBackground(round(MINI, dp(16)));
     mini.setPadding(dp(8), dp(3), dp(4), dp(3));
     mini.setMinimumHeight(dp(58));
     LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-1, -2);
@@ -863,7 +863,7 @@ public final class MainActivity extends ComponentActivity {
       android.graphics.drawable.GradientDrawable tint = new android.graphics.drawable.GradientDrawable(
           android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT,
           new int[] {light ? ArtworkPalette.lightShade(color) : color, MINI});
-      tint.setCornerRadius(dp(8));
+      tint.setCornerRadius(dp(16));
       mini.setBackground(tint);
     });
     miniArt.setBackground(round(PANEL, dp(5)));

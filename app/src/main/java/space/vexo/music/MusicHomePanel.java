@@ -185,14 +185,22 @@ final class MusicHomePanel extends MusicSurface {
           }
         });
     LinearLayout heading = column();
-    this.greeting = text("", 22, Visuals.TEXT, true);
+    TextView brand = text("VEXO Music", 24, Visuals.TEXT, true);
+    heading.addView(brand);
+    gap(heading, 4);
+    this.greeting = text("", 13, Visuals.MUTED, false);
     this.greeting.setMaxLines(2);
     this.greeting.setEllipsize(TextUtils.TruncateAt.END);
     heading.addView(this.greeting);
-    LinearLayout.LayoutParams avatarParams = new LinearLayout.LayoutParams(dp(40), dp(40));
-    avatarParams.rightMargin = dp(12);
-    linearLayoutRow.addView(this.profileAvatar, avatarParams);
+    linearLayoutRow.setMinimumHeight(dp(64));
     linearLayoutRow.addView(heading, new LinearLayout.LayoutParams(0, -2, 1));
+    Visuals.Icon search = new Visuals.Icon(context, "search", Visuals.TEXT);
+    search.setBackground(Visuals.touch(android.graphics.Color.TRANSPARENT, dp(24)));
+    search.setOnClickListener(v -> listener.search());
+    linearLayoutRow.addView(search, new LinearLayout.LayoutParams(dp(48), dp(48)));
+    LinearLayout.LayoutParams avatarParams = new LinearLayout.LayoutParams(dp(48), dp(48));
+    avatarParams.leftMargin = dp(6);
+    linearLayoutRow.addView(this.profileAvatar, avatarParams);
     String str4 = RegionPolicy.name(str) + " ▾";
     Objects.requireNonNull(listener);
     TextView textViewAction =
@@ -293,10 +301,12 @@ final class MusicHomePanel extends MusicSurface {
                 }
               });
       textViewAction2.setTextSize(13);
+      textViewAction2.setTextColor(str6.equals(str3) ? Visuals.BG : Visuals.TEXT);
+      textViewAction2.setSelected(str6.equals(str3));
       textViewAction2.setMinHeight(dp(48));
       textViewAction2.setBackground(
           new android.graphics.drawable.InsetDrawable(
-              Visuals.round(str6.equals(str3) ? Visuals.LIME : Visuals.CONTROL, dp(18)),
+              Visuals.touch(str6.equals(str3) ? Visuals.TEXT : Visuals.softSurface(), dp(10)),
               0,
               dp(6),
               0,
@@ -325,19 +335,17 @@ final class MusicHomePanel extends MusicSurface {
       for (int mood = 0; mood < labels.length; mood++) {
         final MixCatalogue.Mix target = MixCatalogue.find(ids[mood], str);
         TextView chip = action(labels[mood], false, () -> listener.mix(target));
-        chip.setTextSize(13);
-        LinearLayout.LayoutParams chipParams = new LinearLayout.LayoutParams(-2, dp(48));
+        chip.setTextSize(14);
+        chip.setBackground(new android.graphics.drawable.InsetDrawable(
+            Visuals.touch(Visuals.softSurface(), dp(10)), 0, dp(4), 0, dp(4)));
+        chip.setPadding(dp(16), dp(10), dp(16), dp(10));
+        LinearLayout.LayoutParams chipParams = new LinearLayout.LayoutParams(-2, -2);
         chipParams.rightMargin = dp(8);
         moodRow.addView(chip, chipParams);
       }
       moods.addView(moodRow);
       body.addView(moods);
       gap(body, 16);
-    }
-    if (!str3.equals("Playlists")) {
-      artistSlot = column();
-      body.addView(artistSlot);
-      artists();
     }
     quickPicksSlot = column();
     if (!str3.equals("Playlists")) {
@@ -347,6 +355,11 @@ final class MusicHomePanel extends MusicSurface {
       if (picks.isEmpty()) picks.addAll(mixCatalogue.cached(MixCatalogue.find("daily", str), str));
       if (picks.isEmpty() && regionalFeed != null) picks.addAll(regionalFeed.tracks);
       quickPicks(picks);
+    }
+    if (!str3.equals("Playlists")) {
+      artistSlot = column();
+      body.addView(artistSlot);
+      artists();
     }
     personalSlot = column();
     if (!str3.equals("Playlists")) body.addView(personalSlot);
@@ -767,7 +780,9 @@ final class MusicHomePanel extends MusicSurface {
   private void updateQuickPlaying() {
     for (Map.Entry<View, Track> entry : quickRows.entrySet()) {
       boolean current = playingId.equals(entry.getValue().url);
-      entry.getKey().setBackground(current ? Visuals.round(Visuals.SELECTED, dp(12)) : null);
+      entry.getKey().setBackground(Visuals.touch(
+          current ? Visuals.softSurface() : android.graphics.Color.TRANSPARENT, dp(12)));
+      entry.getKey().setSelected(current);
       PlayingIndicator indicator = quickIndicators.get(entry.getKey());
       indicator.setVisibility(current ? View.VISIBLE : View.GONE);
       indicator.playing(isPlaying);
@@ -791,6 +806,13 @@ final class MusicHomePanel extends MusicSurface {
     heading.addView(text("Quick picks", 22, Visuals.TEXT, true), new LinearLayout.LayoutParams(0, -2, 1));
     TextView all = action("Play all", false, () -> listener.play(picks, 0));
     all.setTextSize(12);
+    android.graphics.drawable.GradientDrawable outline = Visuals.round(android.graphics.Color.TRANSPARENT, dp(20));
+    outline.setStroke(dp(1), Visuals.BORDER);
+    all.setBackground(new android.graphics.drawable.InsetDrawable(
+        new android.graphics.drawable.RippleDrawable(
+            android.content.res.ColorStateList.valueOf(Visuals.softSurface()), outline, null),
+        0, dp(6), 0, dp(6)));
+    all.setPadding(dp(16), dp(8), dp(16), dp(8));
     heading.addView(all);
     quickPicksSlot.addView(heading);
     gap(quickPicksSlot, 8);

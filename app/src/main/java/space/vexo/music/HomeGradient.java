@@ -19,9 +19,9 @@ final class HomeGradient extends Drawable {
     float w = Math.max(1, bounds.width());
     float h = Math.max(1, Math.min(bounds.height(), 660 * density));
     pools = new Shader[] {
-      pool(w * .12f, h * .02f, w * .92f, light ? 0x55d999a9 : 0x995d394e),
-      pool(w * .92f, h * .04f, w * .95f, light ? 0x66899fdc : 0xaa354965),
-      pool(w * .12f, h * .36f, w * .92f, light ? 0x667ac8c4 : 0xaa155561)
+      pool(w * .12f, h * .02f, w * .92f, light ? 0x55d999a9 : 0xaa633b50),
+      pool(w * .92f, h * .04f, w * .95f, light ? 0x66899fdc : 0xbb3e4b72),
+      pool(w * .12f, h * .36f, w * .92f, light ? 0x667ac8c4 : 0xaa155864)
     };
   }
 

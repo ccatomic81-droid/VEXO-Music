@@ -155,6 +155,30 @@ public class NowPlayingPanelTest {
   }
 
   @Test
+  public void lyricsAndQueueRemainReachableAfterScrollingInBothThemes() throws Exception {
+    try {
+      for (boolean light : new boolean[] {false, true}) {
+        Visuals.appearance(light);
+        List<String> actions = new ArrayList<>();
+        NowPlayingPanel p = panel(320, 640, 1.6f, actions);
+        TextView lyrics = new SearchUiTest().text(p, "Lyrics");
+        TextView queue = new SearchUiTest().text(p, "Up next  ↑");
+        assertNotNull(lyrics); assertNotNull(queue);
+        p.scroll.scrollTo(0, p.scroll.getChildAt(0).getHeight());
+        for (View tab : new View[] {lyrics, queue}) {
+          Rect bounds = new Rect(0, 0, tab.getWidth(), tab.getHeight());
+          p.offsetDescendantRectToMyCoords(tab, bounds);
+          assertTrue(bounds.top >= 0 && bounds.bottom <= p.getHeight());
+          assertTrue(tab.getWidth() >= 48 && tab.getHeight() >= 48);
+          tab.performClick();
+        }
+        assertEquals(Arrays.asList("lyrics", "queue"), actions);
+        render(p, 320, 640, "player-footer-inspired-" + light);
+      }
+    } finally { Visuals.appearance(false); }
+  }
+
+  @Test
   public void glyphsStayTheSameSizeInsideDifferentTouchTargets() throws Exception {
     Context c = RuntimeEnvironment.getApplication();
     String[] names = {

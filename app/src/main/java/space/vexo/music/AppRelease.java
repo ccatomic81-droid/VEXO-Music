@@ -7,11 +7,11 @@ import org.json.*;
 /** A release feed contains metadata only. Downloads always need a user tap. */
 final class AppRelease {
   static final String NOTES =
-      "• Playback controls fit better on smaller screens and with larger text.\n"
-          + "• Quick Picks shows more of long song titles and updates more smoothly.\n"
-          + "• Queue songs have more room for artist names and a simpler reorder handle.\n"
-          + "• Queue options stay accessible, with a clearer empty-queue message.\n"
-          + "• The blended Home gradient, mood shortcuts and smart queue remain available.";
+      "• Refreshed Home with a clearer VEXO header, soft mood chips and Quick Picks first.\n"
+          + "• Mixed-colour atmosphere and quieter playing-song highlights.\n"
+          + "• Lyrics and Up next stay within reach at the bottom of the player.\n"
+          + "• Artwork colours blend between songs, with native touch feedback.\n"
+          + "• Rounded mini-player and refined page motion with reduced-motion support.";
   final int code;
   final String version, summary, url;
   String sha256 = "";

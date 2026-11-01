@@ -67,9 +67,9 @@ class MusicSurface extends ScrollView {
     textViewText.setPadding(dp(16.0f), dp(13.0f), dp(16.0f), dp(13.0f));
     textViewText.setMinHeight(dp(48.0f));
     if (z) {
-      textViewText.setBackground(Visuals.round(Visuals.LIME, dp(24.0f)));
+      textViewText.setBackground(Visuals.touch(Visuals.LIME, dp(24.0f)));
     } else {
-      textViewText.setBackground(Visuals.round(Visuals.CONTROL, dp(24)));
+      textViewText.setBackground(Visuals.touch(Visuals.CONTROL, dp(24)));
     }
     textViewText.setOnClickListener(
         new View.OnClickListener() {
