@@ -12,6 +12,7 @@ final class QueueSheet extends FrameLayout {
   private float down;
   private int initial;
   private int lastViewport;
+  private android.animation.ValueAnimator settling;
   QueueSheet(Context context, QueuePanel panel, Runnable close) {
     super(context);
     this.panel = panel;
@@ -26,6 +27,7 @@ final class QueueSheet extends FrameLayout {
     panel.handle.setOnTouchListener((view, event) -> {
       switch (event.getActionMasked()) {
         case MotionEvent.ACTION_DOWN:
+          if (settling != null) settling.cancel();
           down = event.getRawY(); initial = panel.getHeight(); moving = false; return true;
         case MotionEvent.ACTION_MOVE:
           float delta = down - event.getRawY();
@@ -61,15 +63,27 @@ final class QueueSheet extends FrameLayout {
   private void snap(boolean expanded) {
     full = expanded;
     panel.expanded(full);
-    resize(full ? available() : Math.min(available(), Math.max(dp(340), Math.round(available() * .68f))));
+    int target = full ? available() : Math.min(available(), Math.max(dp(340), Math.round(available() * .68f)));
+    if (settling != null) settling.cancel();
+    if (!isAttachedToWindow() || !android.animation.ValueAnimator.areAnimatorsEnabled()) { resize(target); return; }
+    settling = android.animation.ValueAnimator.ofInt(panel.getHeight(), target);
+    settling.setDuration(180);
+    settling.setInterpolator(new android.view.animation.DecelerateInterpolator());
+    settling.addUpdateListener(frame -> resize((int) frame.getAnimatedValue()));
+    settling.start();
   }
   @Override protected void onMeasure(int width, int height) {
     int viewport = Math.max(1, MeasureSpec.getSize(height) - getPaddingTop() - getPaddingBottom());
     if (viewport != lastViewport) {
+      if (settling != null) settling.cancel();
       lastViewport = viewport;
       panel.getLayoutParams().height = full ? viewport
           : Math.min(viewport, Math.max(dp(340), Math.round(viewport * .68f)));
     }
     super.onMeasure(width, height);
+  }
+  @Override protected void onDetachedFromWindow() {
+    if (settling != null) settling.cancel();
+    super.onDetachedFromWindow();
   }
 }

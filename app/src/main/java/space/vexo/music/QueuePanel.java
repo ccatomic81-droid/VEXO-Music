@@ -213,7 +213,7 @@ public final class QueuePanel extends LinearLayout {
         editing = false;
         if (dragFrom >= 0 && dragTo >= 0 && dragFrom != dragTo)
           actions.move(dragFrom, dragTo, dragId, dragTarget);
-        else actions.changed();
+        else post(actions::changed);
         dragFrom = dragTo = -1;
       }
       @Override public void onSwiped(RecyclerView.ViewHolder holder, int direction) {
