@@ -1,0 +1,31 @@
+{
+  "versionName": "0.30.0-dev",
+  "versionCode": 50,
+  "sourceCommit": "613a3b1bf8a28beaee36c1ad608bcf6616ea471f",
+  "testerUrl": "https://vexo-music-testing.kavindukavishka785.workers.dev/",
+  "downloadUrl": "https://vexo-music-testing.kavindukavishka785.workers.dev/releases/VEXO-Music-0.30.0-dev.apk",
+  "apkSha256": "a895c343e4335ae6bf05a79754c6d7d1560ff52bf3a2a6d4af5f9f870285623e",
+  "sizeBytes": 9201800,
+  "signingCertificateSha256": "0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3",
+  "verifiedAt": "2026-11-01T13:17:51.967950+00:00",
+  "publicChecks": {
+    "manifest": 200,
+    "page": 200,
+    "apk": 200,
+    "head": 200,
+    "range": 206,
+    "checksums": 200,
+    "previous-tester": 200,
+    "stable": 200,
+    "closed-writes": 405
+  },
+  "publicDownloadMatchesSignedApk": true,
+  "previousTesterAvailable": true,
+  "publicReleaseUnchanged": true,
+  "publicationDisabled": true,
+  "hostTestsPassed": 9,
+  "workerBindingNames": [
+    "RELEASES"
+  ],
+  "deploymentId": "254e418ce5184f32818f9ff5aa1351d9"
+}
