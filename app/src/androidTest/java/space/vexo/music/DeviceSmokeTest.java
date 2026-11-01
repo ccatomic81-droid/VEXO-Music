@@ -112,7 +112,7 @@ public class DeviceSmokeTest {
         QueuePanel queue = (QueuePanel) field(a, "queuePanel");
         assertFalse(controller(a).isPlaying());
         assertEquals("Device playback check", String.valueOf(controller(a).getCurrentMediaItem().mediaMetadata.title));
-        assertTrue(findText(queue, "Clear queue").isShown());
+        assertTrue(findDescription(queue, "Queue options").isShown());
         findText(queue, "Save mix").performClick();
       });
       await(scenario, a -> new LibraryStore(context).playlists().contains("Device playback check Mix"), "Queue mix was not saved");

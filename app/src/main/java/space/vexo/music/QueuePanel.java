@@ -109,6 +109,9 @@ public final class QueuePanel extends LinearLayout {
     title.setTypeface(null, Typeface.BOLD);
     top.addView(title, new LayoutParams(0, -2, 1));
     top.addView(action("Save mix", actions::save));
+    Visuals.Icon options = icon("more", this::showOptions);
+    options.setContentDescription("Queue options");
+    top.addView(options);
     top.addView(icon("close", actions::close));
     addView(top);
     currentRow = row();
@@ -242,6 +245,16 @@ public final class QueuePanel extends LinearLayout {
   }
 
   boolean editing() { return editing; }
+
+  private void showOptions() {
+    new VexoDialogs.Builder(getContext()).setTitle("Queue options")
+        .setItems(new String[] {toggle.isChecked() ? "Turn autoplay off" : "Turn autoplay on", "Clear upcoming", "Clear queue"},
+            (dialog, which) -> {
+              if (which == 0) actions.autoplay(!toggle.isChecked());
+              else if (which == 1) actions.clearUpcoming();
+              else actions.clearAll();
+            }).setNegativeButton("Close", null).show();
+  }
 
   void filterState(String selected) {
     for (Map.Entry<String, TextView> entry : filters.entrySet()) {
