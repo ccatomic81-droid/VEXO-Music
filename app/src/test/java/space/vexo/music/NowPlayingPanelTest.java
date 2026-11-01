@@ -123,6 +123,16 @@ public class NowPlayingPanelTest {
   }
 
   @Test
+  public void transportControlsRemainVisibleWithLargeTextOnShortPortraitScreens() throws Exception {
+    NowPlayingPanel p = panel(320, 640, 1.6f, new ArrayList<>());
+    Rect play = new Rect(0, 0, p.play.getWidth(), p.play.getHeight());
+    p.scroll.offsetDescendantRectToMyCoords(p.play, play);
+    assertTrue("Play button should be fully visible without scrolling", play.bottom <= p.scroll.getHeight());
+    assertTrue("Artwork should still be large enough to see", p.cover.getWidth() >= 144);
+    render(p, 320, 640, "now-playing-refined-large-320");
+  }
+
+  @Test
   public void largeTextAndLandscapeRemainScrollableWithoutHorizontalClipping() throws Exception {
     for (int[] size : new int[][] {{320, 640}, {640, 360}}) {
       NowPlayingPanel p = panel(size[0], size[1], 1.6f, new ArrayList<>());
@@ -142,6 +152,30 @@ public class NowPlayingPanelTest {
       after.recycle();
       render(p, size[0], size[1], "now-playing-footer-large-" + size[0]);
     }
+  }
+
+  @Test
+  public void lyricsAndQueueRemainReachableAfterScrollingInBothThemes() throws Exception {
+    try {
+      for (boolean light : new boolean[] {false, true}) {
+        Visuals.appearance(light);
+        List<String> actions = new ArrayList<>();
+        NowPlayingPanel p = panel(320, 640, 1.6f, actions);
+        TextView lyrics = new SearchUiTest().text(p, "Lyrics");
+        TextView queue = new SearchUiTest().text(p, "Up next  ↑");
+        assertNotNull(lyrics); assertNotNull(queue);
+        p.scroll.scrollTo(0, p.scroll.getChildAt(0).getHeight());
+        for (View tab : new View[] {lyrics, queue}) {
+          Rect bounds = new Rect(0, 0, tab.getWidth(), tab.getHeight());
+          p.offsetDescendantRectToMyCoords(tab, bounds);
+          assertTrue(bounds.top >= 0 && bounds.bottom <= p.getHeight());
+          assertTrue(tab.getWidth() >= 48 && tab.getHeight() >= 48);
+          tab.performClick();
+        }
+        assertEquals(Arrays.asList("lyrics", "queue"), actions);
+        render(p, 320, 640, "player-footer-inspired-" + light);
+      }
+    } finally { Visuals.appearance(false); }
   }
 
   @Test

@@ -51,4 +51,24 @@ final class ManualQueue {
       p.moveMediaItem(from, QueuePolicy.playNextTarget(from, current));
     }
   }
+
+  /** Indices and IDs are validated against the live timeline before committing a completed drag. */
+  static boolean move(Player player, int from, int to, String expected, String target,
+      Consumer<int[]> shuffleOrder) {
+    List<Integer> upcoming = QueuePolicy.order(player.getMediaItemCount(), player.getCurrentMediaItemIndex(),
+        at -> player.getCurrentTimeline().getNextWindowIndex(at, Player.REPEAT_MODE_OFF, player.getShuffleModeEnabled()));
+    if (upcoming.indexOf(from) <= 0 || upcoming.indexOf(to) <= 0 || from == to
+        || !player.getMediaItemAt(from).mediaId.equals(expected)
+        || !player.getMediaItemAt(to).mediaId.equals(target)) return false;
+    List<Integer> all = order(player);
+    // A deliberately moved recommendation becomes a manual choice, protected from retuning.
+    player.replaceMediaItem(from, Track.from(player.getMediaItemAt(from)).mediaItem());
+    if (player.getShuffleModeEnabled()) {
+      int destination = all.indexOf(to);
+      all.remove(Integer.valueOf(from));
+      all.add(destination, from);
+      shuffleOrder.accept(all.stream().mapToInt(Integer::intValue).toArray());
+    } else player.moveMediaItem(from, to);
+    return true;
+  }
 }

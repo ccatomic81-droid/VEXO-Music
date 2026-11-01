@@ -1,0 +1,17 @@
+{
+  "versionName": "0.30.1-dev",
+  "versionCode": 51,
+  "applicationId": "space.vexo.music.radio",
+  "sourceCommit": "b5a9de44e0e2dc3fe8a839f22d9efd03706c7a81",
+  "sha256": "9aee86bae83d8316d6ac65f4ea17b3cf7d3d4b425b895818a878d71f64c10b6f",
+  "size": 9201800,
+  "certificateSha256": "0b31c50904567389b723e23ad6043b2d2fc6635c30dfdb3ed5ef3f9ba9727ef3",
+  "debuggable": false,
+  "signatureSchemes": [
+    "v2",
+    "v3"
+  ],
+  "checks": "https://github.com/ccatomic81-droid/VEXO-Music/actions/runs/41312217184",
+  "verifiedAt": "2026-11-01T13:46:09.334602+00:00",
+  "distribution": "opt-in tester website and direct APK"
+}

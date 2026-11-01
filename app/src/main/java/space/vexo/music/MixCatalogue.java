@@ -18,7 +18,7 @@ final class MixCatalogue {
       this.query = query;
       this.intent = id.equals("focus") ? "lofi focus instrumental" : id.equals("acoustic") ? "acoustic chill"
           : id.equals("energy") ? "upbeat workout" : id.equals("calm") ? "calm relaxing"
-          : id.equals("feelgood") ? "happy uplifting" : id.equals("tamil") ? "Tamil melodic"
+          : id.equals("feelgood") ? "happy uplifting" : id.equals("party") ? "party dance upbeat" : id.equals("tamil") ? "Tamil melodic"
           : id.equals("regional") ? query.replace(" popular songs", "") : id.equals("pop") ? "pop" : "";
       this.color = color;
     }
@@ -65,7 +65,8 @@ final class MixCatalogue {
             "Slow down and settle in",
             "acoustic chill songs",
             0xff8a6b44),
-        new Mix("energy", "Energy boost", "Turn your day up", "workout upbeat songs", 0xff417c50));
+        new Mix("energy", "Energy boost", "Turn your day up", "workout upbeat songs", 0xff417c50),
+        new Mix("party", "Party rotation", "Keep the night moving", "party dance upbeat songs", 0xff88559a));
   }
 
   static Mix find(String id, String country) {

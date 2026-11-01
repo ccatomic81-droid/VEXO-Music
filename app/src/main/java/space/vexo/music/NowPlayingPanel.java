@@ -24,12 +24,44 @@ public final class NowPlayingPanel extends LinearLayout {
   public final View cover;
   public final ScrollView scroll;
   private android.graphics.Bitmap tintedArtwork;
+  private int availableHeight;
+  private int tintColor;
+  private android.animation.ValueAnimator tintAnimation;
+  private android.graphics.drawable.GradientDrawable atmosphere;
+
+  @Override protected void onDetachedFromWindow() {
+    if (tintAnimation != null) tintAnimation.cancel();
+    animate().cancel();
+    super.onDetachedFromWindow();
+  }
+
+  @Override
+  protected void onMeasure(int width, int height) {
+    availableHeight = Math.max(0, MeasureSpec.getSize(height) - getPaddingTop() - getPaddingBottom());
+    super.onMeasure(width, height);
+  }
 
   private void tint(int color) {
-    setBackground(
-        new android.graphics.drawable.GradientDrawable(
-            android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
-            new int[] {light ? ArtworkPalette.lightShade(color) : color, PLAYER_MID, BG}));
+    int target = light ? ArtworkPalette.lightShade(color) : color;
+    if (tintAnimation != null) tintAnimation.cancel();
+    if (atmosphere == null) {
+      atmosphere = new android.graphics.drawable.GradientDrawable();
+      atmosphere.setOrientation(android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM);
+      setBackground(atmosphere);
+    }
+    if (!isAttachedToWindow() || !android.animation.ValueAnimator.areAnimatorsEnabled()) {
+      applyTint(target);
+      return;
+    }
+    tintAnimation = android.animation.ValueAnimator.ofArgb(tintColor, target);
+    tintAnimation.setDuration(260);
+    tintAnimation.addUpdateListener(frame -> applyTint((Integer) frame.getAnimatedValue()));
+    tintAnimation.start();
+  }
+
+  private void applyTint(int color) {
+    tintColor = color;
+    atmosphere.setColors(new int[] {color, PLAYER_MID, BG});
   }
 
   static String statusSummary(String value) {
@@ -68,6 +100,7 @@ public final class NowPlayingPanel extends LinearLayout {
     Icon v = new Icon(getContext(), name, color);
     v.setLayoutParams(new LayoutParams(dp(48), dp(48)));
     v.setFocusable(true);
+    v.setBackground(touch(android.graphics.Color.TRANSPARENT, dp(24)));
     v.setOnClickListener(w -> actions.action(name));
     return v;
   }
@@ -90,6 +123,8 @@ public final class NowPlayingPanel extends LinearLayout {
     scroll.setClipToPadding(true);
     scroll.setClipChildren(true);
     scroll.setFillViewport(false);
+    scroll.setVerticalScrollBarEnabled(false);
+    scroll.setOverScrollMode(View.OVER_SCROLL_NEVER);
     LinearLayout body =
         new LinearLayout(c) {
           @Override
@@ -105,6 +140,30 @@ public final class NowPlayingPanel extends LinearLayout {
     body.setPadding(dp(24), dp(16), dp(24), dp(20));
     scroll.addView(body, new FrameLayout.LayoutParams(-1, -2, Gravity.CENTER_HORIZONTAL));
     addView(scroll, new LayoutParams(-1, 0, 1));
+    LinearLayout footer = row();
+    footer.setPadding(dp(16), dp(4), dp(16), dp(4));
+    footer.setBackgroundColor(light ? 0xeef7f9f7 : 0xee121212);
+    TextView queueGrip = text("Up next  ↑", 13, TEXT, true);
+    queueGrip.setGravity(Gravity.CENTER);
+    queueGrip.setMinHeight(dp(48));
+    queueGrip.setFocusable(true);
+    queueGrip.setContentDescription("Open queue. Swipe up or tap");
+    queueGrip.setOnClickListener(v -> actions.action("queue"));
+    PlayerGestures.expand(queueGrip, () -> actions.action("queue"));
+    queueGrip.setBackground(touch(android.graphics.Color.TRANSPARENT, dp(12)));
+    footer.addView(queueGrip, new LayoutParams(0, -2, 1));
+    View divider = new View(c);
+    divider.setBackgroundColor(BORDER);
+    footer.addView(divider, new LayoutParams(dp(1), dp(20)));
+    TextView lyricsTab = text("Lyrics", 13, TEXT, true);
+    lyricsTab.setGravity(Gravity.CENTER);
+    lyricsTab.setMinHeight(dp(48));
+    lyricsTab.setFocusable(true);
+    lyricsTab.setContentDescription("Open lyrics");
+    lyricsTab.setBackground(touch(android.graphics.Color.TRANSPARENT, dp(12)));
+    lyricsTab.setOnClickListener(v -> actions.action("lyrics"));
+    footer.addView(lyricsTab, new LayoutParams(0, -2, 1));
+    addView(footer, new LayoutParams(-1, -2));
     FrameLayout artwork =
         new FrameLayout(c) {
           private final android.graphics.Path clip = new android.graphics.Path();
@@ -113,7 +172,7 @@ public final class NowPlayingPanel extends LinearLayout {
           protected void onSizeChanged(int w, int h, int oldW, int oldH) {
             super.onSizeChanged(w, h, oldW, oldH);
             clip.reset();
-            clip.addRoundRect(0, 0, w, h, dp(8), dp(8), android.graphics.Path.Direction.CW);
+            clip.addRoundRect(0, 0, w, h, dp(16), dp(16), android.graphics.Path.Direction.CW);
           }
 
           @Override
@@ -131,20 +190,26 @@ public final class NowPlayingPanel extends LinearLayout {
                         == android.content.res.Configuration.ORIENTATION_LANDSCAPE
                     ? dp(192)
                     : dp(320);
+            // Keep transport controls on screen when the user chooses larger text or a short display.
+            if (availableHeight > 0) {
+              float scale = Math.max(1f, getResources().getConfiguration().fontScale);
+              int spaceForArt = availableHeight - dp(Math.round(312 + 110 * scale));
+              max = Math.min(max, Math.max(dp(144), spaceForArt));
+            }
             int side = Math.min(MeasureSpec.getSize(w), max);
             super.onMeasure(
                 MeasureSpec.makeMeasureSpec(side, MeasureSpec.EXACTLY),
                 MeasureSpec.makeMeasureSpec(side, MeasureSpec.EXACTLY));
           }
         };
-    artwork.setBackground(round(PANEL, dp(8)));
-    artwork.setElevation(dp(8));
+    artwork.setBackground(round(PANEL, dp(16)));
+    artwork.setElevation(dp(3));
     artwork.setClipToOutline(true);
     artwork.setOutlineProvider(
         new ViewOutlineProvider() {
           @Override
           public void getOutline(View view, Outline outline) {
-            outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), dp(8));
+            outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), dp(16));
           }
         });
     art =
@@ -235,7 +300,7 @@ public final class NowPlayingPanel extends LinearLayout {
     transport.addView(icon("previous", TEXT, actions));
     play = icon("play", BG, actions);
     play.setGlyphSize(36);
-    play.setBackground(round(TEXT, dp(40)));
+    play.setBackground(touch(TEXT, dp(40)));
     transport.addView(play);
     transport.addView(icon("next", TEXT, actions));
     repeat = icon("repeat", MUTED, actions);
@@ -243,6 +308,7 @@ public final class NowPlayingPanel extends LinearLayout {
     body.addView(transport, new LayoutParams(-1, dp(72)));
     gap(body, 14);
     LinearLayout tools = row();
+    tools.setBackground(round(Visuals.softSurface(), dp(24)));
     tools.addView(icon("timer", MUTED, actions), new LayoutParams(0, dp(48), 1));
     speed = text("1×", 13, TEXT, true);
     speed.setGravity(Gravity.CENTER);
@@ -250,21 +316,13 @@ public final class NowPlayingPanel extends LinearLayout {
 
     speed.setContentDescription("Playback speed");
     speed.setFocusable(true);
+    speed.setBackground(touch(android.graphics.Color.TRANSPARENT, dp(24)));
     speed.setOnClickListener(v -> actions.action("speed"));
     LayoutParams sp = new LayoutParams(0, dp(48), 1);
     sp.setMargins(0, 0, 0, 0);
     tools.addView(speed, sp);
     tools.addView(icon("more", MUTED, actions), new LayoutParams(0, dp(48), 1));
     body.addView(tools, new LayoutParams(-1, -2));
-    gap(body, 14);
-    TextView lyrics = text("♪   Lyrics", 15, TEXT, true);
-    lyrics.setGravity(Gravity.CENTER_VERTICAL);
-    lyrics.setPadding(dp(16), 0, dp(16), 0);
-    lyrics.setMinHeight(dp(52));
-    lyrics.setBackground(round(PANEL, dp(12)));
-    lyrics.setFocusable(true);
-    lyrics.setOnClickListener(v -> actions.action("lyrics"));
-    body.addView(lyrics, new LayoutParams(-1, -2));
     gap(body, 14);
     radioStatus = text("", 12, MUTED, false);
     radioStatus.setMaxLines(2);

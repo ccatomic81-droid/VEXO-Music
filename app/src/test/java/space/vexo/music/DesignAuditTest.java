@@ -105,6 +105,7 @@ public class DesignAuditTest {
     assertNotNull(find.text(p, "Ready to play · 3 songs up next"));
     p.refresh(Collections.emptyList(), -1, false, "");
     assertNotNull(find.text(p, "Your queue is empty"));
+    assertEquals(View.VISIBLE, find.text(p, "Songs you play or add will appear here.").getVisibility());
     assertFalse(find.text(p, "Clear queue").isEnabled());
   }
 

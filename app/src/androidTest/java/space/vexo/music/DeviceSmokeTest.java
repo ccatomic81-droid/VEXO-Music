@@ -91,9 +91,38 @@ public class DeviceSmokeTest {
       });
       await(scenario, a -> !controller(a).isPlaying(), "Pause did not reach the service");
       shot("local-paused");
+      scenario.onActivity(a -> {
+        Dialog player = (Dialog) field(a, "playerDialog");
+        clickDescription(player.getWindow().getDecorView(), "Up next");
+      });
+      await(scenario, a -> field(a, "queueDialog") != null
+          && ((Dialog) field(a, "queueDialog")).isShowing()
+          && ((QueuePanel) field(a, "queuePanel")).getHeight() > 300 * context.getResources().getDisplayMetrics().density,
+          "Half-height queue did not become visible");
+      shot("smart-queue-half");
+      scenario.onActivity(a -> {
+        QueuePanel queue = (QueuePanel) field(a, "queuePanel");
+        assertNotNull(findText(queue, "Device playback check"));
+        findText(queue, "Discover").performClick();
+        queue.handle.performClick();
+      });
+      await(scenario, a -> QueueMixFilter.read(context).equals("Discover"), "Queue filter did not reach service");
+      SystemClock.sleep(250);
+      scenario.onActivity(a -> {
+        QueuePanel queue = (QueuePanel) field(a, "queuePanel");
+        assertFalse(controller(a).isPlaying());
+        assertEquals("Device playback check", String.valueOf(controller(a).getCurrentMediaItem().mediaMetadata.title));
+        assertTrue(findDescription(queue, "Queue options").isShown());
+        findText(queue, "Save").performClick();
+      });
+      await(scenario, a -> new LibraryStore(context).playlists().contains("Device playback check Mix"), "Queue mix was not saved");
+      shot("smart-queue-full");
+      scenario.onActivity(a -> ((Dialog) field(a, "queueDialog")).dismiss());
       scenario.onActivity(a -> controller(a).clearMediaItems());
     } finally {
       new LibraryStore(context).save("imports", Collections.emptyList());
+      new LibraryStore(context).deletePlaylist("Device playback check Mix");
+      context.getSharedPreferences("playback_state", 0).edit().putString("queue_filter", "All").commit();
       wav.delete();
     }
   }

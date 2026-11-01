@@ -31,6 +31,8 @@ public final class PlaybackService extends MediaSessionService {
   public static final String MIX_CHANGED = "space.vexo.music.MIX_CHANGED";
   public static final String START_RADIO = "space.vexo.music.START_RADIO";
   public static final String HIDE_RADIO = "space.vexo.music.HIDE_RADIO";
+  public static final String QUEUE_FILTER = "space.vexo.music.QUEUE_FILTER";
+  public static final String QUEUE_EDIT = "space.vexo.music.QUEUE_EDIT";
   private AutoplayManager autoplay;
   private RadioStore radioStore;
   public static final String ROOM_JOIN = "space.vexo.music.ROOM_JOIN",
@@ -136,6 +138,41 @@ public final class PlaybackService extends MediaSessionService {
   }
 
   private java.util.List<Track> loadAutoplay(Track seed, java.util.List<Track> queueSnapshot) throws Exception {
+    String filter = QueueMixFilter.read(this);
+    java.util.List<Track> candidates;
+    try { candidates = loadAutoplayBase(seed, queueSnapshot); }
+    catch (Exception unavailable) {
+      if (Thread.currentThread().isInterrupted()) throw new InterruptedException();
+      if (filter.equals("All") || filter.equals("Discover")) throw unavailable;
+      candidates = java.util.Collections.emptyList();
+    }
+    if (filter.equals("All")) return candidates;
+    MusicInterests interests = MusicInterests.read(this);
+    java.util.List<Track> pool = new java.util.ArrayList<>();
+    String query = QueueMixFilter.query(filter, seed);
+    if (!query.isEmpty()) {
+      try { pool.addAll(OnlineMusic.preview(query, RegionPolicy.current(this))); }
+      catch (Exception unavailable) { if (Thread.currentThread().isInterrupted()) throw new InterruptedException(); }
+    }
+    pool.addAll(candidates);
+    if (filter.equals("Familiar")) {
+      pool.addAll(interests.favourites); pool.addAll(interests.history);
+    }
+    pool = QueueMixFilter.select(filter, pool, interests.history, interests.favourites);
+    pool.removeIf(track -> interests.blocked(track) || interests.bonus(track) < -20);
+    MixCatalogue.Mix active = MixSession.active(this);
+    boolean avoidRecent = interests.preferences.optInt("repeat_hours", 24) != 0
+        && (active == null || MixDiscovery.Tuning.read(interests, active.id).avoidRecent);
+    if (avoidRecent) {
+      java.util.Set<String> recent = new java.util.HashSet<>();
+      for (Track track : interests.history.subList(0, Math.min(12, interests.history.size())))
+        recent.add(RadioPolicy.songKey(track));
+      pool.removeIf(track -> recent.contains(RadioPolicy.songKey(track)));
+    }
+    return pool;
+  }
+
+  private java.util.List<Track> loadAutoplayBase(Track seed, java.util.List<Track> queueSnapshot) throws Exception {
     MixCatalogue.Mix mix = MixSession.active(this);
     if (mix != null) {
       MusicInterests interests = MusicInterests.read(this);
@@ -368,7 +405,8 @@ public final class PlaybackService extends MediaSessionService {
                     history,
                     new LibraryStore(this).tracks("favourites"),
                     radioStore.hidden(),
-                    radioStore.mode(),
+                    QueueMixFilter.read(this).equals("Familiar") ? RadioPolicy.Mode.FAMILIAR
+                        : QueueMixFilter.read(this).equals("Discover") ? RadioPolicy.Mode.DISCOVER : radioStore.mode(),
                     10);
             });
     autoplay.newQueue();
@@ -531,6 +569,8 @@ public final class PlaybackService extends MediaSessionService {
                                 .add(new SessionCommand(CROSSFADE_CHANGED, Bundle.EMPTY))
                                 .add(new SessionCommand(NEW_QUEUE, Bundle.EMPTY))
                                 .add(new SessionCommand(MIX_CHANGED, Bundle.EMPTY))
+                                .add(new SessionCommand(QUEUE_FILTER, Bundle.EMPTY))
+                                .add(new SessionCommand(QUEUE_EDIT, Bundle.EMPTY))
                                 .add(new SessionCommand(AUTOPLAY_CHANGED, Bundle.EMPTY))
                                 .add(new SessionCommand(CLEAR_UPCOMING, Bundle.EMPTY))
                                 .add(new SessionCommand(CLEAR_QUEUE, Bundle.EMPTY))
@@ -556,6 +596,39 @@ public final class PlaybackService extends MediaSessionService {
                       return Futures.immediateFuture(
                           new SessionResult(
                               androidx.media3.session.SessionError.ERROR_PERMISSION_DENIED));
+                    if (command.customAction.equals(QUEUE_FILTER)) {
+                      if (remote != null && remote.active()
+                          || getSharedPreferences("playback_state", 0).getBoolean("fair_queue", false))
+                        return Futures.immediateFuture(new SessionResult(
+                            androidx.media3.session.SessionError.ERROR_INVALID_STATE));
+                      String filter = QueueMixFilter.valid(args.getString("filter", "All"));
+                      if (filter.equals(QueueMixFilter.read(PlaybackService.this)))
+                        return Futures.immediateFuture(new SessionResult(SessionResult.RESULT_SUCCESS));
+                      autoplay.suspend();
+                      getSharedPreferences("playback_state", 0).edit().putString("queue_filter", filter).apply();
+                      SongRadio.pruneRecommendations(player);
+                      retuneAutoplay();
+                      saveQueue();
+                      return Futures.immediateFuture(new SessionResult(SessionResult.RESULT_SUCCESS));
+                    }
+                    if (command.customAction.equals(QUEUE_EDIT)) {
+                      int from = args.getInt("from", -1), to = args.getInt("to", -1);
+                      String expected = args.getString("expected", "");
+                      boolean changed;
+                      if (args.getBoolean("remove")) {
+                        java.util.List<Integer> upcoming = QueuePolicy.order(player.getMediaItemCount(),
+                            player.getCurrentMediaItemIndex(), at -> player.getCurrentTimeline().getNextWindowIndex(
+                                at, Player.REPEAT_MODE_OFF, player.getShuffleModeEnabled()));
+                        changed = upcoming.indexOf(from) > 0 && from < player.getMediaItemCount()
+                            && player.getMediaItemAt(from).mediaId.equals(expected);
+                        if (changed) player.removeMediaItem(from);
+                      } else changed = ManualQueue.move(player, from, to, expected, args.getString("target", ""),
+                          order -> player.setShuffleOrder(new androidx.media3.exoplayer.source.ShuffleOrder
+                              .DefaultShuffleOrder(order, System.nanoTime())));
+                      if (changed) saveQueue();
+                      return Futures.immediateFuture(new SessionResult(changed ? SessionResult.RESULT_SUCCESS
+                          : androidx.media3.session.SessionError.ERROR_BAD_VALUE));
+                    }
                     if (command.customAction.equals(PURE_ACTION)) {
                       try {
                         String action = args.getString("action", "changed");

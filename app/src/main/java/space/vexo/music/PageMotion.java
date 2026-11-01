@@ -14,8 +14,8 @@ final class PageMotion {
     page.setTranslationX(direction * 12 * page.getResources().getDisplayMetrics().density);
     page.animate()
         .translationX(0)
-        .setDuration(160)
-        .setInterpolator(new DecelerateInterpolator())
+        .setDuration(200)
+        .setInterpolator(new android.view.animation.PathInterpolator(.2f, 0f, 0f, 1f))
         .withEndAction(() -> page.setTranslationX(0))
         .start();
   }

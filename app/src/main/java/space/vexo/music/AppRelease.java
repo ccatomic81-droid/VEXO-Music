@@ -7,11 +7,11 @@ import org.json.*;
 /** A release feed contains metadata only. Downloads always need a user tap. */
 final class AppRelease {
   static final String NOTES =
-      "• Official lyric and music releases now appear in song search and artist pages.\n"
-          + "• Finds recordings such as JANANA’s Kolama that have no audio-only catalogue entry.\n"
-          + "• Official recordings play as audio in the existing player.\n"
-          + "• Unrelated videos and unverified uploads remain excluded.\n"
-          + "• Artist-page stability and your saved music are preserved.";
+      "• Refreshed Home with a clearer VEXO header, soft mood chips and Quick Picks first.\n"
+          + "• Mixed-colour atmosphere and quieter playing-song highlights.\n"
+          + "• Lyrics and Up next stay within reach at the bottom of the player.\n"
+          + "• Artwork colours blend between songs, with native touch feedback.\n"
+          + "• Rounded mini-player and refined page motion with reduced-motion support.";
   final int code;
   final String version, summary, url;
   String sha256 = "";

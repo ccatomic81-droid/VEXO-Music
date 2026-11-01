@@ -45,6 +45,15 @@ public final class Visuals {
     return d;
   }
 
+  /** Bounded native ripple: no touch listener, so scrolling and accessibility retain control. */
+  static android.graphics.drawable.Drawable touch(int color, float radius) {
+    return new android.graphics.drawable.RippleDrawable(
+        android.content.res.ColorStateList.valueOf(light ? 0x16000000 : 0x24ffffff),
+        round(color, radius), round(Color.WHITE, radius));
+  }
+
+  static int softSurface() { return light ? 0x16000000 : 0x18ffffff; }
+
   static void clearArtwork() {
     ArtworkLoader.clear();
   }
@@ -129,6 +138,8 @@ public final class Visuals {
 
     private static String description(String name) {
       switch (name) {
+        case "drag":
+          return "Reorder song";
         case "smart":
           return "Smart Experience";
         case "play":
@@ -178,6 +189,12 @@ public final class Visuals {
       p.setStrokeWidth(1.9f);
       p.setStrokeCap(Paint.Cap.ROUND);
       p.setStrokeJoin(Paint.Join.ROUND);
+      if (name.equals("drag")) {
+        c.drawLine(5, 9, 19, 9, p);
+        c.drawLine(5, 15, 19, 15, p);
+        c.restore();
+        return;
+      }
       Path a = new Path();
       switch (name) {
         case "intro":
